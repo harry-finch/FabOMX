@@ -15,4 +15,4 @@
 
 ## À suivre
 
-- Idées du jalon v0.1 à spécifier, dans l’ordre : R-003, R-001, R-002, R-004. Action en attente : A-001.
+- Jalon v0.1 : R-003 spécifié, à développer ; idées à spécifier ensuite : R-001, R-002, R-004, R-005, R-006. Action en attente : A-001.
