@@ -22,7 +22,7 @@ Poser chaque dessin importé là où il doit être découpé, dans la bonne orie
   - « Choisir sur le plateau » : un clic s'accroche, à 8 px près, aux extrémités, aux centres d'arcs et aux centres de cercles du dessin.
   - Le point est marqué sur le plateau et suit le dessin quand on le déplace.
 - **Déplacer** :
-  - glisser le dessin ;
+  - glisser le dessin, avec l'outil Déplacer ou directement avec l'outil Sélection (au-delà de 3 px : un simple clic ne fait que sélectionner) ;
   - flèches du clavier (1 mm, 10 mm avec Maj) ;
   - X/Y du coin bas gauche de la boîte (« Position » ; les X/Y du point de référence, eux, déplacent le point sans bouger le dessin) ;
   - boutons « À l'origine » (coin bas gauche de la boîte en (0, 0)) et « Centrer sur le plateau ».

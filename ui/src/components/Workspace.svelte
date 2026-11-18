@@ -9,7 +9,8 @@
   // liseré sombre, contours ouverts en attention, sélection en accent.
   // Un clic choisit le dessin dont un tracé passe sous le pointeur, sinon
   // celui dont la boîte le contient ; un clic dans le vide désélectionne.
-  // Outils : Déplacer (glisser le dessin), Tourner (glisser autour du point
+  // Outils : Sélection et Déplacer (glisser le dessin, au-delà de 3 px pour
+  // qu'un simple clic ne fasse que sélectionner), Tourner (glisser autour du point
   // de référence, Maj par 15°), Mettre à l'échelle (poignées de la boîte ;
   // côtés seulement cadenas ouvert). Un geste = une étape d'annulation.
   // « Choisir sur le plateau » : le clic suivant place le point de référence,
@@ -51,7 +52,10 @@
   let space = $state(false);
   let drag: { x: number; y: number; ox: number; oy: number } | null = $state(null);
   /** Geste en cours sur un dessin : départ (mm), matrice et point de référence au départ. */
-  let gesture: { kind: 'move' | 'rotate' | 'scale'; id: number; p0: Pt; m0: M; ref: Pt; hx: number; hy: number } | null = $state(null);
+  type Gesture = { kind: 'move' | 'rotate' | 'scale'; id: number; p0: Pt; m0: M; ref: Pt; hx: number; hy: number; s0: Pt; moved: boolean };
+  let gesture = $state<Gesture | null>(null);
+  /** Seuil (px) avant qu'un clic sur un dessin devienne un déplacement. */
+  const DRAG = 3;
   const drawings = $derived(doc.drawings);
   const selected = $derived(doc.selected);
   let colors: Record<string, string> = {};
@@ -354,7 +358,7 @@
         if (h) return start(e, 'scale', sel, h.hx, h.hy);
       }
       const id = hit(px, py);
-      if (tool === 'move' && id != null) {
+      if ((tool === 'move' || tool === 'select') && id != null) {
         doc.select(id);
         return start(e, 'move', doc.selection!);
       }
@@ -372,11 +376,17 @@
     e.preventDefault();
     canvas.setPointerCapture(e.pointerId);
     doc.begin();
-    gesture = { kind, id: d.id, p0: toWorld(...local(e)), m0: d.matrix, ref: refPoint(d), hx, hy };
+    const s0 = local(e);
+    gesture = { kind, id: d.id, p0: toWorld(...s0), m0: d.matrix, ref: refPoint(d), hx, hy, s0, moved: kind !== 'move' };
   }
 
   function follow(e: PointerEvent, p: Pt) {
     const g = gesture!;
+    if (!g.moved) {
+      const [px, py] = local(e);
+      if (Math.hypot(px - g.s0[0], py - g.s0[1]) < DRAG) return;
+      g.moved = true;
+    }
     const [dx, dy] = [p[0] - g.p0[0], p[1] - g.p0[1]];
     let m: M = g.m0;
     if (g.kind === 'move') m = then(translate(dx, dy), g.m0);
@@ -418,7 +428,7 @@
   }
 
   const cursor = $derived(
-    doc.picking ? 'crosshair' : tools.active === 'move' ? 'move' : tools.active === 'rotate' && selected != null ? 'alias' : undefined,
+    doc.picking ? 'crosshair' : tools.active === 'move' || gesture?.kind === 'move' ? 'move' : tools.active === 'rotate' && selected != null ? 'alias' : undefined,
   );
 </script>
 

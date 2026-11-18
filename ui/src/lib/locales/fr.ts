@@ -20,7 +20,7 @@ const fr = {
   tools: {
     label: 'Outils',
     soon: 'À venir',
-    select: { name: 'Sélection', hint: 'Choisir un élément du dessin.' },
+    select: { name: 'Sélection', hint: 'Cliquer sur un dessin pour le choisir, le glisser pour le déplacer.' },
     hand: { name: 'Main', hint: 'Glisser pour déplacer la vue. Espace + glisser fait de même avec tout outil.' },
     import: { name: 'Importer', hint: 'Ouvrir un dessin SVG ou DXF.' },
     move: { name: 'Déplacer', hint: 'Déplacer le dessin sur le plateau.' },

@@ -22,7 +22,7 @@ const en: Shape<typeof fr> = {
   tools: {
     label: 'Tools',
     soon: 'Coming soon',
-    select: { name: 'Select', hint: 'Pick an element of the drawing.' },
+    select: { name: 'Select', hint: 'Click a drawing to pick it, drag it to move it.' },
     hand: { name: 'Hand', hint: 'Drag to move the view. Space + drag does the same with any tool.' },
     import: { name: 'Import', hint: 'Open an SVG or DXF drawing.' },
     move: { name: 'Move', hint: 'Move the drawing on the bed.' },
