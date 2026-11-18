@@ -7,6 +7,7 @@ import { doc } from './document.svelte';
 import { ui } from './ui.svelte';
 import { t } from './i18n.svelte';
 import { cleaning } from './cleaning.svelte';
+import { tools } from './tools.svelte';
 import { isDesktop, openFile, openPath, remember } from './desktop';
 import type { ImportFailure, Report, Unit } from './types';
 
@@ -116,6 +117,8 @@ class Importer {
       return;
     }
     doc.add(geo, p.name, report, loaded.snaps, engine.machine);
+    // Un dessin posé se regarde et se place d'abord : retour à l'outil Sélection.
+    tools.select('select');
     if (isDesktop && p.path) remember(p.path).catch(() => {});
     ui.toast(t('import.added', { name: p.name }));
     this.pending = null;

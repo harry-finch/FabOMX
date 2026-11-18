@@ -279,7 +279,7 @@ const fr = {
     pause: 'Pause',
     progress: 'Avancement du parcours',
     tooShort: 'Amorce trop courte',
-    export: 'Exporter l’OMX',
+    export: 'Exporter',
     exportHint: 'Écrire le parcours dans un fichier OMX pour MAKE. Le premier point est le point de départ : placez la buse au-dessus avant de lancer.',
     exported: 'OMX exporté : {name}',
     exportFailed: 'L’OMX n’a pas pu être écrit.',

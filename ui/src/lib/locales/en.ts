@@ -281,7 +281,7 @@ const en: Shape<typeof fr> = {
     pause: 'Pause',
     progress: 'Toolpath progress',
     tooShort: 'Lead too short',
-    export: 'Export the OMX',
+    export: 'Export',
     exportHint: 'Write the toolpath to an OMX file for MAKE. The first point is the start point: place the nozzle above it before launching.',
     exported: 'OMX exported: {name}',
     exportFailed: 'The OMX could not be written.',
