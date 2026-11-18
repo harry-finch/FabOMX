@@ -8,8 +8,8 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ## Restant à faire
 
-1. **[R-001 Importer un DXF ou un SVG](roadmap/items/R-001-importer-un-dxf-ou-un-svg.md)** · Idée · jalon v0.1
-   Lire le dessin 2D des pièces à découper depuis un fichier DXF ou SVG.
+1. **[R-001 Importer un DXF ou un SVG](roadmap/items/R-001-importer-un-dxf-ou-un-svg.md)** · Spécifiée · jalon v0.1
+   Importer un dessin SVG ou DXF par un dialogue qui montre l'unité, les dimensions, les éléments, ce qu'il faudra nettoyer et les avertissements ; plusieurs dessins centrés sur le plateau, sélection, retrait, annuler.
 2. **[R-002 Redimensionner, déplacer et tourner le dessin](roadmap/items/R-002-redimensionner-deplacer-tourner-et-nettoyer-le.md)** · Idée · jalon v0.1
    Ajuster le dessin importé : mise à l'échelle, position et rotation.
 3. **[R-004 Nettoyer le dessin](roadmap/items/R-004-nettoyer-le-dessin.md)** · Idée · jalon v0.1
