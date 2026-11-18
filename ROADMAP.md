@@ -8,18 +8,18 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ## Restant à faire
 
-1. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée · jalon v0.2
-   Marquer un trait sans traverser la plaque (gravure), dès que son code OMX est connu par un exemple de LAYOUT.
-2. **[R-010 Amorces et perçages](roadmap/items/R-010-amorces-et-percages.md)** · Idée · jalon v0.2
-   Placer les amorces d'entrée et de sortie de chaque contour et son point de perçage, hors de la pièce, réglables.
-3. **[R-011 Ordre de coupe et aperçu du parcours](roadmap/items/R-011-ordre-de-coupe-et-apercu-du-parcours.md)** · Idée · jalon v0.2
+1. **[R-010 Amorces et perçages](roadmap/items/R-010-amorces-et-percages.md)** · Idée · jalon v0.2
+   Amorces d'entrée et de sortie (droites ou en arc, longueurs par défaut ou par contour) et point de perçage dans la chute, placées sur un coin ou à la main ; petit trou percé au centre, amorce raccourcie ou signalée quand elle ne tient pas.
+2. **[R-011 Ordre de coupe et aperçu du parcours](roadmap/items/R-011-ordre-de-coupe-et-apercu-du-parcours.md)** · Idée · jalon v0.2
    Calculer l'ordre de coupe (trous avant l'extérieur, déplacements courts) et montrer le parcours complet : coupes, déplacements jet coupé, perçages.
-4. **[R-012 Comprendre le format OMX](roadmap/items/R-012-comprendre-le-format-omx.md)** · Idée · jalon v0.2
+3. **[R-012 Comprendre le format OMX](roadmap/items/R-012-comprendre-le-format-omx.md)** · Idée · jalon v0.2
    Décrire et reproduire le format OMX de la ProtoMAX à partir de fichiers réels produits par LAYOUT, avec des tests qui relisent ces fichiers.
-5. **[R-007 Reconnaître des arcs dans les segments](roadmap/items/R-007-reconnaitre-des-arcs-dans-les-segments.md)** · Idée · jalon v0.2
+4. **[R-007 Reconnaître des arcs dans les segments](roadmap/items/R-007-reconnaitre-des-arcs-dans-les-segments.md)** · Idée · jalon v0.2
    Remplacer les suites de petits segments issues des courbes converties par de vrais arcs, pour un parcours de jet d'eau plus fluide.
-6. **[R-013 Exporter l'OMX](roadmap/items/R-013-exporter-l-omx.md)** · Idée · jalon v0.2
+5. **[R-013 Exporter l'OMX](roadmap/items/R-013-exporter-l-omx.md)** · Idée · jalon v0.2
    Écrire le fichier OMX du parcours, prêt à ouvrir dans MAKE ; la compensation de la saignée reste à MAKE, qui reçoit le côté de coupe.
+6. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée · jalon v0.2
+   Marquer un trait sans traverser la plaque (gravure), dès que son code OMX est connu par un exemple de LAYOUT.
 7. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
    Logo définitif de la famille Fab (tuile graphite et symbole à la couleur d'identité), à la place du logo provisoire du kit.
 
