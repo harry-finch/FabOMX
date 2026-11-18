@@ -2,8 +2,11 @@
 
 # FabOMX : feuille de route
 
-**Avancement : 0 livrés sur 0** (0 %)
+**Avancement : 0 livrés sur 2** (0 %)
 
 ## Restant à faire
 
-Rien en attente.
+1. **[R-001 Importer un DXF ou un SVG](roadmap/items/R-001-importer-un-dxf-ou-un-svg.md)** · Idée
+   Lire le dessin 2D des pièces à découper depuis un fichier DXF ou SVG.
+2. **[R-002 Redimensionner, déplacer, tourner et nettoyer le dessin](roadmap/items/R-002-redimensionner-deplacer-tourner-et-nettoyer-le.md)** · Idée
+   Ajuster le dessin importé : mise à l'échelle, position, rotation, et nettoyage de la géométrie.
