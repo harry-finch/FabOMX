@@ -10,14 +10,14 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 1. **[R-007 Reconnaître des arcs](roadmap/items/R-007-reconnaitre-des-arcs-dans-les-segments.md)** · À tester · jalon v0.2
    Courbes de Bézier, splines et ellipses lues en arcs tangents à l'import ; opération « Reconnaître des arcs » au nettoyage pour les polylignes en segments ; coins vifs, lignes droites et petits détails intacts ; arcs écrits en Bow dans l'OMX.
-2. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée · jalon v0.2
-   Marquer un trait sans traverser la plaque (gravure), dès que son code OMX est connu par un exemple de LAYOUT.
-3. **[R-015 Onglets de maintien](roadmap/items/R-015-onglets-de-maintien.md)** · Idée · jalon v0.3
+2. **[R-015 Onglets de maintien](roadmap/items/R-015-onglets-de-maintien.md)** · Idée · jalon v0.3
    Laisser de petits ponts de matière (onglets) sur un contour pour que la pièce reste accrochée à la plaque pendant la coupe.
-4. **[R-016 Couper une plaque dans un coin du stock](roadmap/items/R-016-couper-une-plaque-dans-un-coin-du-stock.md)** · Idée · jalon v0.3
+3. **[R-016 Couper une plaque dans un coin du stock](roadmap/items/R-016-couper-une-plaque-dans-un-coin-du-stock.md)** · Idée · jalon v0.3
    Couper une plaque dans un coin du stock sans faire le tour complet. À spécifier.
-5. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
+4. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
    Logo définitif de la famille Fab (tuile graphite et symbole à la couleur d'identité), à la place du logo provisoire du kit.
+5. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée · jalon v0.2
+   Marquer un trait sans traverser la plaque (gravure), dès que son code OMX est connu par un exemple de LAYOUT.
 
 ## Actions à faire
 
