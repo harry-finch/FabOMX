@@ -159,11 +159,12 @@ fn direction_does_not_depend_on_the_file() {
         "les deux carrés sont tracés en sens contraires"
     );
     for area in [a, b] {
-        assert!(travel(area, Side::Outside, 1.0) > 0.0);
-        assert!(travel(area, Side::Inside, 1.0) < 0.0);
+        // Pièce à droite du jet : extérieur dans le sens horaire, trou dans le sens trigonométrique.
+        assert!(travel(area, Side::Outside, 1.0) < 0.0);
+        assert!(travel(area, Side::Inside, 1.0) > 0.0);
         // Après un miroir, toujours pareil par rapport à la pièce.
-        assert!(travel(area, Side::Outside, -1.0) > 0.0);
-        assert!(travel(area, Side::Inside, -1.0) < 0.0);
+        assert!(travel(area, Side::Outside, -1.0) < 0.0);
+        assert!(travel(area, Side::Inside, -1.0) > 0.0);
     }
     assert!(!reversed(Side::Line, a, 1.0) && !reversed(Side::Skip, b, -1.0));
 }

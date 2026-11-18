@@ -34,6 +34,8 @@ pub const MIN_LEAD: f64 = 0.5;
 pub const LEAD_RANGE: std::ops::RangeInclusive<f64> = 0.5..=20.0;
 /// Changement de direction minimal d'un coin.
 const CORNER: f64 = 30.0 * std::f64::consts::PI / 180.0;
+/// Distance au point d'entrée sous laquelle un contact avec le contour lui-même ne compte pas.
+const NEAR_ENTRY: f64 = 0.05;
 /// Facteur de raccourcissement d'une amorce qui ne tient pas.
 const SHRINK: f64 = 0.85;
 
@@ -120,6 +122,7 @@ pub fn leads(contours: &[Contour], specs: &[LeadSpec], m: Affine) -> Leads {
             Side::Line => Some(on_line(c, &polys[i], &spec, m)),
             Side::Outside | Side::Inside if c.closed => {
                 let ctx = Ctx {
+                    entry: P::new(f64::NAN, f64::NAN),
                     polys: &polys,
                     closed: &closed_of,
                     obstacles: &obstacles,
@@ -149,7 +152,7 @@ fn on_line(c: &Contour, poly: &[P], spec: &LeadSpec, m: Affine) -> Lead {
     let (at, rev) = if c.closed {
         let (q, _) = travel(poly, false);
         let (q, _) = start_at(q, spec.entry, m);
-        (q[0], false)
+        (on_segs(&c.segs, q[0]), false)
     } else {
         // Tracé ouvert : son début, ou sa fin si le point choisi en est plus près.
         let (a, b) = (poly[0], poly[poly.len() - 1]);
@@ -167,7 +170,12 @@ fn on_line(c: &Contour, poly: &[P], spec: &LeadSpec, m: Affine) -> Lead {
     }
 }
 
+#[derive(Clone, Copy)]
 struct Ctx<'a> {
+    /// Point d'entrée : les contacts avec le contour lui-même tout près de lui
+    /// ne comptent pas (il est sur la géométrie exacte, le polygone en diffère
+    /// de la tolérance de mise en segments).
+    entry: P,
     polys: &'a [Vec<P>],
     closed: &'a [bool],
     obstacles: &'a [usize],
@@ -202,8 +210,10 @@ impl Ctx<'_> {
             for w in pts.windows(2) {
                 for j in 0..edges {
                     let (c, d) = (poly[j], poly[(j + 1) % n]);
-                    if hits(w[0], w[1], c, d) {
-                        return false;
+                    if let Some(x) = hits(w[0], w[1], c, d) {
+                        if !(o == self.own && x.dist(self.entry) <= NEAR_ENTRY) {
+                            return false;
+                        }
                     }
                 }
             }
@@ -393,7 +403,9 @@ fn closed(c: &Contour, poly: &[P], spec: &LeadSpec, m: Affine, k: f64, ctx: &Ctx
     let (q, _) = travel(poly, rev);
     let (q, corner) = start_at(q, spec.entry, m);
     let n = q.len();
-    let e = q[0];
+    // Le point d'entrée sur la géométrie exacte (les arcs ne sont pas des polygones).
+    let e = on_segs(&c.segs, q[0]);
+    let ctx = &Ctx { entry: e, ..*ctx };
     let t_first = unit(q[1 % n] - e);
     let t_last = unit(e - q[n - 1]);
     let (l_in, l_out, min) = (spec.lead_in / k, spec.lead_out / k, MIN_LEAD / k);
@@ -492,36 +504,58 @@ fn centroid(poly: &[P]) -> P {
 /// L'amorce [a, b] touche-t-elle l'arête [c, d] ailleurs qu'à ses propres
 /// bouts ? Les bouts de l'arête comptent : passer par le coin d'un autre
 /// contour, c'est le toucher.
-fn hits(a: P, b: P, c: P, d: P) -> bool {
+fn hits(a: P, b: P, c: P, d: P) -> Option<P> {
     let r = b - a;
     let s = d - c;
     let den = r.x * s.y - r.y * s.x;
     if den.abs() <= 1e-12 * (r.len() * s.len()).max(1e-300) {
-        return false;
+        return None;
     }
     let w = c - a;
     let t = (w.x * s.y - w.y * s.x) / den;
     let u = (w.x * r.y - w.y * r.x) / den;
     const EPS: f64 = 1e-9;
-    t > EPS && t < 1.0 - EPS && (-EPS..=1.0 + EPS).contains(&u)
+    (t > EPS && t < 1.0 - EPS && (-EPS..=1.0 + EPS).contains(&u)).then(|| a + r * t)
 }
 
-/// Le trajet de coupe d'un contour (repère d'origine), dans son sens de
-/// parcours, du point d'entrée de `lead` jusqu'à sa fin : un contour fermé
-/// revient au point d'entrée.
-pub fn route(c: &Contour, lead: &Lead, m: Affine) -> Vec<P> {
-    let poly = c.points();
-    if !c.closed {
-        let mut q = poly;
-        if lead.reversed {
-            q.reverse();
-        }
-        return q;
+/// Le point de la géométrie exacte `segs` le plus proche de `p`.
+fn on_segs(segs: &[Seg], p: P) -> P {
+    segs.iter()
+        .map(|s| s.closest(p).0)
+        .min_by(|a, b| a.dist(p).total_cmp(&b.dist(p)))
+        .unwrap_or(p)
+}
+
+/// Le trajet de coupe exact d'un contour (repère d'origine), dans son sens
+/// de parcours, du point d'entrée de `lead` jusqu'à sa fin : un contour
+/// fermé est coupé au point d'entrée et y revient.
+pub fn route(c: &Contour, lead: &Lead) -> Vec<Seg> {
+    let mut segs: Vec<Seg> = if lead.reversed {
+        c.segs.iter().rev().map(Seg::reversed).collect()
+    } else {
+        c.segs.clone()
+    };
+    if !c.closed || segs.is_empty() {
+        return segs;
     }
-    let (q, _) = travel(&poly, lead.reversed);
-    let (mut q, _) = start_at(q, Some(lead.entry), m);
-    if let Some(&first) = q.first() {
-        q.push(first);
+    let e = P::new(lead.entry[0], lead.entry[1]);
+    let (j, (_, t)) = segs
+        .iter()
+        .map(|s| s.closest(e))
+        .enumerate()
+        .min_by(|a, b| a.1 .0.dist(e).total_cmp(&b.1 .0.dist(e)))
+        .unwrap();
+    let eps = 1e-9;
+    if t <= eps {
+        segs.rotate_left(j);
+    } else if t >= 1.0 - eps {
+        let n = segs.len();
+        segs.rotate_left((j + 1) % n);
+    } else {
+        let (a, b) = segs[j].split(t);
+        segs[j] = b;
+        segs.rotate_left(j);
+        segs.push(a);
     }
-    q
+    segs
 }

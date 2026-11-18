@@ -18,8 +18,8 @@
 //! découpés (hors le contour qu'il quitte) est signalé (`path.over_cut`).
 
 use crate::cut::{inside, Contour, Side};
-use crate::geom::{Affine, P};
-use crate::lead::{route, Lead};
+use crate::geom::{Affine, Seg, P};
+use crate::lead::{route, Lead, LeadWarning};
 use serde::{Serialize, Serializer};
 use std::collections::BTreeMap;
 
@@ -35,6 +35,8 @@ pub struct Job<'a> {
     pub leads: &'a [Option<Lead>],
     /// Qualité retenue de chaque contour.
     pub qualities: &'a [Option<u8>],
+    /// Amorces trop courtes, reprises dans les remarques du parcours.
+    pub warnings: &'a [LeadWarning],
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
@@ -54,18 +56,32 @@ pub struct Move {
     pub step: Option<usize>,
     pub side: Option<Side>,
     pub quality: Option<u8>,
-    #[serde(serialize_with = "flat")]
-    pub pts: Vec<P>,
+    /// Segments exacts (lignes et arcs) sur le plateau ; pour l'affichage, des points `pts`.
+    #[serde(rename = "pts", serialize_with = "flat")]
+    pub segs: Vec<Seg>,
 }
 
 impl Move {
     pub fn length(&self) -> f64 {
-        self.pts.windows(2).map(|w| w[0].dist(w[1])).sum()
+        self.segs.iter().map(Seg::length).sum()
     }
 }
 
-fn flat<S: Serializer>(pts: &[P], s: S) -> Result<S::Ok, S::Error> {
-    s.collect_seq(pts.iter().flat_map(|p| [p.x, p.y]))
+/// Points d'une suite de segments, à 0,01 mm près.
+pub(crate) fn points(segs: &[Seg]) -> Vec<P> {
+    let mut pts = Vec::new();
+    for s in segs {
+        let before = pts.len();
+        s.points(0.01, &mut pts);
+        if before > 0 {
+            pts.remove(before);
+        }
+    }
+    pts
+}
+
+fn flat<S: Serializer>(segs: &[Seg], s: S) -> Result<S::Ok, S::Error> {
+    s.collect_seq(points(segs).into_iter().flat_map(|p| [p.x, p.y]))
 }
 
 /// Un contour dans l'ordre de coupe.
@@ -92,6 +108,14 @@ pub enum PathWarning {
     /// Le déplacement vers le contour `step` passe au-dessus de ce qui est déjà découpé.
     #[serde(rename = "path.over_cut")]
     OverCut { step: usize, x: f64, y: f64 },
+    /// Une amorce du contour (`key`, `contour`) ne tient pas, même raccourcie (sur le plateau).
+    #[serde(rename = "lead.too_short")]
+    LeadTooShort {
+        key: u32,
+        contour: usize,
+        x: f64,
+        y: f64,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -123,25 +147,22 @@ struct Item {
     side: Side,
     quality: Option<u8>,
     pierce: P,
-    lead_in: Vec<P>,
-    cut: Vec<P>,
-    lead_out: Vec<P>,
+    lead_in: Vec<Seg>,
+    cut: Vec<Seg>,
+    lead_out: Vec<Seg>,
     /// Polygone fermé (plateau), pour le survol ; vide pour un tracé ouvert.
     poly: Vec<P>,
     /// Indices (dans `items`) des contours qu'il contient.
     inner: Vec<usize>,
 }
 
-fn seg_points(segs: &[crate::geom::Seg], m: Affine) -> Vec<P> {
-    let mut pts = Vec::new();
+/// Segments du repère d'origine placés sur le plateau (arcs exacts pour une similitude).
+fn placed(segs: &[Seg], m: Affine) -> Vec<Seg> {
+    let mut out = Vec::new();
     for s in segs {
-        let before = pts.len();
-        s.points(0.01, &mut pts);
-        if before > 0 {
-            pts.remove(before);
-        }
+        s.transformed(m, 0.01, &mut out);
     }
-    pts.into_iter().map(|p| m.apply(p)).collect()
+    out
 }
 
 fn items(jobs: &[Job]) -> Vec<Item> {
@@ -163,12 +184,9 @@ fn items(jobs: &[Job]) -> Vec<Item> {
                 side,
                 quality: job.qualities.get(i).copied().flatten(),
                 pierce: at(lead.pierce),
-                lead_in: seg_points(&lead.lead_in, job.m),
-                cut: route(c, lead, job.m)
-                    .into_iter()
-                    .map(|p| job.m.apply(p))
-                    .collect(),
-                lead_out: seg_points(&lead.lead_out, job.m),
+                lead_in: placed(&lead.lead_in, job.m),
+                cut: placed(&route(c, lead), job.m),
+                lead_out: placed(&lead.lead_out, job.m),
                 poly: if c.closed {
                     c.points().into_iter().map(|p| job.m.apply(p)).collect()
                 } else {
@@ -187,11 +205,7 @@ fn items(jobs: &[Job]) -> Vec<Item> {
             let inner: Vec<usize> = (first..out.len())
                 .filter(|&a| {
                     a != b && {
-                        let probe = out[a].cut.first().copied().unwrap_or(out[a].pierce);
-                        let probe = match out[a].cut.get(1) {
-                            Some(&q) => probe.lerp(q, 0.5),
-                            None => probe,
-                        };
+                        let probe = out[a].cut.first().map_or(out[a].pierce, Seg::mid);
                         let area_a = if out[a].poly.is_empty() {
                             0.0
                         } else {
@@ -252,11 +266,28 @@ pub fn plan(jobs: &[Job], start: P, order: Option<&[(u32, usize)]>) -> Result<Pl
 
     let mut moves = Vec::new();
     let mut stats = Stats::default();
-    let mut warnings = Vec::new();
+    let mut warnings: Vec<PathWarning> = jobs
+        .iter()
+        .flat_map(|j| {
+            j.warnings.iter().map(move |w| {
+                let LeadWarning::TooShort { contour, x, y } = *w;
+                let p = j.m.apply(P::new(x, y));
+                PathWarning::LeadTooShort {
+                    key: j.key,
+                    contour,
+                    x: p.x,
+                    y: p.y,
+                }
+            })
+        })
+        .collect();
     let mut at = start;
     for (step, &i) in seq.iter().enumerate() {
         let it = &items[i];
-        let traverse = vec![at, it.pierce];
+        let traverse = vec![Seg::Line {
+            a: at,
+            b: it.pierce,
+        }];
         // Survol : les contours fermés déjà coupés.
         if let Some(p) = over(&traverse, cut_polys(&items, &seq[..step], at)) {
             warnings.push(PathWarning::OverCut {
@@ -271,7 +302,7 @@ pub fn plan(jobs: &[Job], start: P, order: Option<&[(u32, usize)]>) -> Result<Pl
             step: Some(step),
             side: None,
             quality: None,
-            pts: traverse,
+            segs: traverse,
         });
         stats.pierces += 1;
         for (kind, pts) in [
@@ -279,7 +310,7 @@ pub fn plan(jobs: &[Job], start: P, order: Option<&[(u32, usize)]>) -> Result<Pl
             (MoveKind::Cut, &it.cut),
             (MoveKind::LeadOut, &it.lead_out),
         ] {
-            if pts.len() < 2 {
+            if pts.is_empty() {
                 continue;
             }
             let mv = Move {
@@ -287,7 +318,7 @@ pub fn plan(jobs: &[Job], start: P, order: Option<&[(u32, usize)]>) -> Result<Pl
                 step: Some(step),
                 side: Some(it.side),
                 quality: it.quality,
-                pts: pts.clone(),
+                segs: pts.clone(),
             };
             let l = mv.length();
             if kind == MoveKind::Cut {
@@ -302,7 +333,7 @@ pub fn plan(jobs: &[Job], start: P, order: Option<&[(u32, usize)]>) -> Result<Pl
     // Retour au point de départ.
     if !seq.is_empty() {
         stats.traverse += at.dist(start);
-        let back = vec![at, start];
+        let back = vec![Seg::Line { a: at, b: start }];
         if let Some(p) = over(&back, cut_polys(&items, &seq, at)) {
             warnings.push(PathWarning::OverCut {
                 step: seq.len(),
@@ -315,7 +346,7 @@ pub fn plan(jobs: &[Job], start: P, order: Option<&[(u32, usize)]>) -> Result<Pl
             step: None,
             side: None,
             quality: None,
-            pts: back,
+            segs: back,
         });
     }
 
@@ -351,14 +382,13 @@ fn end_of(it: &Item) -> P {
     it.lead_out
         .last()
         .or(it.cut.last())
-        .copied()
-        .unwrap_or(it.pierce)
+        .map_or(it.pierce, Seg::end)
 }
 
 /// Le premier point où le déplacement `[a, b]` passe au-dessus d'un des
 /// polygones (croise son bord, ou y est tout entier).
-fn over<'a>(line: &[P], polys: impl Iterator<Item = &'a Vec<P>>) -> Option<P> {
-    let (a, b) = (line[0], line[1]);
+fn over<'a>(line: &[Seg], polys: impl Iterator<Item = &'a Vec<P>>) -> Option<P> {
+    let (a, b) = (line[0].start(), line[0].end());
     for poly in polys {
         let n = poly.len();
         if n < 3 {

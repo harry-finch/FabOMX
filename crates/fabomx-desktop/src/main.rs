@@ -1,6 +1,7 @@
 // Application de bureau FabOMX : l'interface (`ui/dist`) et son moteur
 // WebAssembly dans une fenêtre, le dialogue Ouvrir natif, les fichiers
-// récents (10, dans le dossier de configuration de l'application) et le
+// récents (10, dans le dossier de configuration de l'application), le
+// dialogue Enregistrer de l'OMX et le
 // menu macOS, en français ou en anglais selon la langue de l'interface.
 // Les choix du menu sont envoyés à l'interface par l'événement `menu`.
 
@@ -90,6 +91,37 @@ async fn open_file(app: AppHandle) -> Result<Option<Opened>, String> {
         .blocking_pick_file();
     match picked.and_then(|f| f.into_path().ok()) {
         Some(p) => read(&p).map(Some),
+        None => Ok(None),
+    }
+}
+
+/// Dialogue Enregistrer natif, filtré sur OMX, puis écriture de `text` ;
+/// rend le chemin, ou `None` si annulé.
+#[tauri::command]
+async fn save_file(app: AppHandle, name: String, text: String) -> Result<Option<String>, String> {
+    let fr = app
+        .state::<Locale>()
+        .0
+        .lock()
+        .map(|l| l.as_str() == "fr")
+        .unwrap_or(true);
+    let picked = app
+        .dialog()
+        .file()
+        .set_file_name(&name)
+        .add_filter(
+            if fr {
+                "Parcours OMX (ProtoMAX)"
+            } else {
+                "OMX toolpath (ProtoMAX)"
+            },
+            &["omx", "OMX"],
+        )
+        .blocking_save_file();
+    match picked.and_then(|f| f.into_path().ok()) {
+        Some(p) => std::fs::write(&p, text)
+            .map(|_| Some(p.to_string_lossy().into_owned()))
+            .map_err(|_| "unwritable".to_string()),
         None => Ok(None),
     }
 }
@@ -296,6 +328,7 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             open_file,
             open_path,
+            save_file,
             remember,
             recent_files,
             clear_recent,

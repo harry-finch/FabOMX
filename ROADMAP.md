@@ -8,7 +8,7 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ## Restant à faire
 
-1. **[R-012 Exporter l'OMX](roadmap/items/R-012-comprendre-le-format-omx.md)** · Idée · jalon v0.2
+1. **[R-012 Exporter l'OMX](roadmap/items/R-012-comprendre-le-format-omx.md)** · À tester · jalon v0.2
    Écrire le parcours en OMX à l'identique de LAYOUT (pouces, Q, côté, arcs exacts en Bow), avec la pièce à droite du jet comme la machine ; bouton d'export dans l'outil Parcours, dialogue Enregistrer dans l'application Mac, remarques listées avant l'export.
 2. **[R-007 Reconnaître des arcs dans les segments](roadmap/items/R-007-reconnaitre-des-arcs-dans-les-segments.md)** · Idée · jalon v0.2
    Remplacer les suites de petits segments issues des courbes converties par de vrais arcs, pour un parcours de jet d'eau plus fluide.
@@ -21,6 +21,8 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 - [ ] [A-015](roadmap/actions/A-015-fournir-un-omx-de-layout-avec-un-trait-grave.md) Fournir un OMX de LAYOUT avec un trait gravé (fournir, R-014)
 - [ ] [A-023](roadmap/actions/A-023-fournir-un-omx-de-layout-avec-une-fente.md) Fournir un OMX de LAYOUT avec une fente (fournir, R-012)
+- [ ] [A-024](roadmap/actions/A-024-ouvrir-dans-make-un-omx-exporte-par-fabomx.md) Ouvrir dans MAKE un OMX exporté par FabOMX (tester, R-012)
+- [ ] [A-025](roadmap/actions/A-025-couper-une-piece-exportee-par-fabomx-sur-la.md) Couper une pièce exportée par FabOMX sur la ProtoMAX (tester, R-012)
 
 ## Livré
 

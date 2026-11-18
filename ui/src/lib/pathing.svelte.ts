@@ -2,13 +2,15 @@
 // de départ, ordre, mouvements, bilan, remarques), recalculé quand le travail
 // change, le dernier demandé gagnant ; le contour choisi dans la liste ;
 // « Choisir sur le plateau » pour le point de départ ; la lecture pas à pas
-// (avancement de 0 à 1 le long du parcours, 20 s au plus).
+// (avancement de 0 à 1 le long du parcours, 20 s au plus) ; l'export OMX
+// (remarques à confirmer, téléchargement ou dialogue Enregistrer natif).
 
 import { engine } from './engine.svelte';
 import { cutting } from './cutting.svelte';
 import { doc } from './document.svelte';
 import { ui } from './ui.svelte';
 import { t } from './i18n.svelte';
+import { isDesktop, saveFile } from './desktop';
 import type { Move, OrderRefused, Plan } from './types';
 
 const MAX_PLAY = 20;
@@ -105,6 +107,61 @@ class Pathing {
     }
     doc.setOrder(order);
     this.picked = j;
+  }
+
+  /** Ce qu'il faut savoir avant d'exporter : débords, croisements, chevauchements, amorces trop courtes, survols. */
+  remarks(): string[] {
+    const out: string[] = [];
+    for (const d of doc.drawings) {
+      if (d.placement.warnings.some((w) => w.code === 'place.overflow')) out.push(t('path.remarks.overflow', { name: d.name }));
+      const n = cutting.sides(d)?.warnings.length ?? 0;
+      if (n) out.push(t('path.remarks.crossing', { name: d.name, n }));
+    }
+    for (const [a, b] of cutting.overlaps) {
+      const [da, db] = [doc.drawings.find((x) => x.id === a), doc.drawings.find((x) => x.id === b)];
+      if (da && db) out.push(t('path.remarks.overlap', { a: da.name, b: db.name }));
+    }
+    const ws = this.plan?.warnings ?? [];
+    const short = ws.filter((w) => w.code === 'lead.too_short').length;
+    const over = ws.filter((w) => w.code === 'path.over_cut').length;
+    if (short) out.push(t('path.remarks.tooShort', { n: short }));
+    if (over) out.push(t('path.remarks.overCut', { n: over }));
+    return out;
+  }
+
+  /** Nom proposé : celui du premier dessin, en `.omx`. */
+  fileName(): string {
+    const name = doc.drawings[0]?.name ?? 'parcours';
+    return `${name.replace(/\.[^.]+$/, '')}.omx`;
+  }
+
+  /** Écrit l'OMX du parcours affiché : téléchargé, ou enregistré par le dialogue natif. */
+  async exportOmx() {
+    const now = new Date();
+    // Jours depuis 1900, comme LAYOUT (le tableur : 25569 = 1/1/1970).
+    const date = now.getTime() / 86_400_000 + 25569;
+    const comment = `Created with FabOMX ${engine.version ?? ''} ${now.getMonth() + 1}/${now.getDate()}/${now.getFullYear()}`;
+    const order = this.orderLost ? null : doc.job.order;
+    const res = await engine.omx(this.#input(order), date, comment).catch(() => null);
+    if (!res || 'error' in res) {
+      ui.toast(t('path.exportFailed'));
+      return;
+    }
+    const name = this.fileName();
+    if (isDesktop) {
+      try {
+        const path = await saveFile(name, res.omx);
+        if (path) ui.toast(t('path.exported', { name: path.split('/').pop() ?? name }));
+      } catch {
+        ui.toast(t('path.exportFailed'));
+      }
+      return;
+    }
+    const url = URL.createObjectURL(new Blob([res.omx], { type: 'application/octet-stream' }));
+    const a = Object.assign(document.createElement('a'), { href: url, download: name });
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    ui.toast(t('path.exported', { name }));
   }
 
   focus(x: number, y: number) {

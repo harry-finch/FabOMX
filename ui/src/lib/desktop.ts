@@ -1,4 +1,4 @@
-// Application de bureau (Tauri) : dialogue Ouvrir natif, fichiers récents,
+// Application de bureau (Tauri) : dialogues Ouvrir et Enregistrer natifs, fichiers récents,
 // événements du menu macOS. Dans un navigateur, `isDesktop` est faux et
 // l'import passe par le sélecteur du navigateur.
 
@@ -17,6 +17,9 @@ export interface Opened {
 
 /** Dialogue Ouvrir natif (SVG, DXF) ; `null` si annulé. */
 export const openFile = () => tauri!.core.invoke<Opened | null>('open_file');
+
+/** Dialogue Enregistrer natif (OMX) puis écriture ; le chemin, ou `null` si annulé. Rejette `unwritable`. */
+export const saveFile = (name: string, text: string) => tauri!.core.invoke<string | null>('save_file', { name, text });
 
 /** Relit un fichier ; rejette `missing` s'il n'existe plus (il sort alors des récents). */
 export const openPath = (path: string) => tauri!.core.invoke<Opened>('open_path', { path });

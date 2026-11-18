@@ -470,7 +470,7 @@
       const { ends, total } = pathing.lengths;
       const upto = pathing.progress * total;
       const playing = upto < total - 1e-9;
-      const over = new Set(plan.warnings.map((w) => w.step));
+      const over = new Set(plan.warnings.flatMap((w) => (w.code === 'path.over_cut' ? [w.step] : [])));
       const isOver = (m: Move) => m.kind === 'traverse' && over.has(m.step ?? plan.order.length);
       if (pathing.picked != null) {
         ctx.beginPath();

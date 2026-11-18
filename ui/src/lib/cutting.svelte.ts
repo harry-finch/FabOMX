@@ -16,11 +16,11 @@ import type { Drawing } from './document.svelte';
 import type { LeadShape, LeadSpec, Leads, Side, Sides } from './types';
 
 /** Faut-il parcourir le contour à l'envers de son tracé, pour que la pièce
- * reste à gauche du jet ? Mêmes règles que `cut::reversed` du moteur. */
+ * reste à droite du jet (comme sur la ProtoMAX) ? Mêmes règles que `cut::reversed` du moteur. */
 export function reversed(side: Side, area: number, m: M): boolean {
   const ccw = area * Math.sign(det(m)) > 0;
-  if (side === 'outside') return !ccw;
-  if (side === 'inside') return ccw;
+  if (side === 'outside') return ccw;
+  if (side === 'inside') return !ccw;
   return false;
 }
 

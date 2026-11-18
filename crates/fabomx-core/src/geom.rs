@@ -89,6 +89,95 @@ impl Seg {
         }
     }
 
+    /// Le même segment, parcouru dans l'autre sens.
+    pub fn reversed(&self) -> Seg {
+        match *self {
+            Seg::Line { a, b } => Seg::Line { a: b, b: a },
+            Seg::Arc { c, r, a0, sweep } => Seg::Arc {
+                c,
+                r,
+                a0: a0 + sweep,
+                sweep: -sweep,
+            },
+        }
+    }
+
+    /// Le point du segment le plus proche de `p`, et sa position (0 au début, 1 à la fin).
+    pub fn closest(&self, p: P) -> (P, f64) {
+        match *self {
+            Seg::Line { a, b } => {
+                let ab = b - a;
+                let l2 = ab.x * ab.x + ab.y * ab.y;
+                let t = if l2 > 0.0 {
+                    (((p.x - a.x) * ab.x + (p.y - a.y) * ab.y) / l2).clamp(0.0, 1.0)
+                } else {
+                    0.0
+                };
+                (a + ab * t, t)
+            }
+            Seg::Arc { c, r, a0, sweep } => {
+                // Angle de `p` ramené dans le balayage, sinon l'extrémité la plus proche.
+                let d = (p - c).angle() - a0;
+                let mut t = if sweep >= 0.0 {
+                    d.rem_euclid(TAU) / sweep
+                } else {
+                    (-d).rem_euclid(TAU) / -sweep
+                };
+                if t > 1.0 {
+                    let (s, e) = (self.start(), self.end());
+                    t = if p.dist(s) <= p.dist(e) { 0.0 } else { 1.0 };
+                }
+                (polar(c, r, a0 + sweep * t), t)
+            }
+        }
+    }
+
+    /// Les deux morceaux du segment coupé à la position `t` (0 à 1).
+    pub fn split(&self, t: f64) -> (Seg, Seg) {
+        match *self {
+            Seg::Line { a, b } => {
+                let m = a.lerp(b, t);
+                (Seg::Line { a, b: m }, Seg::Line { a: m, b })
+            }
+            Seg::Arc { c, r, a0, sweep } => (
+                Seg::Arc {
+                    c,
+                    r,
+                    a0,
+                    sweep: sweep * t,
+                },
+                Seg::Arc {
+                    c,
+                    r,
+                    a0: a0 + sweep * t,
+                    sweep: sweep * (1.0 - t),
+                },
+            ),
+        }
+    }
+
+    /// Le segment transformé par `m` : exact pour une similitude, sinon des
+    /// lignes à `tol` près.
+    pub fn transformed(&self, m: Affine, tol: f64, out: &mut Vec<Seg>) {
+        match *self {
+            Seg::Line { a, b } => out.push(Seg::Line {
+                a: m.apply(a),
+                b: m.apply(b),
+            }),
+            Seg::Arc { c, r, a0, sweep } if m.is_similarity() => out.push(m.arc(c, r, a0, sweep)),
+            _ => {
+                let mut pts = Vec::new();
+                self.points(tol / m.factor().max(1e-12), &mut pts);
+                for w in pts.windows(2) {
+                    out.push(Seg::Line {
+                        a: m.apply(w[0]),
+                        b: m.apply(w[1]),
+                    });
+                }
+            }
+        }
+    }
+
     /// Le point au milieu du segment.
     pub fn mid(&self) -> P {
         match *self {

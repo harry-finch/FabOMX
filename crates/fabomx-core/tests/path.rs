@@ -56,6 +56,7 @@ fn job(key: u32, d: &Drawing) -> Job<'_> {
         sides: &d.sides,
         leads: &d.leads.leads,
         qualities: &d.qualities,
+        warnings: &d.leads.warnings,
     }
 }
 
@@ -154,9 +155,9 @@ fn the_path_starts_and_ends_at_the_start_point() {
     let first = p.moves.first().unwrap();
     let last = p.moves.last().unwrap();
     assert_eq!(first.kind, MoveKind::Traverse);
-    assert_eq!(first.pts[0], P::new(10.0, 5.0));
+    assert_eq!(first.segs[0].start(), P::new(10.0, 5.0));
     assert_eq!(last.kind, MoveKind::Traverse);
-    assert_eq!(*last.pts.last().unwrap(), P::new(10.0, 5.0));
+    assert_eq!(last.segs.last().unwrap().end(), P::new(10.0, 5.0));
     assert_eq!(last.step, None);
 }
 
@@ -168,14 +169,15 @@ fn stats_count_cut_length_leads_traverses_and_pierces() {
     assert!((p.stats.cut[&3] - 200.0).abs() < 1e-9);
     assert!((p.stats.leads - (3.8 + 1.3)).abs() < 1e-9);
     let pierce = P::new(p.order[0].pierce[0], p.order[0].pierce[1]);
-    let out_end = *p
+    let out_end = p
         .moves
         .iter()
         .find(|m| m.kind == MoveKind::LeadOut)
         .unwrap()
-        .pts
+        .segs
         .last()
-        .unwrap();
+        .unwrap()
+        .end();
     let expected = P::new(0.0, 0.0).dist(pierce) + out_end.dist(P::new(0.0, 0.0));
     assert!((p.stats.traverse - expected).abs() < 1e-9);
 }

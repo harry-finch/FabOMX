@@ -4,8 +4,10 @@
   // évidence ; Plus tôt / Plus tard, refusés quand un contour passerait avant
   // l'un de ceux qu'il contient ; retour à l'ordre automatique), le bilan, les
   // remarques (un clic centre la vue) et la lecture pas à pas. Le plan est
-  // recalculé un peu après chaque changement du travail.
-  import { Crosshair, House, ArrowUp, ArrowDown, RotateCcw, Play, Pause, CircleCheck, TriangleAlert } from '@lucide/svelte';
+  // recalculé un peu après chaque changement du travail. « Exporter l'OMX »
+  // liste d'abord les remarques qui restent, à confirmer.
+  import { Crosshair, House, ArrowUp, ArrowDown, RotateCcw, Play, Pause, CircleCheck, TriangleAlert, Download } from '@lucide/svelte';
+  import Dialog from './Dialog.svelte';
   import Section from './Section.svelte';
   import NumField from './NumField.svelte';
   import { doc } from '../lib/document.svelte';
@@ -21,6 +23,11 @@
     cutting.ensure(doc.drawings);
   });
   $effect(() => {
+    const list = doc.drawings;
+    const timer = setTimeout(() => cutting.refreshOverlaps(list), 150);
+    return () => clearTimeout(timer);
+  });
+  $effect(() => {
     void [doc.drawings, doc.job, cutting.byGeo, cutting.quality, cutting.lead.shape, cutting.lead.lead_in, cutting.lead.lead_out];
     const timer = setTimeout(() => pathing.refresh(), 80);
     return () => clearTimeout(timer);
@@ -30,6 +37,20 @@
   const start = $derived(doc.job.start);
   const qualities = $derived(plan ? Object.entries(plan.stats.cut).sort(([a], [b]) => Number(a) - Number(b)) : []);
   const picked = $derived(pathing.picked);
+  let confirm = $state<string[] | null>(null);
+  let busy = $state(false);
+
+  async function exportOmx() {
+    busy = true;
+    await pathing.exportOmx();
+    busy = false;
+  }
+
+  function ask() {
+    const remarks = pathing.remarks();
+    if (remarks.length) confirm = remarks;
+    else exportOmx();
+  }
 </script>
 
 <Section id="path" title={t('path.title')}>
@@ -90,7 +111,9 @@
         <ul class="warnings">
           {#each plan.warnings as w, n (n)}
             <li>
-              <button type="button" onclick={() => pathing.focus(w.x, w.y)}>{t(w.step >= plan.order.length ? 'path.overCutBack' : 'path.overCut')} {n + 1}</button>
+              <button type="button" onclick={() => pathing.focus(w.x, w.y)}
+                >{t(w.code === 'lead.too_short' ? 'path.tooShort' : w.step >= plan.order.length ? 'path.overCutBack' : 'path.overCut')} {n + 1}</button
+              >
             </li>
           {/each}
         </ul>
@@ -105,9 +128,33 @@
         </button>
         <input type="range" min="0" max="1000" step="1" aria-label={t('path.progress')} value={Math.round(pathing.progress * 1000)} oninput={(e) => pathing.seek(Number((e.currentTarget as HTMLInputElement).value) / 1000)} />
       </div>
+
+      <button class="btn primary export" type="button" disabled={busy || !plan.order.length} use:tip={t('path.exportHint')} onclick={ask}><Download size={14} /> {t('path.export')}</button>
     {/if}
   {/if}
 </Section>
+
+{#if confirm}
+  <Dialog title={t('path.confirmTitle')} width={460} onclose={() => (confirm = null)}>
+    <p class="intro">{t('path.confirmIntro')}</p>
+    <ul class="remarks">
+      {#each confirm as r (r)}
+        <li><TriangleAlert size={14} /> {r}</li>
+      {/each}
+    </ul>
+    {#snippet footer({ close })}
+      <button class="btn" type="button" onclick={close}>{t('common.cancel')}</button>
+      <button
+        class="btn primary"
+        type="button"
+        onclick={() => {
+          close();
+          exportOmx();
+        }}>{t('path.exportAnyway')}</button
+      >
+    {/snippet}
+  </Dialog>
+{/if}
 
 <style>
   .muted {
@@ -266,6 +313,38 @@
 
   .warnings button:hover {
     background: var(--bg-hover);
+  }
+
+  .export {
+    align-self: flex-start;
+    margin-top: var(--s2);
+  }
+
+  .intro {
+    margin: 0 0 var(--s2);
+    color: var(--text-secondary);
+  }
+
+  .remarks {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .remarks li {
+    display: flex;
+    align-items: flex-start;
+    gap: 6px;
+    color: var(--warning);
+    font-size: var(--fs-sm);
+  }
+
+  .remarks :global(svg) {
+    flex: none;
+    margin-top: 2px;
   }
 
   .play {

@@ -159,7 +159,9 @@ export interface PathStats {
   pierces: number;
 }
 
-export type PathWarning = { code: 'path.over_cut'; step: number; x: number; y: number };
+export type PathWarning =
+  | { code: 'path.over_cut'; step: number; x: number; y: number }
+  | { code: 'lead.too_short'; key: number; contour: number; x: number; y: number };
 
 export interface Plan {
   start: [number, number];

@@ -4,14 +4,14 @@
 //! niveau (trou, pièce dans le trou…). Un tracé ouvert, ou un contour qui
 //! se croise ou en croise un autre, est coupé sur la ligne ; un repère
 //! (d'après le fichier) n'est pas coupé. Le sens de parcours est fixé : la
-//! pièce reste à gauche du jet.
+//! pièce reste à droite du jet.
 //!
 //! Qualité de coupe : de 1 (rapide, bord rugueux) à 5 (lent, bord net), celle
 //! du contour s'il en a une, sinon la qualité par défaut ; un contour qui
 //! n'est pas coupé n'en a pas.
 
 use crate::drawing::Piece;
-use crate::geom::{Affine, BBox, P};
+use crate::geom::{Affine, BBox, Seg, P};
 use serde::{Deserialize, Serialize};
 
 /// Tolérance des contours mis en segments pour ces calculs (mm d'origine).
@@ -46,6 +46,9 @@ pub struct Contour {
     pub crossing: Option<[f64; 2]>,
     /// Points `[x, y, …]` dans le sens du tracé ; un contour fermé ne répète pas le premier.
     pub pts: Vec<f64>,
+    /// Segments exacts (lignes et arcs), dans le sens du tracé.
+    #[serde(skip)]
+    pub segs: Vec<Seg>,
 }
 
 impl Contour {
@@ -128,6 +131,7 @@ pub fn sides(pieces: &[Piece]) -> Sides {
                 area,
                 crossing: None,
                 pts: pts.into_iter().flat_map(|q| [q.x, q.y]).collect(),
+                segs: p.segs.clone(),
             }
         })
         .collect();
@@ -192,14 +196,15 @@ pub fn sides(pieces: &[Piece]) -> Sides {
 }
 
 /// Faut-il parcourir le contour à l'envers de son tracé, pour qu'avec
-/// `side` la pièce reste à gauche du jet ? Extérieur dans le sens
-/// trigonométrique, Trou dans le sens horaire, sur le plateau : une
-/// matrice de déterminant négatif (miroir) retourne le sens du dessin.
+/// `side` la pièce reste à droite du jet, comme sur la ProtoMAX (exemples
+/// LAYOUT) ? Extérieur dans le sens horaire, Trou dans le sens
+/// trigonométrique, sur le plateau : une matrice de déterminant négatif
+/// (miroir) retourne le sens du dessin.
 pub fn reversed(side: Side, area: f64, det: f64) -> bool {
     let ccw = area * det.signum() > 0.0;
     match side {
-        Side::Outside => !ccw,
-        Side::Inside => ccw,
+        Side::Outside => ccw,
+        Side::Inside => !ccw,
         Side::Line | Side::Skip => false,
     }
 }

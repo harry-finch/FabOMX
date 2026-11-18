@@ -106,6 +106,11 @@ class Engine {
   }): Promise<Plan | OrderRefused | { error: string }> {
     return this.#call({ kind: 'plan', job: JSON.stringify(job) });
   }
+
+  /** Le texte du fichier OMX du travail (mêmes données que `plan`), daté (jours depuis 1900). */
+  omx(job: Parameters<Engine['plan']>[0], date: number, comment: string): Promise<{ omx: string } | OrderRefused | { error: string }> {
+    return this.#call({ kind: 'omx', job: JSON.stringify(job), date, comment });
+  }
 }
 
 export const engine = new Engine();

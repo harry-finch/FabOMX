@@ -252,6 +252,14 @@ pub fn leads(geo: u32, m: &[f64], specs: &str) -> String {
 /// contour], "inner": [clé, contour]}` pour un ordre refusé.
 #[wasm_bindgen]
 pub fn plan(job: &str) -> String {
+    match planned(job) {
+        Ok(p) => serde_json::to_string(&p).expect("parcours sérialisable"),
+        Err(e) => e,
+    }
+}
+
+/// Le plan du travail `job` (voir `plan`), ou l'erreur en JSON.
+fn planned(job: &str) -> Result<fabomx_core::path::Plan, String> {
     #[derive(serde::Deserialize)]
     struct Drawing {
         key: u32,
@@ -267,7 +275,7 @@ pub fn plan(job: &str) -> String {
         drawings: Vec<Drawing>,
     }
     let Ok(input) = serde_json::from_str::<Input>(job) else {
-        return error("path.job");
+        return Err(error("path.job"));
     };
     GEOMETRIES.with(|g| {
         let mut g = g.borrow_mut();
@@ -301,19 +309,33 @@ pub fn plan(job: &str) -> String {
                 sides,
                 leads: &leads.leads,
                 qualities: &d.qualities,
+                warnings: &leads.warnings,
             })
             .collect();
         let start = fabomx_core::geom::P::new(input.start[0], input.start[1]);
-        match fabomx_core::path::plan(&jobs, start, input.order.as_deref()) {
-            Ok(p) => serde_json::to_string(&p).expect("parcours sérialisable"),
-            Err(e) => serde_json::json!({
+        fabomx_core::path::plan(&jobs, start, input.order.as_deref()).map_err(|e| {
+            serde_json::json!({
                 "error": e.code(),
                 "contour": [e.contour.0, e.contour.1],
                 "inner": [e.inner.0, e.inner.1],
             })
-            .to_string(),
-        }
+            .to_string()
+        })
     })
+}
+
+/// Le fichier OMX du travail `job` (voir `plan`), daté de `date` (jours
+/// depuis 1900) avec le commentaire `comment` : `{"omx": "<texte>"}`, ou
+/// l'erreur de `plan`.
+#[wasm_bindgen]
+pub fn omx(job: &str, date: f64, comment: &str) -> String {
+    match planned(job) {
+        Ok(p) => {
+            let text = fabomx_core::omx::write(&fabomx_core::omx::from_plan(&p, date, comment));
+            serde_json::json!({ "omx": text }).to_string()
+        }
+        Err(e) => e,
+    }
 }
 
 /// Machine cible (zone de coupe en mm), en JSON.
@@ -437,6 +459,15 @@ mod tests {
         let e: serde_json::Value =
             serde_json::from_str(&plan(&job(serde_json::json!([[1, outside]])))).unwrap();
         assert_eq!(e["error"], "path.order");
+        let f: serde_json::Value = serde_json::from_str(&omx(
+            &job(serde_json::Value::Null),
+            46000.0,
+            "Created with FabOMX",
+        ))
+        .unwrap();
+        let text = f["omx"].as_str().unwrap();
+        assert!(text.contains("[COMMENT]\r\nCreated with FabOMX\r\n[END]"));
+        assert!(text.ends_with("[END]\r\n"));
     }
 
     #[test]
