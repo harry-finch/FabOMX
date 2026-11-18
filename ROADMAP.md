@@ -4,24 +4,23 @@ Objectif de FabOMX : à partir d'un dessin vectoriel (SVG ou DXF), produire un p
 
 On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la découpe et les spécificités du jet d'eau (v0.2).
 
-**Avancement : 9 livrés sur 14** (64 %)
+**Avancement : 9 livrés sur 13** (69 %)
 
 ## Restant à faire
 
-1. **[R-012 Comprendre le format OMX](roadmap/items/R-012-comprendre-le-format-omx.md)** · Idée · jalon v0.2
-   Décrire et reproduire le format OMX de la ProtoMAX à partir de fichiers réels produits par LAYOUT, avec des tests qui relisent ces fichiers.
+1. **[R-012 Exporter l'OMX](roadmap/items/R-012-comprendre-le-format-omx.md)** · Idée · jalon v0.2
+   Écrire le parcours en OMX à l'identique de LAYOUT (pouces, Q, côté, arcs exacts en Bow), avec la pièce à droite du jet comme la machine ; bouton d'export dans l'outil Parcours, dialogue Enregistrer dans l'application Mac, remarques listées avant l'export.
 2. **[R-007 Reconnaître des arcs dans les segments](roadmap/items/R-007-reconnaitre-des-arcs-dans-les-segments.md)** · Idée · jalon v0.2
    Remplacer les suites de petits segments issues des courbes converties par de vrais arcs, pour un parcours de jet d'eau plus fluide.
-3. **[R-013 Exporter l'OMX](roadmap/items/R-013-exporter-l-omx.md)** · Idée · jalon v0.2
-   Écrire le fichier OMX du parcours, prêt à ouvrir dans MAKE ; la compensation de la saignée reste à MAKE, qui reçoit le côté de coupe.
-4. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée · jalon v0.2
+3. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée · jalon v0.2
    Marquer un trait sans traverser la plaque (gravure), dès que son code OMX est connu par un exemple de LAYOUT.
-5. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
+4. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
    Logo définitif de la famille Fab (tuile graphite et symbole à la couleur d'identité), à la place du logo provisoire du kit.
 
 ## Actions à faire
 
 - [ ] [A-015](roadmap/actions/A-015-fournir-un-omx-de-layout-avec-un-trait-grave.md) Fournir un OMX de LAYOUT avec un trait gravé (fournir, R-014)
+- [ ] [A-023](roadmap/actions/A-023-fournir-un-omx-de-layout-avec-une-fente.md) Fournir un OMX de LAYOUT avec une fente (fournir, R-012)
 
 ## Livré
 
@@ -48,3 +47,8 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
   Qualité de coupe de 1 à 5 : une qualité par défaut mémorisée sur le poste, et une qualité propre pour les contours choisis dans l'outil Découpe, affichée près de leur flèche.
 - [R-008 Côtés de coupe](roadmap/items/R-008-cotes-de-coupe.md) · livrée le 2026-11-18
   Outil Découpe : pour chaque contour, Extérieur, Trou, Sur la ligne (fente) ou Ne pas couper (repère), détecté par imbrication et d'après le fichier (pointillés, calques), modifiable, avec sens de parcours fixé et croisements signalés.
+
+## Écarté
+
+- [R-013 Exporter l'OMX](roadmap/items/R-013-exporter-l-omx.md)
+  Fusionné dans R-012 à la demande de l'utilisateur (18/11/2026) : l'export de l'OMX se fait avec le format.
