@@ -107,22 +107,44 @@ pub struct Report {
     pub warnings: Vec<Warning>,
     pub ignored: BTreeMap<String, usize>,
     pub traces: Vec<Trace>,
+    /// Ce que « Nettoyer à l'import » a corrigé.
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub cleaned: Option<crate::clean::Counts>,
 }
 
 /// Lit `text` (SVG ou DXF) dans l'unité `unit`, ou celle du fichier.
 pub fn import(text: &str, unit: Option<Unit>, machine: &Machine) -> Result<Report, ImportError> {
-    let (format, parsed, detected, source) = parse(text, unit)?;
+    import_with(text, unit, None, machine)
+}
+
+/// Comme `import`, nettoyé avec `clean` s'il est donné (« Nettoyer à l'import ») :
+/// le rapport est celui du dessin nettoyé, et `cleaned` dit ce qui a été corrigé.
+pub fn import_with(
+    text: &str,
+    unit: Option<Unit>,
+    clean: Option<&crate::clean::Options>,
+    machine: &Machine,
+) -> Result<Report, ImportError> {
+    let (format, mut parsed, detected, source) = parse(text, unit)?;
     if parsed.pieces.is_empty() {
         return Err(ImportError::Empty);
     }
-    Ok(analyze(
+    let mut cleaned = None;
+    if let Some(o) = clean {
+        let (pieces, counts, _) = crate::clean::clean(&parsed.pieces, o, 1.0);
+        parsed.pieces = pieces;
+        cleaned = Some(counts);
+    }
+    let mut report = analyze(
         format,
         parsed,
         unit.unwrap_or(detected),
         detected,
         source,
         machine,
-    ))
+    );
+    report.cleaned = cleaned;
+    Ok(report)
 }
 
 /// Lecture seule : le format, les pièces exactes (mm), l'unité du fichier et sa source.
@@ -145,7 +167,7 @@ pub fn parse(
     Ok((format, parsed, detected, source))
 }
 
-fn analyze(
+pub fn analyze(
     format: Format,
     parsed: Parsed,
     unit: Unit,
@@ -280,26 +302,27 @@ fn analyze(
         warnings,
         ignored,
         traces,
+        cleaned: None,
     }
 }
 
 /// Un nœud : des extrémités confondues (à `JOINED` près).
-struct Node {
-    p: P,
-    degree: usize,
+pub(crate) struct Node {
+    pub(crate) p: P,
+    pub(crate) degree: usize,
 }
 
 /// Les contours : pièces reliées par leurs extrémités confondues. Un
 /// contour est fermé quand chacun de ses nœuds relie exactement deux bouts.
-struct Topology {
-    nodes: Vec<Node>,
-    closed: usize,
-    open: usize,
-    piece_open: Vec<bool>,
+pub(crate) struct Topology {
+    pub(crate) nodes: Vec<Node>,
+    pub(crate) closed: usize,
+    pub(crate) open: usize,
+    pub(crate) piece_open: Vec<bool>,
 }
 
 impl Topology {
-    fn build(pieces: &[Piece]) -> Topology {
+    pub(crate) fn build(pieces: &[Piece]) -> Topology {
         let mut nodes: Vec<Node> = Vec::new();
         let mut cells: HashMap<(i64, i64), Vec<usize>> = HashMap::new();
         let key = |p: P| ((p.x / JOINED).floor() as i64, (p.y / JOINED).floor() as i64);
@@ -385,13 +408,13 @@ impl Topology {
 }
 
 /// Grille de recherche des points voisins.
-struct Grid {
+pub(crate) struct Grid {
     cell: f64,
     cells: HashMap<(i64, i64), Vec<usize>>,
 }
 
 impl Grid {
-    fn new(pts: &[P], cell: f64) -> Grid {
+    pub(crate) fn new(pts: &[P], cell: f64) -> Grid {
         let mut cells: HashMap<(i64, i64), Vec<usize>> = HashMap::new();
         for (i, p) in pts.iter().enumerate() {
             cells.entry(Self::key(*p, cell)).or_default().push(i);
@@ -403,7 +426,7 @@ impl Grid {
         ((p.x / cell).floor() as i64, (p.y / cell).floor() as i64)
     }
 
-    fn near(&self, p: P) -> Vec<usize> {
+    pub(crate) fn near(&self, p: P) -> Vec<usize> {
         let (kx, ky) = Self::key(p, self.cell);
         let mut out = Vec::new();
         for dx in -1..=1 {
@@ -419,10 +442,10 @@ impl Grid {
 
 /// Clé d'un segment, arrondie à `JOINED`, indépendante de son sens.
 #[derive(Hash, PartialEq, Eq)]
-struct SegKey(Vec<i64>);
+pub(crate) struct SegKey(Vec<i64>);
 
 impl SegKey {
-    fn of(s: &Seg) -> SegKey {
+    pub(crate) fn of(s: &Seg) -> SegKey {
         let q = |v: f64| (v / JOINED).round() as i64;
         let pt = |p: P| [q(p.x), q(p.y)];
         let (a, b) = (pt(s.start()), pt(s.end()));

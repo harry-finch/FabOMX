@@ -9,10 +9,19 @@
   import DrawingInfo from './DrawingInfo.svelte';
   import { importer } from '../lib/importer.svelte';
   import { t, type Key } from '../lib/i18n.svelte';
+  import { cleaning } from '../lib/cleaning.svelte';
+  import { tip } from '../lib/tip';
+  import { num } from '../lib/format';
+  import type { CleanCounts } from '../lib/types';
 
   const p = $derived(importer.pending!);
   const report = $derived(importer.report);
   const failure = $derived(p.result && 'error' in p.result ? p.result.error : null);
+
+  function cleanedList(c: CleanCounts): string {
+    const parts = (['duplicates', 'overlaps', 'tiny', 'joins', 'simplified'] as const).filter((k) => c[k] > 0).map((k) => t(`clean.counts.${k}`, { n: num(c[k]) }));
+    return parts.length ? t('clean.cleaned', { list: parts.join(', ') }) : t('clean.cleanedNothing');
+  }
 </script>
 
 <Dialog title={t('import.title')} width={600} onclose={() => importer.cancel()}>
@@ -25,6 +34,11 @@
     <p class="error" role="alert"><CircleX size={14} /> {t(`import.errors.${failure.split('.')[1]}` as Key)}</p>
   {:else if report}
     <div class="body">
+      <label class="atimport" use:tip={t('clean.atImportHint')}>
+        <input type="checkbox" checked={cleaning.atImport} disabled={p.busy} onchange={(e) => importer.setClean((e.currentTarget as HTMLInputElement).checked)} />
+        {t('clean.atImport')}
+        {#if report.cleaned}<span class="cleaned">· {cleanedList(report.cleaned)}</span>{/if}
+      </label>
       <DrawingPreview {report} />
       <DrawingInfo {report} onunit={(u) => importer.setUnit(u)} />
     </div>
@@ -66,6 +80,23 @@
     display: flex;
     flex-direction: column;
     gap: var(--s3);
+  }
+
+  .atimport {
+    display: flex;
+    align-items: center;
+    gap: var(--s2);
+    font-size: var(--fs-sm);
+    color: var(--text-secondary);
+  }
+
+  .atimport input {
+    margin: 0;
+    accent-color: var(--accent);
+  }
+
+  .cleaned {
+    color: var(--success);
   }
 
   .error {

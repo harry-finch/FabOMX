@@ -2,12 +2,14 @@
 // version et la machine cible, puis répond aux demandes du fil principal.
 // Le calcul ne bloque jamais l'interface.
 
-import init, { engine_version, inspect, load, machine, place } from '../wasm/fabomx.js';
+import init, { clean_apply, clean_preview, engine_version, inspect, load, machine, place } from '../wasm/fabomx.js';
 
 type Request =
-  | { kind: 'inspect'; id: number; text: string; unit: string }
-  | { kind: 'load'; id: number; drawing: number; text: string; unit: string }
-  | { kind: 'place'; id: number; drawing: number; matrix: number[] };
+  | { kind: 'inspect'; id: number; text: string; unit: string; clean: string }
+  | { kind: 'load'; id: number; geo: number; text: string; unit: string; clean: string }
+  | { kind: 'place'; id: number; geo: number; matrix: number[] }
+  | { kind: 'preview'; id: number; geo: number; opts: string; k: number }
+  | { kind: 'clean'; id: number; geo: number; opts: string; k: number; next: number };
 
 /** `postMessage` du worker (les types DOM ne connaissent que celui de `window`). */
 const post = (msg: unknown) => (self as unknown as Worker).postMessage(msg);
@@ -20,9 +22,11 @@ onmessage = async (ev: MessageEvent<Request>) => {
   const req = ev.data;
   try {
     let value: string;
-    if (req.kind === 'inspect') value = inspect(req.text, req.unit);
-    else if (req.kind === 'load') value = load(req.drawing, req.text, req.unit);
-    else value = place(req.drawing, new Float64Array(req.matrix));
+    if (req.kind === 'inspect') value = inspect(req.text, req.unit, req.clean);
+    else if (req.kind === 'load') value = load(req.geo, req.text, req.unit, req.clean);
+    else if (req.kind === 'place') value = place(req.geo, new Float64Array(req.matrix));
+    else if (req.kind === 'preview') value = clean_preview(req.geo, req.opts, req.k);
+    else value = clean_apply(req.geo, req.opts, req.k, req.next);
     post({ kind: 'result', id: req.id, ok: true, value: JSON.parse(value) });
   } catch (e) {
     post({ kind: 'result', id: req.id, ok: false, error: String(e) });

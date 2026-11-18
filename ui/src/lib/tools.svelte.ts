@@ -31,7 +31,7 @@ export const TOOL_GROUPS: Tool[][] = [
     { id: 'rotate', icon: RotateCw, key: 'r', enabled: true },
     { id: 'scale', icon: Scaling, key: 's', enabled: true },
   ],
-  [{ id: 'clean', icon: WandSparkles, key: 'c', enabled: false }],
+  [{ id: 'clean', icon: WandSparkles, key: 'c', enabled: true }],
 ];
 
 const TOOLS = TOOL_GROUPS.flat();

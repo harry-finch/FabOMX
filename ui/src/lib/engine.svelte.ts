@@ -2,7 +2,7 @@
 // cible, lus par la barre d'état, l'espace de travail et l'inspecteur ; les
 // lectures de fichiers passent par des promesses.
 
-import type { ImportFailure, Placement, Report, Unit } from './types';
+import type { CleanCounts, CleanOptions, CleanPreview, ImportFailure, Placement, Report, Unit } from './types';
 import type { M } from './affine';
 
 /** Zone de coupe d'une machine, en mm, origine en bas à gauche. */
@@ -58,19 +58,29 @@ class Engine {
     });
   }
 
-  /** L'état d'un dessin SVG ou DXF ; `unit` absente : celle du fichier. */
-  inspect(text: string, unit?: Unit): Promise<Report | ImportFailure> {
-    return this.#call({ kind: 'inspect', text, unit: unit ?? '' });
+  /** L'état d'un dessin SVG ou DXF ; `unit` absente : celle du fichier ; `clean` : nettoyé à l'import. */
+  inspect(text: string, unit?: Unit, clean?: CleanOptions): Promise<Report | ImportFailure> {
+    return this.#call({ kind: 'inspect', text, unit: unit ?? '', clean: clean ? JSON.stringify(clean) : '' });
   }
 
-  /** Garde la géométrie d'origine du dessin `drawing` ; rend ses points d'accrochage. */
-  load(drawing: number, text: string, unit: Unit): Promise<{ snaps: number[] } | ImportFailure> {
-    return this.#call({ kind: 'load', drawing, text, unit });
+  /** Garde la géométrie d'origine sous `geo` ; rend ses points d'accrochage. */
+  load(geo: number, text: string, unit: Unit, clean?: CleanOptions): Promise<{ snaps: number[] } | ImportFailure> {
+    return this.#call({ kind: 'load', geo, text, unit, clean: clean ? JSON.stringify(clean) : '' });
   }
 
-  /** Le dessin `drawing` transformé par `matrix`, depuis sa géométrie d'origine. */
-  place(drawing: number, matrix: M): Promise<Placement | { error: string }> {
-    return this.#call({ kind: 'place', drawing, matrix });
+  /** La géométrie `geo` transformée par `matrix`, depuis l'origine. */
+  place(geo: number, matrix: M): Promise<Placement | { error: string }> {
+    return this.#call({ kind: 'place', geo, matrix });
+  }
+
+  /** Ce que ferait le nettoyage de `geo` à l'échelle `k` (mm du plateau par mm d'origine). */
+  cleanPreview(geo: number, opts: CleanOptions, k: number): Promise<CleanPreview | { error: string }> {
+    return this.#call({ kind: 'preview', geo, opts: JSON.stringify(opts), k });
+  }
+
+  /** Nettoie `geo` et range le résultat sous `next` (l'ancienne géométrie reste, pour annuler). */
+  cleanApply(geo: number, opts: CleanOptions, k: number, next: number): Promise<{ report: Report; snaps: number[]; counts: CleanCounts } | { error: string }> {
+    return this.#call({ kind: 'clean', geo, opts: JSON.stringify(opts), k, next });
   }
 }
 

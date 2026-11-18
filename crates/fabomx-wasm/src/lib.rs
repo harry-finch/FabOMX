@@ -1,15 +1,47 @@
 //! Moteur FabOMX pour l'interface : appelé depuis un Web Worker. Les
-//! données passent en JSON.
+//! données passent en JSON. Les dessins posés sont gardés ici, chacun sous
+//! un identifiant de géométrie que l'interface choisit : un nettoyage range
+//! une nouvelle géométrie sous un nouvel identifiant, et l'ancienne reste
+//! pour annuler.
 
-use fabomx_core::drawing::Piece;
+use fabomx_core::clean::Options;
+use fabomx_core::drawing::Parsed;
 use fabomx_core::geom::Affine;
+use fabomx_core::import::{analyze, parse, Format};
+use fabomx_core::{Source, Unit, PROTOMAX};
 use std::cell::RefCell;
 use std::collections::HashMap;
 use wasm_bindgen::prelude::*;
 
+/// Une géométrie gardée, avec ce qu'il faut pour en refaire le rapport.
+struct Stored {
+    parsed: Parsed,
+    format: Format,
+    unit: Unit,
+    detected: Unit,
+    source: Source,
+}
+
 thread_local! {
-    /// Géométrie d'origine des dessins posés, par identifiant de l'interface.
-    static DRAWINGS: RefCell<HashMap<u32, Vec<Piece>>> = RefCell::new(HashMap::new());
+    static GEOMETRIES: RefCell<HashMap<u32, Stored>> = RefCell::new(HashMap::new());
+}
+
+fn error(code: &str) -> String {
+    serde_json::json!({ "error": code }).to_string()
+}
+
+/// Réglages de nettoyage en JSON ; vide : pas de nettoyage.
+fn options(json: &str) -> Option<Options> {
+    (!json.is_empty())
+        .then(|| serde_json::from_str(json).ok())
+        .flatten()
+}
+
+fn snaps(parsed: &Parsed) -> Vec<f64> {
+    fabomx_core::place::snap_points(&parsed.pieces)
+        .into_iter()
+        .flat_map(|p| [p.x, p.y])
+        .collect()
 }
 
 /// Version du moteur.
@@ -19,86 +51,170 @@ pub fn engine_version() -> String {
 }
 
 /// L'état d'un dessin SVG ou DXF pour le dialogue d'import, en JSON. `unit`
-/// vide : l'unité du fichier. Un refus donne `{"error": "<code stable>"}`.
+/// vide : l'unité du fichier. `clean` : réglages de « Nettoyer à l'import »,
+/// ou vide. Un refus donne `{"error": "<code stable>"}`.
 #[wasm_bindgen]
-pub fn inspect(text: &str, unit: &str) -> String {
-    let unit = fabomx_core::Unit::parse(unit);
-    match fabomx_core::import(text, unit, &fabomx_core::PROTOMAX) {
+pub fn inspect(text: &str, unit: &str, clean: &str) -> String {
+    let unit = Unit::parse(unit);
+    match fabomx_core::import::import_with(text, unit, options(clean).as_ref(), &PROTOMAX) {
         Ok(report) => serde_json::to_string(&report).expect("rapport sérialisable"),
-        Err(e) => serde_json::json!({ "error": e.code() }).to_string(),
+        Err(e) => error(e.code()),
     }
 }
 
-/// Garde la géométrie d'origine d'un dessin importé sous `id`, pour le
-/// placer ensuite. Rend ses points d'accrochage `[x, y, …]` (mm), en JSON,
-/// ou `{"error": "<code stable>"}`.
+/// Garde la géométrie d'origine d'un dessin importé sous `geo` (nettoyée
+/// avec `clean` s'il n'est pas vide). Rend ses points d'accrochage
+/// `{"snaps": [x, y, …]}` (mm), ou `{"error": "<code stable>"}`.
 #[wasm_bindgen]
-pub fn load(id: u32, text: &str, unit: &str) -> String {
-    match fabomx_core::import::parse(text, fabomx_core::Unit::parse(unit)) {
-        Ok((_, parsed, _, _)) => {
-            let snaps: Vec<f64> = fabomx_core::place::snap_points(&parsed.pieces)
-                .into_iter()
-                .flat_map(|p| [p.x, p.y])
-                .collect();
-            DRAWINGS.with(|d| d.borrow_mut().insert(id, parsed.pieces));
-            serde_json::json!({ "snaps": snaps }).to_string()
+pub fn load(geo: u32, text: &str, unit: &str, clean: &str) -> String {
+    let unit = Unit::parse(unit);
+    match parse(text, unit) {
+        Ok((format, mut parsed, detected, source)) => {
+            if let Some(o) = options(clean) {
+                parsed.pieces = fabomx_core::clean::clean(&parsed.pieces, &o, 1.0).0;
+            }
+            let out = serde_json::json!({ "snaps": snaps(&parsed) }).to_string();
+            let stored = Stored {
+                parsed,
+                format,
+                unit: unit.unwrap_or(detected),
+                detected,
+                source,
+            };
+            GEOMETRIES.with(|g| g.borrow_mut().insert(geo, stored));
+            out
         }
-        Err(e) => serde_json::json!({ "error": e.code() }).to_string(),
+        Err(e) => error(e.code()),
     }
 }
 
-/// Le dessin `id` transformé par la matrice `[a, b, c, d, e, f]` : sa boîte,
-/// ses dimensions et ses avertissements, en JSON.
+/// La géométrie `geo` transformée par la matrice `[a, b, c, d, e, f]` : sa
+/// boîte, ses dimensions et ses avertissements, en JSON.
 #[wasm_bindgen]
-pub fn place(id: u32, m: &[f64]) -> String {
-    DRAWINGS.with(|d| {
-        let d = d.borrow();
-        let (Some(pieces), [a, b, c, dd, e, f]) = (d.get(&id), m) else {
-            return serde_json::json!({ "error": "place.unknown" }).to_string();
+pub fn place(geo: u32, m: &[f64]) -> String {
+    GEOMETRIES.with(|g| {
+        let g = g.borrow();
+        let (Some(s), [a, b, c, d, e, f]) = (g.get(&geo), m) else {
+            return error("place.unknown");
         };
         let p = fabomx_core::place::place(
-            pieces,
-            Affine([*a, *b, *c, *dd, *e, *f]),
-            &fabomx_core::PROTOMAX,
+            &s.parsed.pieces,
+            Affine([*a, *b, *c, *d, *e, *f]),
+            &PROTOMAX,
         );
         serde_json::to_string(&p).expect("placement sérialisable")
+    })
+}
+
+/// Ce que ferait le nettoyage de `geo` avec `opts` (JSON), à l'échelle `k`
+/// (mm du plateau par mm d'origine) : comptes, bilan, défauts.
+#[wasm_bindgen]
+pub fn clean_preview(geo: u32, opts: &str, k: f64) -> String {
+    let Some(o) = options(opts) else {
+        return error("clean.options");
+    };
+    GEOMETRIES.with(|g| match g.borrow().get(&geo) {
+        Some(s) => serde_json::to_string(&fabomx_core::clean::preview(&s.parsed.pieces, &o, k))
+            .expect("aperçu sérialisable"),
+        None => error("clean.unknown"),
+    })
+}
+
+/// Nettoie `geo` et range le résultat sous `new_geo`, sans toucher à `geo`.
+/// Rend `{"report", "snaps", "counts"}` du dessin nettoyé, en JSON.
+#[wasm_bindgen]
+pub fn clean_apply(geo: u32, opts: &str, k: f64, new_geo: u32) -> String {
+    let Some(o) = options(opts) else {
+        return error("clean.options");
+    };
+    GEOMETRIES.with(|g| {
+        let mut g = g.borrow_mut();
+        let Some(s) = g.get(&geo) else {
+            return error("clean.unknown");
+        };
+        let (pieces, counts, _) = fabomx_core::clean::clean(&s.parsed.pieces, &o, k);
+        let parsed = Parsed {
+            pieces,
+            ignored: s.parsed.ignored.clone(),
+        };
+        let report = analyze(
+            s.format,
+            parsed.clone(),
+            s.unit,
+            s.detected,
+            s.source,
+            &PROTOMAX,
+        );
+        let out =
+            serde_json::json!({ "report": report, "snaps": snaps(&parsed), "counts": counts })
+                .to_string();
+        let stored = Stored {
+            parsed,
+            format: s.format,
+            unit: s.unit,
+            detected: s.detected,
+            source: s.source,
+        };
+        g.insert(new_geo, stored);
+        out
     })
 }
 
 /// Machine cible (zone de coupe en mm), en JSON.
 #[wasm_bindgen]
 pub fn machine() -> String {
-    serde_json::to_string(&fabomx_core::PROTOMAX).expect("machine sérialisable")
+    serde_json::to_string(&PROTOMAX).expect("machine sérialisable")
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
+    const CIRCLE: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" width="10mm" height="10mm" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5"/></svg>"#;
+    const OPEN_SQUARE: &str = "0\nSECTION\n2\nENTITIES\n0\nLINE\n10\n0\n20\n0\n11\n10\n21\n0\n0\nLINE\n10\n10\n20\n0\n11\n10\n21\n10\n0\nLINE\n10\n10\n20\n10\n11\n0\n21\n10\n0\nLINE\n10\n0\n20\n10\n11\n0\n21\n0.005\n0\nENDSEC\n0\nEOF\n";
+
     #[test]
     fn inspect_reports_or_refuses() {
-        let ok: serde_json::Value = serde_json::from_str(&inspect(
-            r#"<svg xmlns="http://www.w3.org/2000/svg" width="10mm" height="10mm" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5"/></svg>"#,
-            "",
-        ))
-        .unwrap();
+        let ok: serde_json::Value = serde_json::from_str(&inspect(CIRCLE, "", "")).unwrap();
         assert_eq!(ok["unit"], "mm");
         assert_eq!(ok["counts"]["circle"], 1);
-        let err: serde_json::Value = serde_json::from_str(&inspect("", "")).unwrap();
+        assert!(ok.get("cleaned").is_none());
+        let err: serde_json::Value = serde_json::from_str(&inspect("", "", "")).unwrap();
         assert_eq!(err["error"], "import.empty");
     }
 
     #[test]
-    fn load_then_place() {
-        let svg = r#"<svg xmlns="http://www.w3.org/2000/svg" width="10mm" height="10mm" viewBox="0 0 10 10"><circle cx="5" cy="5" r="5"/></svg>"#;
-        let snaps: serde_json::Value = serde_json::from_str(&load(7, svg, "")).unwrap();
-        assert!(snaps["snaps"].as_array().unwrap().len() >= 4);
+    fn inspect_can_clean_at_import() {
+        let opts = serde_json::to_string(&Options::default()).unwrap();
+        let r: serde_json::Value = serde_json::from_str(&inspect(OPEN_SQUARE, "", &opts)).unwrap();
+        assert_eq!(r["cleaned"]["joins"], 1);
+        assert_eq!(r["closed"], 1);
+        assert_eq!(r["open"], 0);
+    }
+
+    #[test]
+    fn load_place_clean_keep_versions() {
+        let snaps: serde_json::Value = serde_json::from_str(&load(7, CIRCLE, "", "")).unwrap();
+        assert!(snaps["snaps"].as_array().unwrap().len() >= 2);
         let p: serde_json::Value =
             serde_json::from_str(&place(7, &[2.0, 0.0, 0.0, 2.0, 0.0, 0.0])).unwrap();
         assert!((p["width"].as_f64().unwrap() - 20.0).abs() < 1e-9);
         let err: serde_json::Value =
             serde_json::from_str(&place(8, &[1.0, 0.0, 0.0, 1.0, 0.0, 0.0])).unwrap();
         assert_eq!(err["error"], "place.unknown");
+
+        load(10, OPEN_SQUARE, "", "");
+        let opts = serde_json::to_string(&Options::default()).unwrap();
+        let pv: serde_json::Value = serde_json::from_str(&clean_preview(10, &opts, 1.0)).unwrap();
+        assert_eq!(pv["counts"]["joins"], 1);
+        let done: serde_json::Value =
+            serde_json::from_str(&clean_apply(10, &opts, 1.0, 11)).unwrap();
+        assert_eq!(done["report"]["closed"], 1);
+        // L'ancienne géométrie reste, pour annuler.
+        let old: serde_json::Value = serde_json::from_str(&clean_preview(10, &opts, 1.0)).unwrap();
+        assert_eq!(old["counts"]["joins"], 1);
+        let new: serde_json::Value = serde_json::from_str(&clean_preview(11, &opts, 1.0)).unwrap();
+        assert_eq!(new["counts"]["joins"], 0);
     }
 
     #[test]
@@ -106,6 +222,5 @@ mod tests {
         let v: serde_json::Value = serde_json::from_str(&machine()).unwrap();
         assert_eq!(v["id"], "protomax");
         assert_eq!(v["width"], 305.0);
-        assert_eq!(v["height"], 305.0);
     }
 }

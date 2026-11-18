@@ -8,7 +8,7 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ## Restant à faire
 
-1. **[R-004 Nettoyer le dessin](roadmap/items/R-004-nettoyer-le-dessin.md)** · Spécifiée · jalon v0.1
+1. **[R-004 Nettoyer le dessin](roadmap/items/R-004-nettoyer-le-dessin.md)** · À tester · jalon v0.1
    Section Nettoyer : doublons, superpositions, minuscules, jonctions sous un seuil, segments alignés, avec comptes et bilan en direct, liste des défauts et option à l'import ; rien n'est inventé.
 2. **[R-005 Application de bureau macOS](roadmap/items/R-005-application-de-bureau-macos.md)** · Idée · jalon v0.1
    Emballer FabOMX en application de bureau Tauri, comme FabVents et FabWeave.
@@ -16,6 +16,11 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
    Logo définitif de la famille Fab (tuile graphite et symbole à la couleur d'identité), à la place du logo provisoire du kit.
 4. **[R-007 Reconnaître des arcs dans les segments](roadmap/items/R-007-reconnaitre-des-arcs-dans-les-segments.md)** · Idée · jalon v0.2
    Remplacer les suites de petits segments issues des courbes converties par de vrais arcs, pour un parcours de jet d'eau plus fluide.
+
+## Actions à faire
+
+- [ ] [A-008](roadmap/actions/A-008-nettoyer-tes-fichiers-sales-dans-fabomx.md) Nettoyer tes fichiers sales dans FabOMX (tester, R-004)
+- [ ] [A-009](roadmap/actions/A-009-juger-la-section-nettoyer-de-fabomx.md) Juger la section Nettoyer de FabOMX (valider, R-004)
 
 ## Livré
 

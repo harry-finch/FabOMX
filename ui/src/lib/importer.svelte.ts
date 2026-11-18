@@ -6,6 +6,7 @@ import { engine } from './engine.svelte';
 import { doc } from './document.svelte';
 import { ui } from './ui.svelte';
 import { t } from './i18n.svelte';
+import { cleaning } from './cleaning.svelte';
 import type { ImportFailure, Report, Unit } from './types';
 
 export interface Pending {
@@ -46,6 +47,12 @@ class Importer {
     await this.#read();
   }
 
+  /** « Nettoyer à l'import » : relit le fichier, nettoyé ou non. */
+  async setClean(on: boolean) {
+    cleaning.setAtImport(on);
+    await this.#read();
+  }
+
   async setUnit(unit: Unit) {
     if (!this.pending) return;
     this.pending.unit = unit;
@@ -57,7 +64,7 @@ class Importer {
     if (!p) return;
     p.busy = true;
     try {
-      const result = await engine.inspect(p.text, p.unit);
+      const result = await engine.inspect(p.text, p.unit, cleaning.atImport ? $state.snapshot(cleaning.options) : undefined);
       if (this.pending === p) p.result = result;
     } catch {
       if (this.pending === p) p.result = { error: 'import.unreadable' };
@@ -76,14 +83,15 @@ class Importer {
     const report = this.report;
     if (!p || !report || p.busy || !engine.machine) return;
     p.busy = true;
-    const id = doc.reserve();
-    const loaded = await engine.load(id, p.text, report.unit).catch(() => null);
+    const geo = doc.reserve();
+    const clean = cleaning.atImport ? $state.snapshot(cleaning.options) : undefined;
+    const loaded = await engine.load(geo, p.text, report.unit, clean).catch(() => null);
     if (!loaded || 'error' in loaded) {
       p.result = { error: 'import.unreadable' };
       p.busy = false;
       return;
     }
-    doc.add(id, p.name, report, loaded.snaps, engine.machine);
+    doc.add(geo, p.name, report, loaded.snaps, engine.machine);
     ui.toast(t('import.added', { name: p.name }));
     this.pending = null;
   }

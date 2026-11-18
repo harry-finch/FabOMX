@@ -16,6 +16,8 @@ export type Ref = { kind: 'box'; ix: number; iy: number } | { kind: 'point'; x: 
 
 export interface Drawing {
   id: number;
+  /** Géométrie d'origine dans le moteur ; un nettoyage en range une nouvelle. */
+  geo: number;
   /** Nom du fichier importé. */
   name: string;
   /** L'import : géométrie d'origine, unité, éléments, défauts. */
@@ -72,7 +74,7 @@ class Doc {
     return this.drawings.find((d) => d.id === this.selected) ?? null;
   }
 
-  /** Identifiant du prochain dessin (le moteur le connaît avant qu'il soit posé). */
+  /** Un identifiant neuf : dessin, ou géométrie que le moteur garde. */
   reserve(): number {
     return this.#next++;
   }
@@ -99,10 +101,11 @@ class Doc {
   }
 
   /** Pose un dessin centré sur un plateau de `bed` (mm) et le sélectionne. */
-  add(id: number, name: string, report: Report, snaps: number[], bed: { width: number; height: number }) {
+  add(geo: number, name: string, report: Report, snaps: number[], bed: { width: number; height: number }) {
     const [x0, y0, x1, y1] = report.bbox;
     const matrix = translate(bed.width / 2 - (x0 + x1) / 2, bed.height / 2 - (y0 + y1) / 2);
-    const drawing: Drawing = { id, name, report, matrix, ref: { kind: 'box', ix: 1, iy: 1 }, snaps, placement: roughPlacement(report, matrix) };
+    const id = this.reserve();
+    const drawing: Drawing = { id, geo, name, report, matrix, ref: { kind: 'box', ix: 1, iy: 1 }, snaps, placement: roughPlacement(report, matrix) };
     this.#commit([...this.drawings, drawing]);
     this.selected = id;
     this.#place(drawing);
@@ -123,6 +126,15 @@ class Doc {
     if (patch.matrix) this.#place(next);
   }
 
+  /** Remplace la géométrie d'un dessin nettoyé ; la transformation est gardée. Une étape. */
+  replaceGeometry(id: number, geo: number, report: Report, snaps: number[]) {
+    const d = this.drawings.find((x) => x.id === id);
+    if (!d) return;
+    const next: Drawing = { ...d, geo, report, snaps, placement: { ...roughPlacement(report, d.matrix), warnings: d.placement.warnings } };
+    this.#commit(this.drawings.map((x) => (x.id === id ? next : x)));
+    this.#place(next);
+  }
+
   /** Début d'un geste à la souris : tout jusqu'à `end` fait une seule étape. */
   begin() {
     this.#gesture = this.drawings;
@@ -141,10 +153,10 @@ class Doc {
   async #place(d: Drawing) {
     const m = d.matrix;
     try {
-      const p = await engine.place(d.id, m);
+      const p = await engine.place(d.geo, m);
       if ('error' in p) return;
       // Le dessin a pu changer entre-temps : seul le résultat de sa matrice actuelle compte.
-      const apply = (list: Drawing[]) => list.map((x) => (x.id === d.id && x.matrix === m ? { ...x, placement: p } : x));
+      const apply = (list: Drawing[]) => list.map((x) => (x.id === d.id && x.matrix === m && x.geo === d.geo ? { ...x, placement: p } : x));
       this.drawings = apply(this.drawings);
       if (this.#gesture) this.#gesture = apply(this.#gesture);
     } catch {

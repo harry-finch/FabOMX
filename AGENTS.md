@@ -33,9 +33,10 @@ Elle est dans `roadmap/` (un fichier par élément, un par action de l’utilisa
 - Les valeurs ne sont jamais corrigées en silence : une valeur hors domaine produit une erreur ou un avertissement à code stable.
 - Disposition propre à FabOMX, écart voulu à `fab-design-system` : palette d’outils étroite (44 px) à gauche, paramètres et formulaires à droite.
 - Un outil de la palette qui n’est pas encore développé reste grisé (« À venir »), il ne réagit ni au clic ni à son raccourci.
-- Importer est une action, pas un outil : il ouvre le choix du fichier sans changer l’outil actif. Le dialogue d’import signale ce qu’il faudra nettoyer, il ne répare rien (R-004).
+- Importer est une action, pas un outil : il ouvre le choix du fichier sans changer l’outil actif. Le dialogue d’import signale ce qu’il faudra nettoyer ; il ne répare que si « Nettoyer à l’import » est coché.
 - Import : lignes, arcs et cercles restent exacts ; les autres courbes sont mises en segments à 0,01 mm près (`CURVE_TOL`). Seuils de détection dans `fabomx-core/src/import.rs` (`JOINED`, `GAP`, `TINY`).
 - Un dessin posé garde sa géométrie d’origine (dans le moteur) et une seule matrice affine : toute transformation se compose à cette matrice et se recalcule depuis l’origine (`fabomx-core/src/place.rs`), jamais sur un résultat déjà transformé. `ui/src/lib/affine.ts` reprend les formules d’`Affine` du moteur : les garder identiques.
+- Nettoyage (`fabomx-core/src/clean.rs`) : rien n’est inventé, seules les jonctions sous le seuil ferment un contour ; seuils en mm du plateau, ramenés à l’origine par l’échelle du dessin. Un nettoyage range une nouvelle géométrie sous un nouvel identifiant (`geo`) dans le moteur, l’ancienne reste pour annuler.
 - Interface : aucune couleur en dur dans les composants ni dans le dessin de l’espace de travail, tout passe par les jetons de `ui/src/app.css` ; textes par `t('clé')`, `fr.ts` est la référence et `en.ts` a les mêmes clés.
 - Mettre à jour la documentation dans le même changement que le comportement.
 

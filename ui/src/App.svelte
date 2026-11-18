@@ -141,6 +141,8 @@
       <dd>{t('help.keys.fit')}</dd>
       <dt><kbd>M · R · S</kbd></dt>
       <dd>{t('help.keys.transform')}</dd>
+      <dt><kbd>C</kbd></dt>
+      <dd>{t('help.keys.clean')}</dd>
       <dt><kbd>← → ↑ ↓</kbd></dt>
       <dd>{t('help.keys.nudge')}</dd>
       <dt><kbd>{t('help.del')}</kbd></dt>

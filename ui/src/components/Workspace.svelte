@@ -16,10 +16,12 @@
   // « Choisir sur le plateau » : le clic suivant place le point de référence,
   // accroché aux points du dessin à HIT px près. Un dessin qui déborde du
   // plateau a sa boîte en attention.
+  import { untrack } from 'svelte';
   import { theme } from '../lib/theme.svelte';
   import { tools } from '../lib/tools.svelte';
   import type { Machine } from '../lib/engine.svelte';
   import { doc, refPoint, type Drawing } from '../lib/document.svelte';
+  import { cleaning } from '../lib/cleaning.svelte';
   import { apply, invert, rotateAbout, scaleAbout, then, translate, type M, type Pt } from '../lib/affine';
 
   let {
@@ -206,6 +208,7 @@
     }
     const d = doc.selection;
     if (!d) return;
+    if (tools.active === 'clean') return drawDefects(ctx, d);
     // Point de référence : un cercle et sa croix.
     const [rx, ry] = refPoint(d);
     const [px, py] = [sx(rx), sy(ry)];
@@ -233,6 +236,40 @@
       }
     }
   }
+
+  /** Outil Nettoyer : les défauts de l'aperçu, le défaut choisi en accent. */
+  function drawDefects(ctx: CanvasRenderingContext2D, d: Drawing) {
+    const pv = cleaning.preview;
+    if (!pv || pv.geo !== d.geo) return;
+    pv.preview.defects.forEach((x, i) => {
+      const [wx, wy] = apply(d.matrix, x.x, x.y);
+      const on = cleaning.focused?.index === i;
+      const r = on ? 9 : 5;
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = colors['ctrl-edge'];
+      ctx.beginPath();
+      ctx.arc(sx(wx), sy(wy), r, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.lineWidth = on ? 2 : 1.5;
+      ctx.strokeStyle = on ? colors['ctrl-active'] : colors['drawing-open'];
+      ctx.beginPath();
+      ctx.arc(sx(wx), sy(wy), r, 0, Math.PI * 2);
+      ctx.stroke();
+    });
+  }
+
+  // Un défaut choisi dans la liste : la vue se centre dessus, assez près pour le voir.
+  $effect(() => {
+    const f = cleaning.focused;
+    const d = doc.selection;
+    if (!f || !d) return;
+    const [wx, wy] = apply(d.matrix, f.defect.x, f.defect.y);
+    untrack(() => {
+      const s = Math.max(view.s, 20 * PX_PER_MM);
+      view = { s, ox: width / 2 - wx * s, oy: height / 2 + wy * s };
+      auto = false;
+    });
+  });
 
   /** Le dessin sous le point d'écran (px, py), le plus récent d'abord. */
   function hit(px: number, py: number): number | null {
@@ -289,7 +326,7 @@
   });
 
   $effect(() => {
-    void [view, width, height, machine, drawings, selected, tools.active, doc.lock];
+    void [view, width, height, machine, drawings, selected, tools.active, doc.lock, cleaning.preview, cleaning.focused];
     zoom = view.s / PX_PER_MM;
     request();
   });

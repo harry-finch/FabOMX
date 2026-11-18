@@ -25,6 +25,8 @@ export interface Report {
   warnings: ImportWarning[];
   ignored: Record<string, number>;
   traces: { open: boolean; pts: number[] }[];
+  /** Ce que « Nettoyer à l'import » a corrigé. */
+  cleaned?: CleanCounts;
 }
 
 /** Refus d'un fichier, par code stable du moteur. */
@@ -40,4 +42,38 @@ export interface Placement {
   width: number;
   height: number;
   warnings: PlaceWarning[];
+}
+
+/** Réglages du nettoyage ; seuils en mm du plateau. */
+export interface CleanOptions {
+  duplicates: boolean;
+  overlaps: boolean;
+  tiny: boolean;
+  tiny_size: number;
+  join: boolean;
+  join_gap: number;
+  simplify: boolean;
+}
+
+export interface CleanCounts {
+  duplicates: number;
+  overlaps: number;
+  tiny: number;
+  joins: number;
+  simplified: number;
+}
+
+/** Un défaut situé dans la géométrie d'origine ; `gap` : écart d'une extrémité qui restera libre. */
+export interface Defect {
+  kind: 'duplicate' | 'overlap' | 'tiny' | 'gap' | 'open';
+  x: number;
+  y: number;
+  gap?: number;
+}
+
+export interface CleanPreview {
+  counts: CleanCounts;
+  closed: number;
+  open: number;
+  defects: Defect[];
 }

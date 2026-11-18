@@ -6,6 +6,8 @@
   import Section from './Section.svelte';
   import DrawingInfo from './DrawingInfo.svelte';
   import Transform from './Transform.svelte';
+  import CleanPanel from './CleanPanel.svelte';
+  import { tools } from '../lib/tools.svelte';
   import type { Machine } from '../lib/engine.svelte';
   import type { Drawing } from '../lib/document.svelte';
   import { ui } from '../lib/ui.svelte';
@@ -21,8 +23,11 @@
   }: { machine: Machine | null; drawing: Drawing | null; count: number; onremove: (id: number) => void } = $props();
 </script>
 
+{#if tools.active === 'clean'}
+  <CleanPanel {drawing} />
+{/if}
 {#if drawing}
-  <Transform {drawing} />
+  {#if tools.active !== 'clean'}<Transform {drawing} />{/if}
   <Section id="drawing" title={t('drawing.title')}>
     {#snippet actions()}
       <button class="btn quiet icon" type="button" use:tip={t('drawing.removeHint')} aria-label={t('drawing.remove')} onclick={() => onremove(drawing.id)}><Trash2 size={14} /></button>
@@ -31,7 +36,7 @@
     <DrawingInfo report={drawing.report} placement={drawing.placement} />
     <button class="btn" type="button" onclick={() => onremove(drawing.id)}><Trash2 size={14} /> {t('drawing.remove')}</button>
   </Section>
-{:else}
+{:else if tools.active !== 'clean'}
   <p class="empty">{t(count ? 'bed.select' : 'bed.empty')}</p>
 {/if}
 {#if machine}
