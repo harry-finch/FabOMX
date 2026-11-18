@@ -4,25 +4,20 @@ Objectif de FabOMX : à partir d'un dessin vectoriel (SVG ou DXF), produire un p
 
 On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la découpe et les spécificités du jet d'eau (v0.2).
 
-**Avancement : 15 livrés sur 19** (79 %)
+**Avancement : 16 livrés sur 19** (84 %)
 
 ## Restant à faire
 
-1. **[R-019 Version 1.0](roadmap/items/R-019-version-1-0.md)** · À tester · jalon v1.0
-   Version 1.0.0 : CHANGELOG, guide d'utilisation illustré dans le README, raccourcis Ctrl sous Windows, releases Mac (Apple Silicon) et Windows construites par GitHub Actions, sans signature payante.
-2. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée
+1. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée
    Marquer un trait sans traverser la plaque (gravure), dès que son code OMX est connu par un exemple de LAYOUT.
-3. **[R-016 Couper une plaque dans un coin du stock](roadmap/items/R-016-couper-une-plaque-dans-un-coin-du-stock.md)** · Idée · jalon v0.3
+2. **[R-016 Couper une plaque dans un coin du stock](roadmap/items/R-016-couper-une-plaque-dans-un-coin-du-stock.md)** · Idée · jalon v0.3
    Couper une plaque dans un coin du stock sans faire le tour complet. À spécifier.
-4. **[R-020 Avertissement géométrie trop petite](roadmap/items/R-020-avertissement-geometrie-trop-petite.md)** · Idée
+3. **[R-020 Avertissement géométrie trop petite](roadmap/items/R-020-avertissement-geometrie-trop-petite.md)** · Idée
    Emettre un avertissement quand des trous ou des caractèristiques géométriques sont trop petites pour le kerf du jet d’eau (~1mm).
 
 ## Actions à faire
 
 - [ ] [A-015](roadmap/actions/A-015-fournir-un-omx-de-layout-avec-un-trait-grave.md) Fournir un OMX de LAYOUT avec un trait gravé (fournir, R-014)
-- [ ] [A-034](roadmap/actions/A-034-installer-et-essayer-fabomx-sous-windows.md) Installer et essayer FabOMX sous Windows (tester, R-019)
-- [ ] [A-035](roadmap/actions/A-035-installer-fabomx-pour-mac-depuis-la-release.md) Installer FabOMX pour Mac depuis la release (tester, R-019)
-- [ ] [A-036](roadmap/actions/A-036-relire-le-guide-le-changelog-et-publier-la.md) Relire le guide, le CHANGELOG et publier la release v1.0.0 (valider, R-019)
 
 ## Livré
 
@@ -63,6 +58,8 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ### v1.0 : Version 1
 
+- [R-019 Version 1.0](roadmap/items/R-019-version-1-0.md) · livrée le 2026-11-18
+  Version 1.0.0 : CHANGELOG, guide d'utilisation illustré dans le README, raccourcis Ctrl sous Windows, releases Mac (Apple Silicon) et Windows construites par GitHub Actions, sans signature payante.
 - [R-018 Enregistrer et rouvrir un travail](roadmap/items/R-018-enregistrer-et-rouvrir-un-travail.md) · livrée le 2026-11-18
   Fichier de travail .fabomx autonome (géométrie, placements, réglages faits à la main, point de départ, ordre) : Nouveau, Ouvrir, Enregistrer, Enregistrer sous, récents, dépôt ; repère « modifié » et demande avant de perdre des changements.
 - [R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md) · livrée le 2026-11-18
