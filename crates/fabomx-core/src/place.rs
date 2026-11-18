@@ -20,7 +20,9 @@ pub fn transform(pieces: &[Piece], m: Affine) -> Vec<Piece> {
                 Seg::Arc { c, r, a0, sweep } => b.arc(c, r, a0, sweep),
             }
         }
+        let n = out.pieces.len();
         b.finish(p.kind, p.closed, &mut out);
+        out.mark_construction_if(n, p.construction);
     }
     out.pieces
 }

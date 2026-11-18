@@ -1,13 +1,13 @@
-// Outils de la palette (panneau gauche). Tous les outils du jalon v0.1 y
-// figurent ; ceux qui ne sont pas encore développés sont grisés (« à venir »).
+// Outils de la palette (panneau gauche). Les outils prévus y figurent ;
+// ceux qui ne sont pas encore développés sont grisés (« à venir »).
 // Une action (Importer) agit au clic sans devenir l'outil actif. L'outil
 // actif est mémorisé sur le poste.
 
 import type { Component } from 'svelte';
-import { FileUp, Hand, MousePointer2, Move, RotateCw, Scaling, WandSparkles } from '@lucide/svelte';
+import { FileUp, Hand, MousePointer2, Move, RotateCw, Scaling, Scissors, WandSparkles } from '@lucide/svelte';
 import { storageKey } from './app';
 
-export type ToolId = 'select' | 'hand' | 'import' | 'move' | 'rotate' | 'scale' | 'clean';
+export type ToolId = 'select' | 'hand' | 'import' | 'move' | 'rotate' | 'scale' | 'clean' | 'cut';
 
 export interface Tool {
   id: ToolId;
@@ -32,6 +32,7 @@ export const TOOL_GROUPS: Tool[][] = [
     { id: 'scale', icon: Scaling, key: 's', enabled: true },
   ],
   [{ id: 'clean', icon: WandSparkles, key: 'c', enabled: true }],
+  [{ id: 'cut', icon: Scissors, key: 'd', enabled: true }],
 ];
 
 const TOOLS = TOOL_GROUPS.flat();

@@ -80,6 +80,12 @@
   --ctrl-active: #4b9cf5;
   --ctrl-active-fill: rgb(75 156 245 / 0.06);
   --drawing-open: var(--warning);
+  /* Côtés de coupe (outil Découpe) : extérieur, trou, sur la ligne, ne pas
+     couper (en pointillés). Distincts de l'accent, réservé à la sélection. */
+  --cut-outside: #6cc94f;
+  --cut-inside: #e070d4;
+  --cut-line: #4fc3d9;
+  --cut-skip: #8a8f96;
 
   /* Fenêtres et infobulles. */
   --backdrop: rgb(0 0 0 / 0.5);
@@ -166,6 +172,10 @@
   --ctrl-edge: rgb(250 250 250 / 0.9);
   --ctrl-active: #1473e6;
   --ctrl-active-fill: rgb(20 115 230 / 0.06);
+  --cut-outside: #2f7a12;
+  --cut-inside: #a8239f;
+  --cut-line: #0b78b0;
+  --cut-skip: #7a7f86;
 
   --segment-track: #e3e3e3;
   --track: #e0e0e0;

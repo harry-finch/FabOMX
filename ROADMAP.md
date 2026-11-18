@@ -8,7 +8,7 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ## Restant à faire
 
-1. **[R-008 Côtés de coupe](roadmap/items/R-008-cotes-de-coupe.md)** · Idée · jalon v0.2
+1. **[R-008 Côtés de coupe](roadmap/items/R-008-cotes-de-coupe.md)** · À tester · jalon v0.2
    Outil Découpe : pour chaque contour, Extérieur, Trou, Sur la ligne (fente) ou Ne pas couper (repère), détecté par imbrication et d'après le fichier (pointillés, calques), modifiable, avec sens de parcours fixé et croisements signalés.
 2. **[R-009 Qualité de coupe](roadmap/items/R-009-qualite-de-coupe.md)** · Idée · jalon v0.2
    Choisir la qualité de coupe (1 à 5) ou la gravure pour chaque contour, avec une qualité par défaut.
@@ -28,6 +28,8 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 ## Actions à faire
 
 - [ ] [A-012](roadmap/actions/A-012-fournir-des-fichiers-omx-de-layout-avec-leur-dxf.md) Fournir des fichiers OMX de LAYOUT avec leur DXF (fournir, R-012)
+- [ ] [A-013](roadmap/actions/A-013-verifier-les-cotes-de-coupe-sur-tes-vrais.md) Vérifier les côtés de coupe sur tes vrais dessins (tester, R-008)
+- [ ] [A-014](roadmap/actions/A-014-juger-l-outil-decoupe-de-fabomx.md) Juger l'outil Découpe de FabOMX (valider, R-008)
 
 ## Livré
 

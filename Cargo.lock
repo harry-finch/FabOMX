@@ -50,6 +50,7 @@ name = "fabomx-wasm"
 version = "0.1.0"
 dependencies = [
  "fabomx-core",
+ "serde",
  "serde_json",
  "wasm-bindgen",
 ]

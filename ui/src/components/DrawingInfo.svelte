@@ -81,7 +81,14 @@
     <dd class="tabular">{num(report.closed)}</dd>
     <dt>{t('import.open')}</dt>
     <dd class="tabular" class:warn={report.open > 0}>{num(report.open)}</dd>
+    {#if report.construction}
+      <dt>{t('import.construction')}</dt>
+      <dd class="tabular">{num(report.construction)}</dd>
+    {/if}
   </dl>
+  {#if report.construction}
+    <p class="hint">{t('import.constructionHint')}</p>
+  {/if}
 
   <p class="sub">{t('import.cleanup')}</p>
   {#if cleanup.length}

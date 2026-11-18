@@ -8,7 +8,24 @@ use crate::drawing::{Builder, Kind, Parsed};
 use crate::geom::{bulge_arc, Affine, Seg, P};
 use crate::import::ImportError;
 use crate::units::{Source, Unit};
+use std::collections::HashMap;
 use std::f64::consts::TAU;
+
+/// Minuscules sans accents, pour comparer des noms de calques.
+fn fold(s: &str) -> String {
+    s.to_lowercase()
+        .chars()
+        .map(|c| match c {
+            'à' | 'â' | 'ä' => 'a',
+            'é' | 'è' | 'ê' | 'ë' => 'e',
+            'î' | 'ï' => 'i',
+            'ô' | 'ö' => 'o',
+            'ù' | 'û' | 'ü' => 'u',
+            'ç' => 'c',
+            c => c,
+        })
+        .collect()
+}
 
 /// Une entité : son nom et ses groupes (code, valeur), dans l'ordre du fichier.
 struct Entity<'a> {
@@ -34,6 +51,34 @@ impl Entity<'_> {
             .filter(|(c, _)| *c == code)
             .filter_map(|(_, v)| v.parse().ok())
             .collect()
+    }
+
+    fn text(&self, code: i32) -> Option<&str> {
+        self.groups
+            .iter()
+            .find(|(c, _)| *c == code)
+            .map(|(_, v)| *v)
+    }
+
+    /// Repère ou trait de construction : calque « Defpoints », calque dont le
+    /// nom contient « construction » ou « repère », ou trait non continu
+    /// (celui de l'entité, sinon celui de son calque).
+    fn construction(&self, layers: &HashMap<String, String>) -> bool {
+        let layer = self.text(8).unwrap_or("0");
+        let folded = fold(layer);
+        if folded == "defpoints" || folded.contains("construction") || folded.contains("repere") {
+            return true;
+        }
+        let own = self.text(6).unwrap_or("BYLAYER");
+        let ltype = if own.eq_ignore_ascii_case("BYLAYER") {
+            layers.get(&layer.to_uppercase()).map_or("", String::as_str)
+        } else {
+            own
+        };
+        !(ltype.is_empty()
+            || ltype.eq_ignore_ascii_case("CONTINUOUS")
+            || ltype.eq_ignore_ascii_case("BYBLOCK")
+            || ltype.eq_ignore_ascii_case("BYLAYER"))
     }
 
     fn flags(&self) -> i32 {
@@ -82,6 +127,27 @@ pub fn read(text: &str, unit: Option<Unit>) -> Result<(Parsed, Unit, Source), Im
         }
     }
 
+    // Calques de la table LAYER : leur type de trait.
+    let mut layers: HashMap<String, String> = HashMap::new();
+    let mut k = 0;
+    while k < pairs.len() {
+        if pairs[k] == (0, "LAYER") {
+            let (mut name, mut ltype) = ("", "");
+            k += 1;
+            while k < pairs.len() && pairs[k].0 != 0 {
+                match pairs[k].0 {
+                    2 => name = pairs[k].1,
+                    6 => ltype = pairs[k].1,
+                    _ => {}
+                }
+                k += 1;
+            }
+            layers.insert(name.to_uppercase(), ltype.to_string());
+        } else {
+            k += 1;
+        }
+    }
+
     // Les entités de la section ENTITIES, jusqu'à son ENDSEC.
     let start = pairs.iter().position(|&(c, v)| c == 2 && v == "ENTITIES");
     let mut ents: Vec<Entity> = Vec::new();
@@ -108,6 +174,7 @@ pub fn read(text: &str, unit: Option<Unit>) -> Result<(Parsed, Unit, Source), Im
         let e = &ents[i];
         i += 1;
         let mut b = Builder::new(e.ocs(m));
+        let first = out.pieces.len();
         match e.name {
             "LINE" => {
                 b.line(P::new(e.get(10), e.get(20)), P::new(e.get(11), e.get(21)));
@@ -192,6 +259,7 @@ pub fn read(text: &str, unit: Option<Unit>) -> Result<(Parsed, Unit, Source), Im
             "VERTEX" | "SEQEND" => {}
             other => out.ignore(other),
         }
+        out.mark_construction_if(first, e.construction(&layers));
     }
     Ok((out, detected.0, detected.1))
 }

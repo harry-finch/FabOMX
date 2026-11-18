@@ -13,6 +13,7 @@
   import ImportDialog from './components/ImportDialog.svelte';
   import { engine } from './lib/engine.svelte';
   import { doc } from './lib/document.svelte';
+  import { cutting } from './lib/cutting.svelte';
   import { importer } from './lib/importer.svelte';
   import { tools, type ToolId } from './lib/tools.svelte';
   import { then, translate } from './lib/affine';
@@ -38,6 +39,11 @@
     if (d) ui.toast(t('drawing.removed', { name: d.name }));
   }
 
+  // La sélection de contours vit avec l'outil Découpe et le dessin sélectionné.
+  $effect(() => {
+    if (cutting.selection && (tools.active !== 'cut' || cutting.selection.id !== doc.selected)) cutting.clear();
+  });
+
   function keydown(e: KeyboardEvent) {
     const el = e.target as HTMLElement | null;
     if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
@@ -62,8 +68,10 @@
       e.preventDefault();
       remove(doc.selected);
     } else if (e.key === 'Escape') {
-      // Échap : annuler le choix d'un point, puis désélectionner, puis revenir à Sélection.
+      // Échap : annuler le choix d'un point, vider la sélection de contours,
+      // puis désélectionner, puis revenir à Sélection.
       if (doc.picking) doc.picking = false;
+      else if (cutting.selection) cutting.clear();
       else if (doc.selected != null) doc.select(null);
       else tools.select('select');
     } else if (e.key.startsWith('Arrow') && doc.selection) {
@@ -177,6 +185,8 @@
       <dd>{t('help.keys.transform')}</dd>
       <dt><kbd>C</kbd></dt>
       <dd>{t('help.keys.clean')}</dd>
+      <dt><kbd>D</kbd></dt>
+      <dd>{t('help.keys.cut')}</dd>
       <dt><kbd>← → ↑ ↓</kbd></dt>
       <dd>{t('help.keys.nudge')}</dd>
       <dt><kbd>{t('help.del')}</kbd></dt>

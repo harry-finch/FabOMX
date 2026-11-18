@@ -25,6 +25,8 @@ export interface Report {
   warnings: ImportWarning[];
   ignored: Record<string, number>;
   traces: { open: boolean; pts: number[] }[];
+  /** Pièces proposées « Ne pas couper » d'après le fichier (pointillés, calques de construction). */
+  construction: number;
   /** Ce que « Nettoyer à l'import » a corrigé. */
   cleaned?: CleanCounts;
 }
@@ -76,4 +78,29 @@ export interface CleanPreview {
   closed: number;
   open: number;
   defects: Defect[];
+}
+
+/** Côté de coupe d'un contour : la pièce dedans, autour, fente, ou repère. */
+export type Side = 'outside' | 'inside' | 'line' | 'skip';
+
+/** Un contour mis en segments, dans le repère d'origine du dessin. */
+export interface Contour {
+  closed: boolean;
+  /** Repère d'après le fichier. */
+  construction: boolean;
+  /** Côté détecté. */
+  side: Side;
+  depth: number;
+  /** Aire signée (positive dans le sens trigonométrique) ; 0 si ouvert. */
+  area: number;
+  crossing: [number, number] | null;
+  /** `[x, y, …]` dans le sens du tracé ; un contour fermé ne répète pas le premier point. */
+  pts: number[];
+}
+
+export type CutWarning = { code: 'cut.crossing'; contour: number; x: number; y: number };
+
+export interface Sides {
+  contours: Contour[];
+  warnings: CutWarning[];
 }

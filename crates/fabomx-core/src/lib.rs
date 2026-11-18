@@ -3,6 +3,7 @@
 //! machine : origine en bas à gauche du plateau, Y vers le haut.
 
 pub mod clean;
+pub mod cut;
 pub mod drawing;
 mod dxf;
 pub mod geom;

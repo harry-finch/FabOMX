@@ -32,6 +32,9 @@ pub struct Piece {
     pub segs: Vec<Seg>,
     /// Fermée par le fichier (`Z`, drapeau de polyligne, cercle).
     pub closed: bool,
+    /// Repère ou trait de construction d'après le fichier (pointillés,
+    /// calque de construction) : proposé « Ne pas couper ».
+    pub construction: bool,
 }
 
 impl Piece {
@@ -51,6 +54,20 @@ pub struct Parsed {
 impl Parsed {
     pub fn ignore(&mut self, name: &str) {
         *self.ignored.entry(name.to_string()).or_default() += 1;
+    }
+
+    /// Comme `mark_construction`, seulement si `on`.
+    pub fn mark_construction_if(&mut self, from: usize, on: bool) {
+        if on {
+            self.mark_construction(from);
+        }
+    }
+
+    /// Marque comme repères les pièces ajoutées depuis l'indice `from`.
+    pub fn mark_construction(&mut self, from: usize) {
+        for p in &mut self.pieces[from..] {
+            p.construction = true;
+        }
     }
 }
 
@@ -134,7 +151,12 @@ impl Builder {
     pub fn finish(&mut self, kind: Kind, closed: bool, out: &mut Parsed) {
         let segs = std::mem::take(&mut self.segs);
         if !segs.is_empty() {
-            out.pieces.push(Piece { kind, segs, closed });
+            out.pieces.push(Piece {
+                kind,
+                segs,
+                closed,
+                construction: false,
+            });
         }
     }
 

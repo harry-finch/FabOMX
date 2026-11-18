@@ -2,7 +2,7 @@
 // cible, lus par la barre d'état, l'espace de travail et l'inspecteur ; les
 // lectures de fichiers passent par des promesses.
 
-import type { CleanCounts, CleanOptions, CleanPreview, ImportFailure, Placement, Report, Unit } from './types';
+import type { CleanCounts, CleanOptions, CleanPreview, ImportFailure, Placement, Report, Sides, Unit } from './types';
 import type { M } from './affine';
 
 /** Zone de coupe d'une machine, en mm, origine en bas à gauche. */
@@ -81,6 +81,16 @@ class Engine {
   /** Nettoie `geo` et range le résultat sous `next` (l'ancienne géométrie reste, pour annuler). */
   cleanApply(geo: number, opts: CleanOptions, k: number, next: number): Promise<{ report: Report; snaps: number[]; counts: CleanCounts } | { error: string }> {
     return this.#call({ kind: 'clean', geo, opts: JSON.stringify(opts), k, next });
+  }
+
+  /** Les contours de `geo` et leurs côtés détectés. */
+  sides(geo: number): Promise<Sides | { error: string }> {
+    return this.#call({ kind: 'sides', geo });
+  }
+
+  /** Les paires (indices dans `placed`) de dessins placés qui se chevauchent. */
+  overlaps(placed: { geo: number; m: M }[]): Promise<[number, number][] | { error: string }> {
+    return this.#call({ kind: 'overlaps', placed: JSON.stringify(placed) });
   }
 }
 

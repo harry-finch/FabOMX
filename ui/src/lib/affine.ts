@@ -53,3 +53,6 @@ export function angleOf(m: M): number {
 
 /** Facteur d'échelle moyen. */
 export const factorOf = (m: M) => Math.sqrt(Math.abs(m[0] * m[3] - m[1] * m[2]));
+
+/** Déterminant : négatif quand la matrice retourne le dessin (miroir). */
+export const det = (m: M) => m[0] * m[3] - m[1] * m[2];

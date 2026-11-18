@@ -87,6 +87,26 @@ fn hidden(node: roxmltree::Node) -> bool {
             .is_some_and(|s| s.replace(' ', "").contains("display:none"))
 }
 
+/// Trait en pointillés : `stroke-dasharray` (attribut ou style) autre que
+/// `none`, sur l'élément ou hérité d'un parent.
+fn dashed(node: roxmltree::Node) -> bool {
+    for n in node.ancestors().filter(|n| n.is_element()) {
+        let style = n.attribute("style").and_then(|s| {
+            s.split(';').find_map(|decl| {
+                let (k, v) = decl.split_once(':')?;
+                (k.trim() == "stroke-dasharray").then(|| v.trim())
+            })
+        });
+        if let Some(v) = style.or(n.attribute("stroke-dasharray")) {
+            let v = v.trim();
+            if v != "inherit" {
+                return !(v.is_empty() || v == "none");
+            }
+        }
+    }
+    false
+}
+
 fn walk(node: roxmltree::Node, parent: Affine, out: &mut Parsed) {
     for child in node.children().filter(|n| n.is_element()) {
         let name = child.tag_name().name();
@@ -110,7 +130,11 @@ fn walk(node: roxmltree::Node, parent: Affine, out: &mut Parsed) {
         };
         match name {
             "g" | "a" | "switch" | "svg" => walk(child, m, out),
-            _ => shape(child, m, out),
+            _ => {
+                let n = out.pieces.len();
+                shape(child, m, out);
+                out.mark_construction_if(n, dashed(child));
+            }
         }
     }
 }

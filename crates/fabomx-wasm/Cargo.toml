@@ -13,6 +13,7 @@ crate-type = ["cdylib", "rlib"]
 
 [dependencies]
 fabomx-core = { path = "../fabomx-core" }
+serde.workspace = true
 serde_json.workspace = true
 wasm-bindgen = "0.2"
 

@@ -8,7 +8,7 @@
 
 import { engine } from './engine.svelte';
 import { apply, translate, type M, type Pt } from './affine';
-import type { Placement, Report } from './types';
+import type { Placement, Report, Side } from './types';
 
 /** Point de référence : un des 9 points de la boîte (0 à 2, depuis le bas
  * gauche), ou un point du dessin d'origine, qui suit ses transformations. */
@@ -27,6 +27,10 @@ export interface Drawing {
   /** Points d'accrochage du dessin d'origine `[x, y, …]`. */
   snaps: number[];
   placement: Placement;
+  /** Côtés choisis à la main, par indice de contour ; les autres sont ceux détectés. */
+  sides: Record<number, Side>;
+  /** Un nettoyage a recalculé les côtés et fait perdre des choix faits à la main. */
+  sidesReset: boolean;
 }
 
 const HISTORY = 100;
@@ -105,7 +109,7 @@ class Doc {
     const [x0, y0, x1, y1] = report.bbox;
     const matrix = translate(bed.width / 2 - (x0 + x1) / 2, bed.height / 2 - (y0 + y1) / 2);
     const id = this.reserve();
-    const drawing: Drawing = { id, geo, name, report, matrix, ref: { kind: 'box', ix: 1, iy: 1 }, snaps, placement: roughPlacement(report, matrix) };
+    const drawing: Drawing = { id, geo, name, report, matrix, ref: { kind: 'box', ix: 1, iy: 1 }, snaps, placement: roughPlacement(report, matrix), sides: {}, sidesReset: false };
     this.#commit([...this.drawings, drawing]);
     this.selected = id;
     this.#place(drawing);
@@ -126,11 +130,25 @@ class Doc {
     if (patch.matrix) this.#place(next);
   }
 
-  /** Remplace la géométrie d'un dessin nettoyé ; la transformation est gardée. Une étape. */
+  /** Côté de coupe des contours `indices` de `id` ; `null` : revenir au côté détecté. Une étape. */
+  setSides(id: number, indices: number[], side: Side | null) {
+    const d = this.drawings.find((x) => x.id === id);
+    if (!d || !indices.length) return;
+    const sides = { ...d.sides };
+    for (const i of indices) {
+      if (side) sides[i] = side;
+      else delete sides[i];
+    }
+    this.#commit(this.drawings.map((x) => (x.id === id ? { ...d, sides, sidesReset: false } : x)));
+  }
+
+  /** Remplace la géométrie d'un dessin nettoyé ; la transformation est gardée,
+   * les côtés sont recalculés (les choix faits à la main sont perdus). Une étape. */
   replaceGeometry(id: number, geo: number, report: Report, snaps: number[]) {
     const d = this.drawings.find((x) => x.id === id);
     if (!d) return;
-    const next: Drawing = { ...d, geo, report, snaps, placement: { ...roughPlacement(report, d.matrix), warnings: d.placement.warnings } };
+    const sidesReset = Object.keys(d.sides).length > 0;
+    const next: Drawing = { ...d, geo, report, snaps, sides: {}, sidesReset, placement: { ...roughPlacement(report, d.matrix), warnings: d.placement.warnings } };
     this.#commit(this.drawings.map((x) => (x.id === id ? next : x)));
     this.#place(next);
   }

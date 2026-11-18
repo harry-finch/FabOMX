@@ -5,6 +5,7 @@
 //! pour annuler.
 
 use fabomx_core::clean::Options;
+use fabomx_core::cut::Sides;
 use fabomx_core::drawing::Parsed;
 use fabomx_core::geom::Affine;
 use fabomx_core::import::{analyze, parse, Format};
@@ -20,6 +21,8 @@ struct Stored {
     unit: Unit,
     detected: Unit,
     source: Source,
+    /// Côtés détectés, calculés à la première demande.
+    sides: Option<Sides>,
 }
 
 thread_local! {
@@ -80,6 +83,7 @@ pub fn load(geo: u32, text: &str, unit: &str, clean: &str) -> String {
                 unit: unit.unwrap_or(detected),
                 detected,
                 source,
+                sides: None,
             };
             GEOMETRIES.with(|g| g.borrow_mut().insert(geo, stored));
             out
@@ -154,9 +158,64 @@ pub fn clean_apply(geo: u32, opts: &str, k: f64, new_geo: u32) -> String {
             unit: s.unit,
             detected: s.detected,
             source: s.source,
+            sides: None,
         };
         g.insert(new_geo, stored);
         out
+    })
+}
+
+/// Les contours de `geo` et leurs côtés détectés, en JSON (repère d'origine).
+#[wasm_bindgen]
+pub fn sides(geo: u32) -> String {
+    GEOMETRIES.with(|g| {
+        let mut g = g.borrow_mut();
+        let Some(s) = g.get_mut(&geo) else {
+            return error("cut.unknown");
+        };
+        let sides = s
+            .sides
+            .get_or_insert_with(|| fabomx_core::cut::sides(&s.parsed.pieces));
+        serde_json::to_string(sides).expect("côtés sérialisables")
+    })
+}
+
+/// Les paires de dessins placés qui se chevauchent. `placed` : JSON
+/// `[{"geo": n, "m": [a, b, c, d, e, f]}, …]` ; rend `[[i, j], …]` (indices).
+#[wasm_bindgen]
+pub fn overlaps(placed: &str) -> String {
+    #[derive(serde::Deserialize)]
+    struct Placed {
+        geo: u32,
+        m: [f64; 6],
+    }
+    let Ok(list) = serde_json::from_str::<Vec<Placed>>(placed) else {
+        return error("cut.placed");
+    };
+    GEOMETRIES.with(|g| {
+        let mut g = g.borrow_mut();
+        for p in &list {
+            if let Some(s) = g.get_mut(&p.geo) {
+                s.sides
+                    .get_or_insert_with(|| fabomx_core::cut::sides(&s.parsed.pieces));
+            }
+        }
+        let contours = |geo: u32| {
+            g.get(&geo)
+                .and_then(|s| s.sides.as_ref())
+                .map(|s| &s.contours)
+        };
+        let mut out = Vec::new();
+        for i in 0..list.len() {
+            for j in i + 1..list.len() {
+                if let (Some(a), Some(b)) = (contours(list[i].geo), contours(list[j].geo)) {
+                    if fabomx_core::cut::overlap(a, Affine(list[i].m), b, Affine(list[j].m)) {
+                        out.push([i, j]);
+                    }
+                }
+            }
+        }
+        serde_json::to_string(&out).expect("paires sérialisables")
     })
 }
 
@@ -215,6 +274,27 @@ mod tests {
         assert_eq!(old["counts"]["joins"], 1);
         let new: serde_json::Value = serde_json::from_str(&clean_preview(11, &opts, 1.0)).unwrap();
         assert_eq!(new["counts"]["joins"], 0);
+    }
+
+    #[test]
+    fn sides_and_overlaps() {
+        const PLATE: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100"><rect width="100" height="100"/><circle cx="50" cy="50" r="20"/></svg>"#;
+        load(20, PLATE, "", "");
+        let s: serde_json::Value = serde_json::from_str(&sides(20)).unwrap();
+        let mut got: Vec<&str> = s["contours"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|c| c["side"].as_str().unwrap())
+            .collect();
+        got.sort();
+        assert_eq!(got, ["inside", "outside"]);
+        let err: serde_json::Value = serde_json::from_str(&sides(21)).unwrap();
+        assert_eq!(err["error"], "cut.unknown");
+        let apart = r#"[{"geo":20,"m":[1,0,0,1,0,0]},{"geo":20,"m":[1,0,0,1,200,0]}]"#;
+        assert_eq!(overlaps(apart), "[]");
+        let on = r#"[{"geo":20,"m":[1,0,0,1,0,0]},{"geo":20,"m":[1,0,0,1,50,0]}]"#;
+        assert_eq!(overlaps(on), "[[0,1]]");
     }
 
     #[test]

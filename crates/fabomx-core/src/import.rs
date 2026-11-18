@@ -107,6 +107,8 @@ pub struct Report {
     pub warnings: Vec<Warning>,
     pub ignored: BTreeMap<String, usize>,
     pub traces: Vec<Trace>,
+    /// Pièces proposées « Ne pas couper » d'après le fichier (pointillés, calques de construction).
+    pub construction: usize,
     /// Ce que « Nettoyer à l'import » a corrigé.
     #[serde(skip_serializing_if = "Option::is_none")]
     pub cleaned: Option<crate::clean::Counts>,
@@ -302,6 +304,7 @@ pub fn analyze(
         warnings,
         ignored,
         traces,
+        construction: pieces.iter().filter(|p| p.construction).count(),
         cleaned: None,
     }
 }

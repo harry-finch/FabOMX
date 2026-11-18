@@ -95,6 +95,7 @@ pub struct Preview {
 struct E {
     s: Seg,
     kind: Kind,
+    construction: bool,
 }
 
 fn reversed(s: Seg) -> Seg {
@@ -138,7 +139,11 @@ pub fn clean(pieces: &[Piece], o: &Options, k: f64) -> (Vec<Piece>, Counts, Vec<
                 collapse.push((p.segs[0].start(), p.segs[p.segs.len() - 1].end()));
             }
         } else {
-            es.extend(p.segs.iter().map(|&s| E { s, kind: p.kind }));
+            es.extend(p.segs.iter().map(|&s| E {
+                s,
+                kind: p.kind,
+                construction: p.construction,
+            }));
         }
     }
     for (a, b) in collapse {
@@ -207,7 +212,7 @@ pub fn clean(pieces: &[Piece], o: &Options, k: f64) -> (Vec<Piece>, Counts, Vec<
         }
     }
 
-    let (out, simplified) = chain(es, if o.simplify { Some(ALIGNED / k) } else { None });
+    let (out, simplified) = rechain(es, if o.simplify { Some(ALIGNED / k) } else { None });
     counts.simplified = simplified;
     (out, counts, defects)
 }
@@ -283,6 +288,7 @@ fn free_ends(es: &[E]) -> Vec<P> {
             kind: e.kind,
             segs: vec![e.s],
             closed: false,
+            construction: false,
         })
         .collect();
     Topology::build(&pieces)
@@ -314,6 +320,7 @@ fn snap_pair(es: &mut Vec<E>, a: P, b: P) {
             es.push(E {
                 s: Seg::Line { a: pa, b: pb },
                 kind: Kind::Line,
+                construction: false,
             });
             return;
         }
@@ -402,6 +409,7 @@ fn merge_overlaps(es: Vec<E>) -> (Vec<E>, usize, Vec<P>) {
                         b: a0 + dir * cur.1,
                     },
                     kind: cur.2.kind,
+                    construction: cur.2.construction,
                 });
             }
         };
@@ -471,6 +479,7 @@ fn merge_overlaps(es: Vec<E>) -> (Vec<E>, usize, Vec<P>) {
                                     sweep: l,
                                 },
                                 kind: ei.kind,
+                                construction: ei.construction,
                             },
                         );
                         iv.remove(j);
@@ -483,6 +492,30 @@ fn merge_overlaps(es: Vec<E>) -> (Vec<E>, usize, Vec<P>) {
         out.extend(iv.into_iter().map(|(_, _, e)| e));
     }
     (out, absorbed, at)
+}
+
+/// Les contours du dessin, sans rien corriger : ses segments rechaînés.
+pub(crate) fn contours(pieces: &[Piece]) -> Vec<Piece> {
+    let es = pieces
+        .iter()
+        .flat_map(|p| {
+            p.segs.iter().map(|&s| E {
+                s,
+                kind: p.kind,
+                construction: p.construction,
+            })
+        })
+        .collect();
+    rechain(es, None).0
+}
+
+/// `chain`, les repères à part : un contour est tout repère ou pas du tout.
+fn rechain(es: Vec<E>, aligned: Option<f64>) -> (Vec<Piece>, usize) {
+    let (marks, cuts): (Vec<E>, Vec<E>) = es.into_iter().partition(|e| e.construction);
+    let (mut out, n) = chain(cuts, aligned);
+    let (more, m) = chain(marks, aligned);
+    out.extend(more);
+    (out, n + m)
 }
 
 /// Rechaîne les segments en contours : un chemin entre deux nœuds qui ne
@@ -536,6 +569,7 @@ fn chain(es: Vec<E>, aligned: Option<f64>) -> (Vec<Piece>, usize) {
             segs.push(E {
                 s,
                 kind: es[i].kind,
+                construction: es[i].construction,
             });
             n = next;
             if n == start {
@@ -551,6 +585,7 @@ fn chain(es: Vec<E>, aligned: Option<f64>) -> (Vec<Piece>, usize) {
         }
     };
     let emit = |segs: Vec<E>, closed: bool, out: &mut Vec<Piece>, simplified: &mut usize| {
+        let segs_construction = segs[0].construction;
         // Plusieurs lignes ou arcs rechaînés font une polyligne ; les autres types se gardent.
         let kind = match segs[0].kind {
             Kind::Line | Kind::Arc if segs.len() > 1 => Kind::Polyline,
@@ -583,6 +618,7 @@ fn chain(es: Vec<E>, aligned: Option<f64>) -> (Vec<Piece>, usize) {
             kind,
             segs: s,
             closed,
+            construction: segs_construction,
         });
     };
     for (n, around) in adj.iter().enumerate() {
