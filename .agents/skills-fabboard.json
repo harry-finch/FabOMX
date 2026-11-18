@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "skills": {
+    "agent-learnings-manager": {
+      "fingerprint": "sha256:aebb867f055cee40dbbf2147d041332af96144c690e13e911931536678a6d4a2"
+    },
+    "cam-geometry": {
+      "fingerprint": "sha256:ca79a3db2677a8c845e2ee296b776374c0f9836f70f2aea03a1343c5a5af3df4"
+    },
+    "cam-ux-ui": {
+      "fingerprint": "sha256:a4acfb7b4a879a07bdeffc486f582fc3d1c8bb4d6ad04baa1ce8001f2bd31be8"
+    },
+    "cam-validation": {
+      "fingerprint": "sha256:0d7b098d7d7528eebcee9ef1af9ebfcf905c2aca9e6c8e683a28e06dec549b35"
+    },
+    "chef-orchestre": {
+      "fingerprint": "sha256:e73df389495e73fc485b9ec9e9db1ebd81b4ea6696f1bc4aa0236c4a13a97524"
+    },
+    "fab-cleanup": {
+      "fingerprint": "sha256:52e44aecc37d0184dc584054f77e63e5107c5028c8de363283d880b5a34b887e"
+    },
+    "fab-design-system": {
+      "fingerprint": "sha256:0a10155ebd24e93f112296153cf54d7b372003f3e3fd9eeb03fcc6501af3b94d"
+    },
+    "fab-roadmap": {
+      "fingerprint": "sha256:6d8bc477d3511d8776cc78b54e89a05ed3451f3ce468f611a0d5136c539cb816"
+    },
+    "protomax-waterjet": {
+      "fingerprint": "sha256:2c8ea52e85f75dab3669fffd0dffca95c3564f06030e37052c01511c5ec04615"
+    }
+  }
+}
