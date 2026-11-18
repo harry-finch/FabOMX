@@ -8,8 +8,8 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ## Restant à faire
 
-1. **[R-002 Redimensionner, déplacer et tourner le dessin](roadmap/items/R-002-redimensionner-deplacer-tourner-et-nettoyer-le.md)** · Idée · jalon v0.1
-   Ajuster le dessin importé : mise à l'échelle, position et rotation.
+1. **[R-002 Redimensionner, déplacer et tourner le dessin](roadmap/items/R-002-redimensionner-deplacer-tourner-et-nettoyer-le.md)** · Spécifiée · jalon v0.1
+   Déplacer, tourner, mettre à l'échelle (proportionnelle ou non) et retourner un dessin, à la souris et par valeurs, autour d'un point de référence choisi ; calcul depuis la géométrie d'origine, débord signalé.
 2. **[R-004 Nettoyer le dessin](roadmap/items/R-004-nettoyer-le-dessin.md)** · Idée · jalon v0.1
    Préparer la géométrie importée pour la découpe : fermer les contours, retirer les doublons, joindre les segments.
 3. **[R-005 Application de bureau macOS](roadmap/items/R-005-application-de-bureau-macos.md)** · Idée · jalon v0.1
