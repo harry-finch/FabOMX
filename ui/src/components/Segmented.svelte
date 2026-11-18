@@ -1,5 +1,6 @@
 <script lang="ts" generics="T extends string">
   // Groupe de boutons exclusifs (radio), compact. Navigation au clavier par flèches.
+  // `columns` : boutons en grille, pour des libellés trop longs pour une ligne.
   import { tip } from '../lib/tip';
 
   let {
@@ -7,11 +8,13 @@
     value,
     onchange,
     label,
+    columns,
   }: {
     options: { id: T; label: string; hint?: string }[];
     value: T;
     onchange: (v: T) => void;
     label: string;
+    columns?: number;
   } = $props();
 
   function key(e: KeyboardEvent, i: number) {
@@ -25,7 +28,7 @@
   }
 </script>
 
-<div class="seg" role="radiogroup" aria-label={label}>
+<div class="seg" class:grid={columns} style:grid-template-columns={columns ? `repeat(${columns}, minmax(0, 1fr))` : undefined} role="radiogroup" aria-label={label}>
   {#each options as o, i (o.id)}
     <button
       type="button"
@@ -50,6 +53,16 @@
     background: var(--segment-track);
     border: 1px solid var(--border);
     border-radius: var(--radius);
+  }
+
+  .seg.grid {
+    display: grid;
+    height: auto;
+  }
+
+  .seg.grid button {
+    min-height: calc(var(--control-h) - 6px);
+    padding: 2px var(--s1);
   }
 
   button {

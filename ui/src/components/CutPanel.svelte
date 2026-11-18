@@ -71,6 +71,7 @@
       <p class="sub">{t('cut.selected', { n: picked.length })}</p>
       <Segmented
         label={t('cut.side')}
+        columns={2}
         value={common ?? ('' as Side)}
         onchange={(side) => doc.setSides(d.id, picked, side)}
         options={options.map((id) => ({ id, label: t(`cut.sides.${id}`), hint: t(`cut.sideHints.${id}`) }))}
