@@ -10,7 +10,7 @@
     "build": "npm run wasm && vite build",
     "preview": "vite preview",
     "check": "svelte-check --tsconfig ./tsconfig.json",
-    "desktop": "cd ../crates/fabomx-desktop && npm exec --yes --package=@tauri-apps/cli@2.12.3 -- tauri build && mkdir -p ../../dist-desktop && cp target/release/bundle/dmg/*.dmg ../../dist-desktop/"
+    "desktop": "cd ../crates/fabomx-desktop && npm exec --yes --package=@tauri-apps/cli@2.12.3 -- tauri build --bundles app && rm -rf ../../dist-desktop && mkdir -p ../../dist-desktop && cp -R target/release/bundle/macos/FabOMX.app ../../dist-desktop/"
   },
   "devDependencies": {
     "@sveltejs/vite-plugin-svelte": "^7.3.1",

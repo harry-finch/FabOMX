@@ -21,10 +21,10 @@ npm run dev    # http://localhost:5177
 
 ```sh
 cd ui
-npm run desktop   # FabOMX.app et dist-desktop/FabOMX_0.1.0_aarch64.dmg
+npm run desktop   # dist-desktop/FabOMX.app
 ```
 
-Ouvrir le `.dmg` et glisser FabOMX dans Applications. La signature est locale (pas de notarisation Apple) : la première fois, clic droit sur l’application, puis Ouvrir.
+Lancer `dist-desktop/FabOMX.app` sur place, ou la copier dans Applications. La signature est locale (pas de notarisation Apple) : la première fois, clic droit sur l’application, puis Ouvrir. Pour un `.dmg` à distribuer : `tauri build` sans `--bundles app` dans `crates/fabomx-desktop`.
 
 ## Développer
 

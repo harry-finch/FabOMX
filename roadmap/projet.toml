@@ -23,7 +23,7 @@ titre = "Version 1"
 [[test]]
 type = "build"
 titre = "Application macOS"
-motif = "dist-desktop/*.dmg"
+motif = "dist-desktop/*.app"
 
 [[test]]
 type = "url"

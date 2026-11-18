@@ -50,4 +50,4 @@ Elle est dans `roadmap/` (un fichier par élément, un par action de l’utilisa
 - Moteur pour l’interface : `cd ui && npm run wasm` (wasm-pack, sortie dans `ui/src/wasm/`, hors Git).
 - Développement : `cd ui && npm run dev` → http://localhost:5177 (relancer `npm run wasm` après une modification du moteur).
 - Build : `cd ui && npm run build` (moteur compris), puis `npm run preview`.
-- Application macOS : `cd ui && npm run desktop` (Tauri, sortie copiée dans `dist-desktop/`). Le crate `fabomx-desktop` est hors du workspace : les tests ci-dessus ne le compilent pas ; le vérifier avec `cd crates/fabomx-desktop && cargo clippy --release`.
+- Application macOS : `cd ui && npm run desktop` (Tauri, `dist-desktop/FabOMX.app`, à lancer sur place ; pas de `.dmg` pour les essais). Le crate `fabomx-desktop` est hors du workspace : les tests ci-dessus ne le compilent pas ; le vérifier avec `cd crates/fabomx-desktop && cargo clippy --release`.
