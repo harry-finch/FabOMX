@@ -4,25 +4,25 @@ Objectif de FabOMX : à partir d'un dessin vectoriel (SVG ou DXF), produire un p
 
 On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la découpe et les spécificités du jet d'eau (v0.2).
 
-**Avancement : 9 livrés sur 13** (69 %)
+**Avancement : 10 livrés sur 15** (67 %)
 
 ## Restant à faire
 
-1. **[R-012 Exporter l'OMX](roadmap/items/R-012-comprendre-le-format-omx.md)** · À tester · jalon v0.2
-   Écrire le parcours en OMX à l'identique de LAYOUT (pouces, Q, côté, arcs exacts en Bow), avec la pièce à droite du jet comme la machine ; bouton d'export dans l'outil Parcours, dialogue Enregistrer dans l'application Mac, remarques listées avant l'export.
-2. **[R-007 Reconnaître des arcs dans les segments](roadmap/items/R-007-reconnaitre-des-arcs-dans-les-segments.md)** · Idée · jalon v0.2
+1. **[R-007 Reconnaître des arcs dans les segments](roadmap/items/R-007-reconnaitre-des-arcs-dans-les-segments.md)** · Idée · jalon v0.2
    Remplacer les suites de petits segments issues des courbes converties par de vrais arcs, pour un parcours de jet d'eau plus fluide.
-3. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée · jalon v0.2
+2. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée · jalon v0.2
    Marquer un trait sans traverser la plaque (gravure), dès que son code OMX est connu par un exemple de LAYOUT.
-4. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
+3. **[R-015 Onglets de maintien](roadmap/items/R-015-onglets-de-maintien.md)** · Idée · jalon v0.3
+   Laisser de petits ponts de matière (onglets) sur un contour pour que la pièce reste accrochée à la plaque pendant la coupe.
+4. **[R-016 Couper une plaque dans un coin du stock](roadmap/items/R-016-couper-une-plaque-dans-un-coin-du-stock.md)** · Idée · jalon v0.3
+   Découper une plaque dans un coin du stock sans en faire le tour complet : seuls les côtés qui ne sont pas déjà les bords du stock sont coupés. À spécifier.
+5. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
    Logo définitif de la famille Fab (tuile graphite et symbole à la couleur d'identité), à la place du logo provisoire du kit.
 
 ## Actions à faire
 
 - [ ] [A-015](roadmap/actions/A-015-fournir-un-omx-de-layout-avec-un-trait-grave.md) Fournir un OMX de LAYOUT avec un trait gravé (fournir, R-014)
 - [ ] [A-023](roadmap/actions/A-023-fournir-un-omx-de-layout-avec-une-fente.md) Fournir un OMX de LAYOUT avec une fente (fournir, R-012)
-- [ ] [A-024](roadmap/actions/A-024-ouvrir-dans-make-un-omx-exporte-par-fabomx.md) Ouvrir dans MAKE un OMX exporté par FabOMX (tester, R-012)
-- [ ] [A-025](roadmap/actions/A-025-couper-une-piece-exportee-par-fabomx-sur-la.md) Couper une pièce exportée par FabOMX sur la ProtoMAX (tester, R-012)
 
 ## Livré
 
@@ -41,6 +41,8 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ### v0.2 : Découpe jet d'eau
 
+- [R-012 Exporter l'OMX](roadmap/items/R-012-comprendre-le-format-omx.md) · livrée le 2026-11-18
+  Écrire le parcours en OMX à l'identique de LAYOUT (pouces, Q, côté, arcs exacts en Bow), avec la pièce à droite du jet comme la machine ; bouton d'export dans l'outil Parcours, dialogue Enregistrer dans l'application Mac, remarques listées avant l'export.
 - [R-011 Ordre de coupe et aperçu du parcours](roadmap/items/R-011-ordre-de-coupe-et-apercu-du-parcours.md) · livrée le 2026-11-18
   Outil Parcours : point de départ (origine, point choisi ou coordonnées) et retour, ordre automatique (contenu avant contenant, plus proche voisin) retouchable à la main, déplacements jet coupé signalés au-dessus de ce qui est découpé, bilan chiffré et lecture pas à pas.
 - [R-010 Amorces et perçages](roadmap/items/R-010-amorces-et-percages.md) · livrée le 2026-11-18

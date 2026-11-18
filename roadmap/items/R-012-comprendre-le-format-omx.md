@@ -2,11 +2,11 @@
 id: R-012
 titre: "Exporter l'OMX"
 resume: "Écrire le parcours en OMX à l'identique de LAYOUT (pouces, Q, côté, arcs exacts en Bow), avec la pièce à droite du jet comme la machine ; bouton d'export dans l'outil Parcours, dialogue Enregistrer dans l'application Mac, remarques listées avant l'export."
-statut: a-tester
+statut: livree
 jalon: v0.2
 cree: 2026-11-18
 maj: 2026-11-18
-livree:
+livree: 2026-11-18
 ---
 
 ## But
