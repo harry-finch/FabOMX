@@ -3,10 +3,10 @@ id: A-002
 type: tester
 titre: "Juger la disposition de FabOMX"
 element: R-003
-statut: a-faire
+statut: fait
 cree: 2026-11-18
 par: agent
-fait:
+fait: 2026-11-18
 ---
 
 Où : branche r-003-interface. Lancer « cd ui && npm install && npm run wasm && npm run dev », puis ouvrir http://localhost:5177 (ou le bouton « Version web » de FabBoard).

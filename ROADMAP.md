@@ -23,5 +23,4 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ## Actions à faire
 
-- [ ] [A-002](roadmap/actions/A-002-juger-la-disposition-de-fabomx.md) Juger la disposition de FabOMX (tester, R-003)
 - [ ] [A-003](roadmap/actions/A-003-valider-les-outils-de-la-palette-de-fabomx.md) Valider les outils de la palette de FabOMX (valider, R-003)
