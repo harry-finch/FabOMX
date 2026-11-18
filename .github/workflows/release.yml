@@ -49,6 +49,7 @@ jobs:
         shell: bash
         run: |
           version="${GITHUB_REF_NAME#v}"
+          version="${version%%-*}"   # v1.0.0-rc.1 → notes de 1.0.0
           {
             echo 'body<<NOTES_EOF'
             awk -v v="$version" '/^## /{p = index($0, "[" v "]") > 0; next} p' CHANGELOG.md
@@ -66,7 +67,7 @@ jobs:
           releaseBody: ${{ steps.notes.outputs.body }}
           releaseDraft: true
           prerelease: ${{ contains(github.ref_name, '-') }}
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: fabomx-${{ matrix.os }}
           path: |
