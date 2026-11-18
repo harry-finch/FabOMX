@@ -9,7 +9,7 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 ## Restant à faire
 
 1. **[R-015 Onglets de maintien](roadmap/items/R-015-onglets-de-maintien.md)** · Idée · jalon v0.3
-   Laisser de petits ponts de matière (onglets) sur un contour pour que la pièce reste accrochée à la plaque pendant la coupe.
+   Onglets sur les contours extérieurs choisis : onglet de fin sans perçage, onglets le long du contour avec arrêt du jet et reperçage dans la chute ; nombre réparti ou placés au clic ; largeur 1 mm par défaut, réglable.
 2. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
    Logo définitif de la famille Fab (tuile graphite et symbole à la couleur d'identité), à la place du logo provisoire du kit.
 3. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée
