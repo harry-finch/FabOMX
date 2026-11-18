@@ -3,10 +3,10 @@ id: A-029
 type: valider
 titre: "Juger le placement des onglets"
 element: R-015
-statut: a-faire
+statut: fait
 cree: 2026-11-18
 par: agent
-fait:
+fait: 2026-11-18
 ---
 
 Où : la même version, outil Découpe (D) puis Parcours (P).
@@ -16,3 +16,7 @@ Gestes : nombre d'onglets sur un ou plusieurs extérieurs, largeur propre (le �
 À juger : la clarté du panneau, la lisibilité des onglets sur le plateau.
 
 Réponds « validé », ou ce qu'il faut changer.
+
+## Réponse
+
+Validé.

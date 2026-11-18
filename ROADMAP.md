@@ -4,25 +4,21 @@ Objectif de FabOMX : à partir d'un dessin vectoriel (SVG ou DXF), produire un p
 
 On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la découpe et les spécificités du jet d'eau (v0.2).
 
-**Avancement : 11 livrés sur 15** (73 %)
+**Avancement : 12 livrés sur 15** (80 %)
 
 ## Restant à faire
 
-1. **[R-015 Onglets de maintien](roadmap/items/R-015-onglets-de-maintien.md)** · À tester · jalon v0.3
-   Onglets sur les contours extérieurs choisis : onglet de fin sans perçage, onglets le long du contour avec arrêt du jet et reperçage dans la chute ; nombre réparti ou placés au clic ; largeur 1 mm par défaut, réglable.
-2. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
+1. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
    Logo définitif de la famille Fab (tuile graphite et symbole à la couleur d'identité), à la place du logo provisoire du kit.
-3. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée
+2. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée
    Marquer un trait sans traverser la plaque (gravure), dès que son code OMX est connu par un exemple de LAYOUT.
-4. **[R-016 Couper une plaque dans un coin du stock](roadmap/items/R-016-couper-une-plaque-dans-un-coin-du-stock.md)** · Idée · jalon v0.3
+3. **[R-016 Couper une plaque dans un coin du stock](roadmap/items/R-016-couper-une-plaque-dans-un-coin-du-stock.md)** · Idée · jalon v0.3
    Couper une plaque dans un coin du stock sans faire le tour complet. À spécifier.
 
 ## Actions à faire
 
 - [ ] [A-015](roadmap/actions/A-015-fournir-un-omx-de-layout-avec-un-trait-grave.md) Fournir un OMX de LAYOUT avec un trait gravé (fournir, R-014)
 - [ ] [A-023](roadmap/actions/A-023-fournir-un-omx-de-layout-avec-une-fente.md) Fournir un OMX de LAYOUT avec une fente (fournir, R-012)
-- [ ] [A-028](roadmap/actions/A-028-couper-une-piece-avec-des-onglets.md) Couper une pièce avec des onglets (tester, R-015)
-- [ ] [A-029](roadmap/actions/A-029-juger-le-placement-des-onglets.md) Juger le placement des onglets (valider, R-015)
 
 ## Livré
 
@@ -53,6 +49,11 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
   Outil Découpe : pour chaque contour, Extérieur, Trou, Sur la ligne (fente) ou Ne pas couper (repère), détecté par imbrication et d'après le fichier (pointillés, calques), modifiable, avec sens de parcours fixé et croisements signalés.
 - [R-007 Reconnaître des arcs](roadmap/items/R-007-reconnaitre-des-arcs-dans-les-segments.md) · livrée le 2026-11-18
   Courbes de Bézier, splines et ellipses lues en arcs tangents à l'import ; opération « Reconnaître des arcs » au nettoyage pour les polylignes en segments ; coins vifs, lignes droites et petits détails intacts ; arcs écrits en Bow dans l'OMX.
+
+### v0.3 : Découpes avancées
+
+- [R-015 Onglets de maintien](roadmap/items/R-015-onglets-de-maintien.md) · livrée le 2026-11-18
+  Onglets sur les contours extérieurs choisis : onglet de fin sans perçage, onglets le long du contour avec arrêt du jet et reperçage dans la chute ; nombre réparti ou placés au clic ; largeur 1 mm par défaut, réglable.
 
 ## Écarté
 
