@@ -12,7 +12,6 @@
 //! `write` (de `read`) rend les exemples de LAYOUT à l'octet près ; `from_plan`
 //! écrit un parcours de FabOMX.
 
-use crate::cut::Side;
 use crate::geom::{Seg, P};
 use crate::path::{MoveKind, Plan};
 use std::f64::consts::PI;
@@ -217,14 +216,11 @@ pub fn read(text: &str) -> Result<Omx, OmxError> {
     })
 }
 
-/// Côté de décalage écrit pour un contour de côté `side` : 1 quand MAKE doit
-/// décaler la saignée (extérieur, trou : pièce à droite du jet, comme les
-/// exemples) ; 0 pour une fente, coupée sur le trait (confirmé à la coupe, A-023).
-fn offset_side(side: Option<Side>) -> u8 {
-    match side {
-        Some(Side::Outside) | Some(Side::Inside) => 1,
-        _ => 0,
-    }
+/// Côté de décalage écrit : 1 quand MAKE doit décaler la saignée (extérieur,
+/// trou, tracé ouvert d'un côté : pièce à droite du jet, comme les exemples) ;
+/// 0 pour une coupe sur le trait (confirmé à la coupe, A-023).
+fn offset_side(offset: bool) -> u8 {
+    u8::from(offset)
 }
 
 /// Un arc découpé en morceaux d'au plus un demi-tour (l'arrondi d'un tour
@@ -257,8 +253,8 @@ pub fn from_plan(plan: &Plan, date: f64, comment: &str) -> Omx {
     for m in &plan.moves {
         let (q, side) = match m.kind {
             MoveKind::Traverse => (Q_TRAVERSE, 0),
-            MoveKind::LeadIn | MoveKind::LeadOut => (Q_LEAD, offset_side(m.side)),
-            MoveKind::Cut => (m.quality.unwrap_or(3), offset_side(m.side)),
+            MoveKind::LeadIn | MoveKind::LeadOut => (Q_LEAD, offset_side(m.offset)),
+            MoveKind::Cut => (m.quality.unwrap_or(3), offset_side(m.offset)),
         };
         for s in m.segs.iter().flat_map(pieces) {
             if s.length() < 1e-9 {

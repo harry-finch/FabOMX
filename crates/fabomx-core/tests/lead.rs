@@ -23,6 +23,8 @@ fn specs(cs: &[Contour], shape: Shape) -> Vec<LeadSpec> {
             entry: None,
             tabs: Default::default(),
             tab_width: 1.0,
+            part: None,
+            extend: false,
         })
         .collect()
 }

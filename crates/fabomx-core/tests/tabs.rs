@@ -31,6 +31,8 @@ fn run(body: &str, tabs: TabSpec) -> (Vec<Contour>, Leads, Plan) {
             entry: None,
             tabs: tabs.clone(),
             tab_width: 1.0,
+            part: None,
+            extend: false,
         })
         .collect();
     let l = leads(&cs, &specs, ID);

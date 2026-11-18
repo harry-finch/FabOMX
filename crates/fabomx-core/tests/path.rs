@@ -35,6 +35,8 @@ fn drawing(body: &str) -> Drawing {
             entry: None,
             tabs: Default::default(),
             tab_width: 1.0,
+            part: None,
+            extend: false,
         })
         .collect();
     let leads = leads(&contours, &specs, ID);

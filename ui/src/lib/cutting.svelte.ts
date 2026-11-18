@@ -150,6 +150,8 @@ class Cutting {
       entry: d.entries[i] ?? null,
       tabs: d.tabs[i] ?? { kind: 'none' },
       tab_width: own.tab_width ?? this.lead.tab_width,
+      part: d.open[i]?.part ?? null,
+      extend: !!d.open[i]?.extend,
     };
   }
 

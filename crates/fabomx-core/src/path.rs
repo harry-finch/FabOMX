@@ -56,6 +56,8 @@ pub struct Move {
     pub step: Option<usize>,
     pub side: Option<Side>,
     pub quality: Option<u8>,
+    /// MAKE décale la saignée (pièce à droite du jet).
+    pub offset: bool,
     /// Segments exacts (lignes et arcs) sur le plateau ; pour l'affichage, des points `pts`.
     #[serde(rename = "pts", serialize_with = "flat")]
     pub segs: Vec<Seg>,
@@ -154,6 +156,7 @@ struct Item {
     contour: usize,
     side: Side,
     quality: Option<u8>,
+    offset: bool,
     pierce: P,
     /// Après le perçage : amorces, coupes et, aux onglets, sorties,
     /// déplacements et reperçages (sur le plateau).
@@ -191,6 +194,7 @@ fn items(jobs: &[Job]) -> Vec<Item> {
                 contour: i,
                 side,
                 quality: job.qualities.get(i).copied().flatten(),
+                offset: lead.offset,
                 pierce: at(lead.pierce),
                 moves: sequence(c, lead, job.m),
                 poly: if c.closed {
@@ -361,6 +365,7 @@ pub fn plan(jobs: &[Job], start: P, order: Option<&[(u32, usize)]>) -> Result<Pl
             step: Some(step),
             side: None,
             quality: None,
+            offset: false,
             segs: traverse,
         });
         stats.pierces += 1;
@@ -375,6 +380,7 @@ pub fn plan(jobs: &[Job], start: P, order: Option<&[(u32, usize)]>) -> Result<Pl
                 step: Some(step),
                 side: (!traverse).then_some(it.side),
                 quality: if traverse { None } else { it.quality },
+                offset: !traverse && it.offset,
                 segs: pts.clone(),
             };
             let l = mv.length();
@@ -407,6 +413,7 @@ pub fn plan(jobs: &[Job], start: P, order: Option<&[(u32, usize)]>) -> Result<Pl
             step: None,
             side: None,
             quality: None,
+            offset: false,
             segs: back,
         });
     }

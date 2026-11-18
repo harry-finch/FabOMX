@@ -9,7 +9,7 @@
 
 import { engine } from './engine.svelte';
 import { apply, translate, type M, type Pt } from './affine';
-import type { LeadShape, Placement, Report, Side, TabSpec } from './types';
+import type { LeadShape, Part, Placement, Report, Side, TabSpec } from './types';
 
 /** Point de référence : un des 9 points de la boîte (0 à 2, depuis le bas
  * gauche), ou un point du dessin d'origine, qui suit ses transformations. */
@@ -38,6 +38,8 @@ export interface Drawing {
   entries: Record<number, [number, number]>;
   /** Onglets demandés, par indice de contour (extérieurs). */
   tabs: Record<number, TabSpec>;
+  /** Tracés ouverts : côté de la pièce et amorces dans le prolongement, par indice de contour. */
+  open: Record<number, OpenOpts>;
   /** Un nettoyage a recalculé les côtés et fait perdre des choix faits à la main (côtés, qualités). */
   sidesReset: boolean;
 }
@@ -58,6 +60,12 @@ export interface Job {
 }
 
 type Snapshot = { drawings: Drawing[]; job: Job };
+
+/** Réglages d'un tracé ouvert. */
+export interface OpenOpts {
+  part?: Part;
+  extend?: boolean;
+}
 
 const HISTORY = 100;
 
@@ -137,7 +145,7 @@ class Doc {
     const [x0, y0, x1, y1] = report.bbox;
     const matrix = translate(bed.width / 2 - (x0 + x1) / 2, bed.height / 2 - (y0 + y1) / 2);
     const id = this.reserve();
-    const drawing: Drawing = { id, geo, name, report, matrix, ref: { kind: 'box', ix: 1, iy: 1 }, snaps, placement: roughPlacement(report, matrix), sides: {}, qualities: {}, leads: {}, entries: {}, tabs: {}, sidesReset: false };
+    const drawing: Drawing = { id, geo, name, report, matrix, ref: { kind: 'box', ix: 1, iy: 1 }, snaps, placement: roughPlacement(report, matrix), sides: {}, qualities: {}, leads: {}, entries: {}, tabs: {}, open: {}, sidesReset: false };
     this.#commit([...this.drawings, drawing]);
     this.selected = id;
     this.#place(drawing);
@@ -207,6 +215,34 @@ class Doc {
     this.#commit(this.drawings.map((x) => (x.id === id ? { ...d, tabs, sidesReset: false } : x)));
   }
 
+  /** Réglages des tracés ouverts `indices` de `id`, fusionnés (une valeur `undefined` revient au défaut). Une étape. */
+  setOpen(id: number, indices: number[], patch: OpenOpts) {
+    const d = this.drawings.find((x) => x.id === id);
+    if (!d || !indices.length) return;
+    const open = { ...d.open };
+    for (const i of indices) {
+      const next = Object.fromEntries(Object.entries({ ...open[i], ...patch }).filter(([, v]) => v != null && v !== false)) as OpenOpts;
+      if (Object.keys(next).length) open[i] = next;
+      else delete open[i];
+    }
+    this.#commit(this.drawings.map((x) => (x.id === id ? { ...d, open, sidesReset: false } : x)));
+  }
+
+  /** Met la pièce de l'autre côté des tracés ouverts `indices` de `id` qui en ont un. Une étape. */
+  swapParts(id: number, indices: number[]) {
+    const d = this.drawings.find((x) => x.id === id);
+    if (!d) return;
+    const open = { ...d.open };
+    let changed = false;
+    for (const i of indices) {
+      const part = open[i]?.part;
+      if (!part) continue;
+      open[i] = { ...open[i], part: part === 'left' ? 'right' : 'left' };
+      changed = true;
+    }
+    if (changed) this.#commit(this.drawings.map((x) => (x.id === id ? { ...d, open, sidesReset: false } : x)));
+  }
+
   /** Point d'entrée du contour `i` de `id` (repère d'origine) ; `null` : automatique. Une étape. */
   setEntry(id: number, i: number, at: [number, number] | null) {
     const d = this.drawings.find((x) => x.id === id);
@@ -222,8 +258,8 @@ class Doc {
   replaceGeometry(id: number, geo: number, report: Report, snaps: number[]) {
     const d = this.drawings.find((x) => x.id === id);
     if (!d) return;
-    const sidesReset = [d.sides, d.qualities, d.leads, d.entries, d.tabs].some((r) => Object.keys(r).length > 0);
-    const next: Drawing = { ...d, geo, report, snaps, sides: {}, qualities: {}, leads: {}, entries: {}, tabs: {}, sidesReset, placement: { ...roughPlacement(report, d.matrix), warnings: d.placement.warnings } };
+    const sidesReset = [d.sides, d.qualities, d.leads, d.entries, d.tabs, d.open].some((r) => Object.keys(r).length > 0);
+    const next: Drawing = { ...d, geo, report, snaps, sides: {}, qualities: {}, leads: {}, entries: {}, tabs: {}, open: {}, sidesReset, placement: { ...roughPlacement(report, d.matrix), warnings: d.placement.warnings } };
     this.#commit(this.drawings.map((x) => (x.id === id ? next : x)));
     this.#place(next);
   }

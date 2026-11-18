@@ -329,10 +329,49 @@
     s.contours.forEach((c, i) => {
       const side = cutting.sideOf(d, i);
       if (side === 'skip') return;
-      const at = arrow(ctx, d.matrix, c.pts, c.closed, reversed(side, c.area, d.matrix), colors[`cut-${side}`]);
+      const lead = ls?.leads[i];
+      if (!c.closed && d.open[i]?.part) hatch(ctx, d, c.pts, d.open[i].part === 'left', colors[`cut-${side}`]);
+      const at = arrow(ctx, d.matrix, c.pts, c.closed, lead ? lead.reversed : reversed(side, c.area, d.matrix), colors[`cut-${side}`]);
       const q = cutting.qualityOf(d, i);
       if (at && q != null) label(ctx, at, String(q), d.qualities[i] != null ? colors['ctrl-active'] : colors['ctrl']);
     });
+  }
+
+  /** Tracé ouvert d'un côté : de petites hachures du côté de la saignée (la chute).
+   * `partLeft` : la pièce est à gauche du sens dessiné (repère d'origine). */
+  function hatch(ctx: CanvasRenderingContext2D, d: Drawing, pts: number[], partLeft: boolean, color: string) {
+    const [a, b, c, dd] = d.matrix;
+    // La pièce à gauche du sens sur le plateau (un miroir inverse la gauche et la droite).
+    const pieceLeft = partLeft === a * dd - b * c > 0;
+    const STEP = 8;
+    const LEN = 7;
+    const GAP = 2;
+    let carry = STEP / 2;
+    ctx.beginPath();
+    for (let i = 2; i + 1 < pts.length; i += 2) {
+      const [x0, y0] = apply(d.matrix, pts[i - 2], pts[i - 1]);
+      const [x1, y1] = apply(d.matrix, pts[i], pts[i + 1]);
+      const [ax, ay, bx, by] = [sx(x0), sy(y0), sx(x1), sy(y1)];
+      const l = Math.hypot(bx - ax, by - ay);
+      if (l < 1e-9) continue;
+      const [ux, uy] = [(bx - ax) / l, (by - ay) / l];
+      // À l'écran (Y vers le bas), la gauche du sens sur le plateau est (uy, -ux) ;
+      // les hachures vont du côté opposé à la pièce, la chute.
+      const [nx, ny] = pieceLeft ? [-uy, ux] : [uy, -ux];
+      for (let k = carry; k <= l; k += STEP) {
+        const [px, py] = [ax + ux * k, ay + uy * k];
+        ctx.moveTo(px + nx * GAP, py + ny * GAP);
+        ctx.lineTo(px + nx * GAP + (nx - ux * 0.5) * LEN, py + ny * GAP + (ny - uy * 0.5) * LEN);
+      }
+      carry = (carry - l) % STEP;
+      if (carry < 0) carry += STEP;
+    }
+    ctx.strokeStyle = colors['ctrl-edge'];
+    ctx.lineWidth = 3;
+    ctx.stroke();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = 1.25;
+    ctx.stroke();
   }
 
   /** Les onglets d'un dessin : un petit carré sur le contour. */

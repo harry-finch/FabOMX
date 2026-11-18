@@ -8,7 +8,7 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ## Restant à faire
 
-1. **[R-017 Choisir le côté de coupe d'un tracé ouvert](roadmap/items/R-017-choisir-le-cote-de-coupe-d-un-trace-ouvert.md)** · Idée · jalon v0.3
+1. **[R-017 Choisir le côté de coupe d'un tracé ouvert](roadmap/items/R-017-choisir-le-cote-de-coupe-d-un-trace-ouvert.md)** · À tester · jalon v0.3
    Pour un tracé ouvert : sur la ligne, pièce d'un côté ou de l'autre (saignée vers la chute, côté 1 dans l'OMX, sens imposé), avec hachures sur le plateau ; amorces au choix dans le prolongement du tracé pour percer hors de la plaque.
 2. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
    Logo définitif de la famille Fab (tuile graphite et symbole à la couleur d'identité), à la place du logo provisoire du kit.
@@ -20,6 +20,8 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 ## Actions à faire
 
 - [ ] [A-015](roadmap/actions/A-015-fournir-un-omx-de-layout-avec-un-trait-grave.md) Fournir un OMX de LAYOUT avec un trait gravé (fournir, R-014)
+- [ ] [A-030](roadmap/actions/A-030-couper-une-plaque-en-deux-avec-un-trace-decale.md) Couper une plaque en deux avec un tracé décalé (tester, R-017)
+- [ ] [A-031](roadmap/actions/A-031-juger-le-choix-du-cote-d-un-trace-ouvert.md) Juger le choix du côté d'un tracé ouvert (valider, R-017)
 
 ## Livré
 

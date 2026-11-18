@@ -19,7 +19,8 @@
   import { ui } from '../lib/ui.svelte';
   import { tip } from '../lib/tip';
   import { t, type Key } from '../lib/i18n.svelte';
-  import type { LeadShape, Side, TabSpec } from '../lib/types';
+  import type { LeadShape, Part, Side, TabSpec } from '../lib/types';
+  import { ArrowLeftRight } from '@lucide/svelte';
 
   let { drawing: d }: { drawing: Drawing | null } = $props();
 
@@ -91,6 +92,14 @@
   const commonTabWidth = $derived(d && tabPicked.length && tabPicked.every((i) => cutting.spec(d, i).tab_width === cutting.spec(d, tabPicked[0]).tab_width) ? cutting.spec(d, tabPicked[0]).tab_width : null);
   const ownTabWidth = $derived(!!d && tabPicked.some((i) => d.leads[i]?.tab_width != null));
   const tabSingle = $derived(tabPicked.length === 1 && picked.length === 1 ? tabPicked[0] : null);
+  /** Tracés ouverts sélectionnés coupés (sur la ligne ou d'un côté). */
+  const openPicked = $derived(d && s ? picked.filter((i) => s.contours[i] && !s.contours[i].closed && cutting.sideOf(d, i) === 'line') : []);
+  const partOf = (i: number): Part | 'line' => d?.open[i]?.part ?? 'line';
+  const commonPart = $derived(openPicked.length && openPicked.every((i) => partOf(i) === partOf(openPicked[0])) ? partOf(openPicked[0]) : null);
+  const allExtend = $derived(!!d && openPicked.length > 0 && openPicked.every((i) => d.open[i]?.extend));
+  const partOptions = (['line', 'left', 'right'] as const).map((id) => ({ id, label: t(`cut.parts.${id}`), hint: t(`cut.partHints.${id}`) }));
+  const singleHasPart = $derived(single != null && !!d?.open[single]?.part);
+
   function setCount(n: number) {
     if (!d) return;
     const spec: TabSpec | null = n > 0 ? { kind: 'count', n: Math.round(n) } : null;
@@ -191,8 +200,25 @@
           onchange={(v) => doc.setLeads(d.id, leadPicked, { lead_out: v })}
         />
       {/if}
-      {#if leadPicked.length < picked.length}
+      {#if leadPicked.length + openPicked.filter((i) => d.open[i]?.extend).length < picked.length}
         <p class="hint">{t('cut.noLead')}</p>
+      {/if}
+      {#if openPicked.length}
+        <p class="sub">{t('cut.openCut')}</p>
+        <Segmented
+          label={t('cut.openCut')}
+          columns={1}
+          value={commonPart ?? ('' as Part)}
+          onchange={(v) => doc.setOpen(d.id, openPicked, { part: v === 'line' ? undefined : (v as Part) })}
+          options={partOptions}
+        />
+        <div class="row">
+          <button class="btn" type="button" disabled={!openPicked.some((i) => d.open[i]?.part)} use:tip={t('cut.swapPartHint')} onclick={() => doc.swapParts(d.id, openPicked)}><ArrowLeftRight size={14} /> {t('cut.swapPart')}</button>
+        </div>
+        <label class="check" use:tip={t('cut.extendHint')}>
+          <input type="checkbox" checked={allExtend} onchange={(e) => doc.setOpen(d.id, openPicked, { extend: (e.currentTarget as HTMLInputElement).checked })} />
+          {t('cut.extend')}
+        </label>
       {/if}
       <p class="sub">{t('cut.tabs')}</p>
       {#if tabPicked.length}
@@ -222,7 +248,9 @@
         <p class="hint">{t('cut.tabsOutsideOnly')}</p>
       {/if}
       <p class="sub">{t('cut.entry')}</p>
-      {#if single != null}
+      {#if singleHasPart}
+        <p class="hint">{t('cut.partEntry')}</p>
+      {:else if single != null}
         <div class="row">
           <button class="btn" class:on={cutting.pickingEntry} type="button" aria-pressed={cutting.pickingEntry} use:tip={t('cut.pickEntryHint')} onclick={() => (cutting.pickingEntry = !cutting.pickingEntry)}
             ><Crosshair size={14} /> {t(cutting.pickingEntry ? 'cut.pickingEntry' : 'cut.pickEntry')}</button
@@ -356,6 +384,19 @@
     margin-top: var(--s1);
     padding-top: var(--s3);
     border-top: 1px solid var(--divider);
+  }
+
+  .check {
+    display: flex;
+    align-items: center;
+    gap: var(--s2);
+    font-size: var(--fs-sm);
+    cursor: pointer;
+  }
+
+  .check input {
+    margin: 0;
+    accent-color: var(--accent);
   }
 
   .title {

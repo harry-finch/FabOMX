@@ -54,6 +54,8 @@ fn exported(body: &str, m: Affine, start: (f64, f64)) -> fabomx_core::omx::Omx {
             entry: None,
             tabs: Default::default(),
             tab_width: 1.0,
+            part: None,
+            extend: false,
         })
         .collect();
     let l = leads(&contours, &specs, m);

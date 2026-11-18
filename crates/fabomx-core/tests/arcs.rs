@@ -258,6 +258,8 @@ fn a_bezier_circle_is_written_in_few_omx_rows() {
             entry: None,
             tabs: Default::default(),
             tab_width: 1.0,
+            part: None,
+            extend: false,
         })
         .collect();
     let id = Affine([1.0, 0.0, 0.0, 1.0, 0.0, 0.0]);

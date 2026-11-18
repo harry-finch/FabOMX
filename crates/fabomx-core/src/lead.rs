@@ -13,7 +13,11 @@
 //! - Petit trou (l'entrée irait au-delà du centre) : perçage au centre.
 //! - Une amorce qui croise un contour coupé du dessin ou sort de la chute
 //!   est raccourcie ; sous `MIN_LEAD`, elle est signalée.
-//! - Fente ou contour coupé sur la ligne : pas d'amorce, perçage au point d'entrée.
+//! - Fente ou contour coupé sur la ligne : pas d'amorce, perçage au point
+//!   d'entrée. Un tracé ouvert peut garder la pièce d'un côté (`part`, côté
+//!   du tracé tel qu'il est dessiné) : la pièce est alors à droite du jet,
+//!   ce qui impose le sens et le bout de perçage, et MAKE décale la saignée
+//!   (`offset`). Il peut avoir des amorces dans son prolongement (`extend`).
 //! - Onglets (contours Extérieur) : l'onglet de fin arrête la coupe avant le
 //!   point d'entrée, à la largeur de l'onglet, et sort dans la chute ; un
 //!   onglet le long du contour arrête la coupe (sortie dans la chute), puis
@@ -77,6 +81,14 @@ fn tab_width() -> f64 {
     TAB_WIDTH
 }
 
+/// Côté de la pièce le long d'un tracé ouvert, par rapport à son sens dessiné.
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "lowercase")]
+pub enum Part {
+    Left,
+    Right,
+}
+
 /// Réglages d'un contour : son côté retenu, la forme et les longueurs
 /// (mm du plateau) de ses amorces, son point d'entrée choisi (origine), et
 /// ses onglets (largeur en mm du plateau).
@@ -91,6 +103,12 @@ pub struct LeadSpec {
     pub tabs: TabSpec,
     #[serde(default = "tab_width")]
     pub tab_width: f64,
+    /// Tracé ouvert : côté de la pièce (aucun = coupé sur la ligne).
+    #[serde(default)]
+    pub part: Option<Part>,
+    /// Tracé ouvert : amorces dans le prolongement du tracé.
+    #[serde(default)]
+    pub extend: bool,
 }
 
 /// Un onglet placé : son centre (origine), et l'intervalle non coupé le long
@@ -120,6 +138,8 @@ pub struct Lead {
     pub lead_out: Vec<Seg>,
     /// Parcouru à l'envers de son tracé.
     pub reversed: bool,
+    /// MAKE décale la saignée (pièce à droite du jet) : extérieur, trou, tracé ouvert d'un côté.
+    pub offset: bool,
     /// Onglets, dans l'ordre du trajet.
     pub tabs: Vec<Tab>,
 }
@@ -176,6 +196,26 @@ pub fn leads(contours: &[Contour], specs: &[LeadSpec], m: Affine) -> Leads {
         };
         let lead = match spec.side {
             Side::Skip => None,
+            Side::Line if !c.closed => {
+                let ctx = Ctx {
+                    entry: P::new(f64::NAN, f64::NAN),
+                    polys: &polys,
+                    closed: &closed_of,
+                    obstacles: &obstacles,
+                    own: i,
+                    hole: false,
+                    open: true,
+                };
+                let (lead, short) = open(c, &spec, m, k, &ctx);
+                if short {
+                    out.warnings.push(LeadWarning::TooShort {
+                        contour: i,
+                        x: lead.entry[0],
+                        y: lead.entry[1],
+                    });
+                }
+                Some(lead)
+            }
             Side::Line => Some(on_line(c, &polys[i], &spec, m)),
             Side::Outside | Side::Inside if c.closed => {
                 let ctx = Ctx {
@@ -185,6 +225,7 @@ pub fn leads(contours: &[Contour], specs: &[LeadSpec], m: Affine) -> Leads {
                     obstacles: &obstacles,
                     own: i,
                     hole: spec.side == Side::Inside,
+                    open: false,
                 };
                 let (mut lead, short) = closed(c, &polys[i], &spec, m, k, &ctx);
                 if short {
@@ -227,8 +268,51 @@ fn on_line(c: &Contour, poly: &[P], spec: &LeadSpec, m: Affine) -> Lead {
         lead_in: Vec::new(),
         lead_out: Vec::new(),
         reversed: rev,
+        offset: false,
         tabs: Vec::new(),
     }
+}
+
+/// Tracé ouvert coupé sur la ligne ou d'un côté, avec ou sans amorces dans
+/// son prolongement.
+fn open(c: &Contour, spec: &LeadSpec, m: Affine, k: f64, ctx: &Ctx) -> (Lead, bool) {
+    let mut lead = on_line(c, &c.points(), spec, m);
+    if let Some(part) = spec.part {
+        // La pièce à droite du jet, sur le plateau : un miroir inverse les côtés.
+        lead.reversed = (part == Part::Left) != (m.det() < 0.0);
+        lead.offset = true;
+    }
+    let route = route(c, &lead);
+    let (Some(first), Some(last)) = (route.first(), route.last()) else {
+        return (lead, false);
+    };
+    let start = first.start();
+    lead.entry = [start.x, start.y];
+    lead.pierce = lead.entry;
+    if !spec.extend {
+        return (lead, false);
+    }
+    let total = length(&route);
+    let (_, t0) = at_length(&route, 0.0);
+    let (end, t1) = (last.end(), at_length(&route, total).1);
+    let min = MIN_LEAD / k;
+    let (lead_in, short_in) = shrink(
+        &Ctx {
+            entry: start,
+            ..*ctx
+        },
+        spec.lead_in / k,
+        min,
+        &|l| line_in(start, t0 * -1.0, l),
+    );
+    let (lead_out, short_out) = shrink(&Ctx { entry: end, ..*ctx }, spec.lead_out / k, min, &|l| {
+        line_out(end, t1, l)
+    });
+    let pierce = lead_in.first().map_or(start, Seg::start);
+    lead.pierce = [pierce.x, pierce.y];
+    lead.lead_in = lead_in;
+    lead.lead_out = lead_out;
+    (lead, short_in || short_out)
 }
 
 #[derive(Clone, Copy)]
@@ -242,12 +326,14 @@ struct Ctx<'a> {
     obstacles: &'a [usize],
     own: usize,
     hole: bool,
+    /// Tracé ouvert : pas de dedans ni de dehors, seuls les croisements comptent.
+    open: bool,
 }
 
 impl Ctx<'_> {
     /// Le point `p` est-il dans la chute du contour ?
     fn scrap(&self, p: P) -> bool {
-        inside(p, &self.polys[self.own]) == self.hole
+        self.open || inside(p, &self.polys[self.own]) == self.hole
     }
 
     /// Les segments de `segs` restent-ils dans la chute, sans croiser de contour coupé ?
@@ -540,6 +626,7 @@ fn closed(c: &Contour, poly: &[P], spec: &LeadSpec, m: Affine, k: f64, ctx: &Ctx
             lead_in,
             lead_out,
             reversed: rev,
+            offset: true,
             tabs: Vec::new(),
         },
         short_in || short_out,

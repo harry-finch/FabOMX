@@ -122,7 +122,13 @@ export interface LeadSpec {
   entry: [number, number] | null;
   tabs: TabSpec;
   tab_width: number;
+  /** Tracé ouvert : côté de la pièce par rapport au sens dessiné ; `null` : sur la ligne. */
+  part: Part | null;
+  /** Tracé ouvert : amorces dans le prolongement. */
+  extend: boolean;
 }
+
+export type Part = 'left' | 'right';
 
 /** Un onglet placé (repère d'origine) : centre, onglet de fin ou non, sortie et reprise `[x, y, …]`. */
 export interface Tab {
@@ -141,6 +147,8 @@ export interface Lead {
   lead_in: number[];
   lead_out: number[];
   reversed: boolean;
+  /** MAKE décale la saignée (pièce à droite du jet). */
+  offset: boolean;
   tabs: Tab[];
 }
 
@@ -159,6 +167,7 @@ export interface Move {
   step: number | null;
   side: Side | null;
   quality: number | null;
+  offset: boolean;
   pts: number[];
 }
 
