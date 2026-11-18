@@ -1,8 +1,8 @@
 // Application de bureau FabOMX : l'interface (`ui/dist`) et son moteur
 // WebAssembly dans une fenêtre, le dialogue Ouvrir natif, les fichiers
 // récents (10, dans le dossier de configuration de l'application), le
-// dialogue Enregistrer de l'OMX et le
-// menu macOS, en français ou en anglais selon la langue de l'interface.
+// dialogue Enregistrer de l'OMX et le menu macOS, en français ou en anglais
+// selon la langue de l'interface.
 // Les choix du menu sont envoyés à l'interface par l'événement `menu`.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
