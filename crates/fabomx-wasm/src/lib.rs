@@ -219,6 +219,32 @@ pub fn overlaps(placed: &str) -> String {
     })
 }
 
+/// Les amorces et perçages des contours de `geo`, placée par la matrice `m`.
+/// `specs` : JSON `[{"side", "shape", "lead_in", "lead_out", "entry"}, …]`,
+/// un par contour (longueurs en mm du plateau, `entry` en repère d'origine
+/// ou `null`). Rend `{"leads": [...], "warnings": [...]}` (repère d'origine).
+#[wasm_bindgen]
+pub fn leads(geo: u32, m: &[f64], specs: &str) -> String {
+    let Ok(specs) = serde_json::from_str::<Vec<fabomx_core::lead::LeadSpec>>(specs) else {
+        return error("lead.specs");
+    };
+    let [a, b, c, d, e, f] = m else {
+        return error("lead.matrix");
+    };
+    GEOMETRIES.with(|g| {
+        let mut g = g.borrow_mut();
+        let Some(s) = g.get_mut(&geo) else {
+            return error("lead.unknown");
+        };
+        let sides = s
+            .sides
+            .get_or_insert_with(|| fabomx_core::cut::sides(&s.parsed.pieces));
+        let out =
+            fabomx_core::lead::leads(&sides.contours, &specs, Affine([*a, *b, *c, *d, *e, *f]));
+        serde_json::to_string(&out).expect("amorces sérialisables")
+    })
+}
+
 /// Machine cible (zone de coupe en mm), en JSON.
 #[wasm_bindgen]
 pub fn machine() -> String {
@@ -295,6 +321,27 @@ mod tests {
         assert_eq!(overlaps(apart), "[]");
         let on = r#"[{"geo":20,"m":[1,0,0,1,0,0]},{"geo":20,"m":[1,0,0,1,50,0]}]"#;
         assert_eq!(overlaps(on), "[[0,1]]");
+    }
+
+    #[test]
+    fn leads_for_a_plate() {
+        const PLATE: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100"><rect width="100" height="100"/><circle cx="50" cy="50" r="20"/></svg>"#;
+        load(30, PLATE, "", "");
+        let s: serde_json::Value = serde_json::from_str(&sides(30)).unwrap();
+        let specs: Vec<serde_json::Value> = s["contours"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .map(|c| serde_json::json!({ "side": c["side"], "shape": "line", "lead_in": 3.8, "lead_out": 1.3, "entry": null }))
+            .collect();
+        let specs = serde_json::to_string(&specs).unwrap();
+        let l: serde_json::Value =
+            serde_json::from_str(&leads(30, &[1.0, 0.0, 0.0, 1.0, 0.0, 0.0], &specs)).unwrap();
+        assert_eq!(l["leads"].as_array().unwrap().len(), 2);
+        assert!(l["leads"][0]["lead_in"].as_array().unwrap().len() >= 4);
+        let err: serde_json::Value =
+            serde_json::from_str(&leads(31, &[1.0, 0.0, 0.0, 1.0, 0.0, 0.0], &specs)).unwrap();
+        assert_eq!(err["error"], "lead.unknown");
     }
 
     #[test]

@@ -8,7 +8,7 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ## Restant à faire
 
-1. **[R-010 Amorces et perçages](roadmap/items/R-010-amorces-et-percages.md)** · Idée · jalon v0.2
+1. **[R-010 Amorces et perçages](roadmap/items/R-010-amorces-et-percages.md)** · À tester · jalon v0.2
    Amorces d'entrée et de sortie (droites ou en arc, longueurs par défaut ou par contour) et point de perçage dans la chute, placées sur un coin ou à la main ; petit trou percé au centre, amorce raccourcie ou signalée quand elle ne tient pas.
 2. **[R-011 Ordre de coupe et aperçu du parcours](roadmap/items/R-011-ordre-de-coupe-et-apercu-du-parcours.md)** · Idée · jalon v0.2
    Calculer l'ordre de coupe (trous avant l'extérieur, déplacements courts) et montrer le parcours complet : coupes, déplacements jet coupé, perçages.
@@ -26,6 +26,8 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 ## Actions à faire
 
 - [ ] [A-015](roadmap/actions/A-015-fournir-un-omx-de-layout-avec-un-trait-grave.md) Fournir un OMX de LAYOUT avec un trait gravé (fournir, R-014)
+- [ ] [A-018](roadmap/actions/A-018-verifier-les-amorces-sur-tes-vrais-dessins.md) Vérifier les amorces sur tes vrais dessins (tester, R-010)
+- [ ] [A-019](roadmap/actions/A-019-juger-les-reglages-d-amorce-et-le-choix-du-point.md) Juger les réglages d'amorce et le choix du point d'entrée (valider, R-010)
 
 ## Livré
 

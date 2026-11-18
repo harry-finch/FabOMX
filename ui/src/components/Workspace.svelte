@@ -19,7 +19,10 @@
   // Outil Découpe : chaque contour à la couleur de son côté (repères en
   // pointillés), une flèche pour son sens de parcours, les croisements
   // marqués ; un clic choisit un contour, Maj + clic en ajoute ou en retire
-  // un ; un dessin qui en chevauche un autre a sa boîte en attention.
+  // un ; un dessin qui en chevauche un autre a sa boîte en attention. Les
+  // amorces en trait fin de la couleur du contour, le perçage d'un petit
+  // cercle ; « Choisir le point d'entrée » : le clic suivant sur le contour
+  // sélectionné le place, accroché aux coins et aux extrémités.
   import { untrack } from 'svelte';
   import { theme } from '../lib/theme.svelte';
   import { tools } from '../lib/tools.svelte';
@@ -284,6 +287,29 @@
       ctx.stroke();
     }
     ctx.setLineDash([]);
+    const ls = cutting.leads(d);
+    ls?.leads.forEach((l, i) => {
+      if (!l) return;
+      const color = colors[`cut-${cutting.sideOf(d, i)}`];
+      ctx.beginPath();
+      if (l.lead_in.length) tracePath(ctx, d.matrix, l.lead_in);
+      if (l.lead_out.length) tracePath(ctx, d.matrix, l.lead_out);
+      ctx.strokeStyle = colors['ctrl-edge'];
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.25;
+      ctx.stroke();
+      const [px, py] = apply(d.matrix, l.pierce[0], l.pierce[1]);
+      ctx.beginPath();
+      ctx.arc(sx(px), sy(py), 3, 0, Math.PI * 2);
+      ctx.strokeStyle = colors['ctrl-edge'];
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.strokeStyle = color;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    });
     s.contours.forEach((c, i) => {
       const side = cutting.sideOf(d, i);
       if (side === 'skip') return;
@@ -348,7 +374,7 @@
 
   /** Outil Découpe : les croisements du dessin sélectionné, celui montré en accent. */
   function drawCrossings(ctx: CanvasRenderingContext2D, d: Drawing) {
-    for (const w of cutting.sides(d)?.warnings ?? []) {
+    for (const w of [...(cutting.sides(d)?.warnings ?? []), ...(cutting.leads(d)?.warnings ?? [])]) {
       const [wx, wy] = apply(d.matrix, w.x, w.y);
       const f = cutting.focused;
       const on = f?.id === d.id && f.x === w.x && f.y === w.y;
@@ -441,6 +467,53 @@
     return null;
   }
 
+  /** Point d'entrée du contour `i` choisi par un clic : un coin ou une extrémité à HIT px près, sinon le point le plus proche du trait. */
+  function pickEntry(d: Drawing, i: number, px: number, py: number) {
+    const c = cutting.sides(d)?.contours[i];
+    if (!c) return;
+    const n = c.pts.length / 2;
+    const at = (k: number): Pt => [c.pts[2 * (((k % n) + n) % n)], c.pts[2 * (((k % n) + n) % n) + 1]];
+    const scr = (p: Pt): Pt => {
+      const [x, y] = apply(d.matrix, p[0], p[1]);
+      return [sx(x), sy(y)];
+    };
+    const corner = (k: number) => {
+      if (!c.closed && (k === 0 || k === n - 1)) return true;
+      if (!c.closed) return false;
+      const [a, b, e] = [at(k - 1), at(k), at(k + 1)];
+      const [ux, uy, vx, vy] = [b[0] - a[0], b[1] - a[1], e[0] - b[0], e[1] - b[1]];
+      const cos = (ux * vx + uy * vy) / (Math.hypot(ux, uy) * Math.hypot(vx, vy) || 1);
+      return Math.acos(Math.max(-1, Math.min(1, cos))) >= Math.PI / 6;
+    };
+    let best: { p: Pt; k: number } | null = null;
+    for (let k = 0; k < n; k++) {
+      if (!corner(k)) continue;
+      const [x, y] = scr(at(k));
+      const dist = Math.hypot(x - px, y - py);
+      if (dist <= HIT && (!best || dist < best.k)) best = { p: at(k), k: dist };
+    }
+    let chosen = best?.p ?? null;
+    if (!chosen) {
+      // Le point du trait le plus proche, à l'écran, ramené dans le repère d'origine.
+      let near = { k: Infinity, p: at(0) };
+      const edges = c.closed ? n : n - 1;
+      for (let k = 0; k < edges; k++) {
+        const [a, b] = [at(k), at(k + 1)];
+        const [ax, ay] = scr(a);
+        const [bx, by] = scr(b);
+        const [vx, vy] = [bx - ax, by - ay];
+        const l2 = vx * vx + vy * vy;
+        const t = l2 > 0 ? Math.max(0, Math.min(1, ((px - ax) * vx + (py - ay) * vy) / l2)) : 0;
+        const dist = Math.hypot(ax + vx * t - px, ay + vy * t - py);
+        if (dist < near.k) near = { k: dist, p: [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t] };
+      }
+      if (near.k > HIT) return;
+      chosen = near.p;
+    }
+    doc.setEntry(d.id, i, chosen);
+    cutting.pickingEntry = false;
+  }
+
   /** Le dessin sous le point d'écran (px, py), le plus récent d'abord. */
   function hit(px: number, py: number): number | null {
     const near = (d: Drawing) => d.report.traces.some(({ pts }) => distance(d.matrix, pts, false, px, py) <= HIT);
@@ -481,7 +554,7 @@
   });
 
   $effect(() => {
-    void [view, width, height, machine, drawings, selected, tools.active, doc.lock, cleaning.preview, cleaning.focused, cutting.byGeo, cutting.selection, cutting.overlaps, cutting.focused, cutting.quality];
+    void [view, width, height, machine, drawings, selected, tools.active, doc.lock, cleaning.preview, cleaning.focused, cutting.byGeo, cutting.selection, cutting.overlaps, cutting.focused, cutting.quality, cutting.leadsOf, cutting.pickingEntry];
     zoom = view.s / PX_PER_MM;
     request();
   });
@@ -549,6 +622,7 @@
         const h = handles(sel).find((h) => Math.abs(sx(h.x) - px) <= HIT && Math.abs(sy(h.y) - py) <= HIT);
         if (h) return start(e, 'scale', sel, h.hx, h.hy);
       }
+      if (tool === 'cut' && cutting.pickingEntry && sel && cutting.selection?.contours.length === 1) return pickEntry(sel, cutting.selection.contours[0], px, py);
       if (tool === 'cut') {
         const c = hitContour(px, py);
         if (!c) {
@@ -631,7 +705,7 @@
   }
 
   const cursor = $derived(
-    doc.picking ? 'crosshair' : tools.active === 'move' || gesture?.kind === 'move' ? 'move' : tools.active === 'rotate' && selected != null ? 'alias' : undefined,
+    doc.picking || cutting.pickingEntry ? 'crosshair' : tools.active === 'move' || gesture?.kind === 'move' ? 'move' : tools.active === 'rotate' && selected != null ? 'alias' : undefined,
   );
 </script>
 

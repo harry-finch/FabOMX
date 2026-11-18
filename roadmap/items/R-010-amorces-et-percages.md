@@ -2,7 +2,7 @@
 id: R-010
 titre: "Amorces et perçages"
 resume: "Amorces d'entrée et de sortie (droites ou en arc, longueurs par défaut ou par contour) et point de perçage dans la chute, placées sur un coin ou à la main ; petit trou percé au centre, amorce raccourcie ou signalée quand elle ne tient pas."
-statut: idee
+statut: a-tester
 jalon: v0.2
 cree: 2026-11-18
 maj: 2026-11-18
@@ -21,7 +21,7 @@ Le jet ne doit pas percer sur le trait de la pièce : le perçage fait un trou p
   - la chute est dehors pour un Extérieur, dedans pour un Trou ;
   - le sens de parcours est celui de l'outil Découpe et suivra son inversion prévue avec R-012.
 - **Forme** :
-  - **droite par défaut**, comme LAYOUT. À un coin, l'entrée prolonge le premier segment quand ce prolongement est dans la chute ; sinon elle arrive perpendiculairement au contour, ou le long de la bissectrice du coin. La sortie est perpendiculaire ;
+  - **droite par défaut**, comme LAYOUT. À un coin, l'entrée prolonge le premier segment quand ce prolongement est dans la chute ; sinon elle arrive le long de la bissectrice du coin, ou perpendiculairement au contour. La sortie prolonge de même le dernier segment à un coin, sinon elle est perpendiculaire, comme dans l'exemple `rectangle` de LAYOUT ;
   - **en option, en arc** : un quart de cercle tangent au contour, de la longueur réglée.
 - **Longueurs** : entrée 3,8 mm et sortie 1,3 mm par défaut, les valeurs des exemples LAYOUT. Elles sont réglables de 0,5 à 20 mm, en mm du plateau quelle que soit l'échelle du dessin.
 - **Réglages** :

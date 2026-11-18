@@ -5,25 +5,37 @@
   // le plateau, Maj + clic pour en ajouter, ⌘A pour tous) et le retour au
   // côté détecté ou à la qualité par défaut, puis les avertissements :
   // contours qui se croisent (un clic centre la vue) et dessins qui se
-  // chevauchent. Un changement de côté ou de qualité est une étape.
-  import { CircleCheck, ListChecks, RotateCcw, TriangleAlert } from '@lucide/svelte';
+  // chevauchent. Amorces : forme et longueurs des contours sélectionnés, et
+  // le point d'entrée d'un contour seul, choisi sur le plateau. En bas, les
+  // réglages par défaut du poste (qualité, amorces). Un changement sur des
+  // contours est une étape ; un réglage par défaut n'en est pas une.
+  import { CircleCheck, Crosshair, ListChecks, RotateCcw, TriangleAlert } from '@lucide/svelte';
+  import NumField from './NumField.svelte';
   import Section from './Section.svelte';
   import Segmented from './Segmented.svelte';
-  import { cutting, allowed, QUALITIES } from '../lib/cutting.svelte';
+  import { cutting, allowed, QUALITIES, LEAD_MIN, LEAD_MAX } from '../lib/cutting.svelte';
   import { doc, type Drawing } from '../lib/document.svelte';
-  import { num } from '../lib/format';
+  import { fmtLen, num } from '../lib/format';
+  import { ui } from '../lib/ui.svelte';
   import { tip } from '../lib/tip';
   import { t, type Key } from '../lib/i18n.svelte';
-  import type { Side } from '../lib/types';
+  import type { LeadShape, Side } from '../lib/types';
 
   let { drawing: d }: { drawing: Drawing | null } = $props();
 
   const SIDES: Side[] = ['outside', 'inside', 'line', 'skip'];
 
   // Les contours de tous les dessins (pour les couleurs du plateau), et les
-  // chevauchements, recalculés un peu après le dernier changement.
+  // chevauchements, recalculés un peu après le dernier changement ; les
+  // amorces de chaque dessin quand ce qui les produit change.
   $effect(() => {
     cutting.ensure(doc.drawings);
+  });
+  $effect(() => {
+    const list = doc.drawings;
+    void [cutting.byGeo, cutting.lead.shape, cutting.lead.lead_in, cutting.lead.lead_out];
+    const timer = setTimeout(() => list.forEach((x) => cutting.refreshLeads(x)), 60);
+    return () => clearTimeout(timer);
   });
   $effect(() => {
     const list = doc.drawings;
@@ -57,6 +69,20 @@
       : [],
   );
   const qualityOptions = QUALITIES.map((q) => ({ id: String(q), label: String(q), hint: t(`cut.qualityHints.${q}` as Key) }));
+  /** Contours sélectionnés qui ont des amorces : fermés, extérieur ou trou. */
+  const leadPicked = $derived(
+    d && s ? picked.filter((i) => s.contours[i]?.closed && ['outside', 'inside'].includes(cutting.sideOf(d, i))) : [],
+  );
+  const specs = $derived(d ? leadPicked.map((i) => cutting.spec(d, i)) : []);
+  const same = <K extends 'shape' | 'lead_in' | 'lead_out'>(k: K) => (specs.length && specs.every((x) => x[k] === specs[0][k]) ? specs[0][k] : null);
+  const commonShape = $derived(same('shape'));
+  const commonIn = $derived(same('lead_in'));
+  const commonOut = $derived(same('lead_out'));
+  const own = (k: 'shape' | 'lead_in' | 'lead_out') => !!d && leadPicked.some((i) => d.leads[i]?.[k] != null);
+  const ownLeads = $derived(!!d && leadPicked.some((i) => d.leads[i] != null));
+  const shapeOptions = (['line', 'arc'] as LeadShape[]).map((id) => ({ id, label: t(`cut.shapes.${id}`), hint: t(`cut.shapeHints.${id}`) }));
+  const single = $derived(d && picked.length === 1 && cutting.sideOf(d, picked[0]) !== 'skip' ? picked[0] : null);
+  const leadWarnings = $derived(d ? (cutting.leads(d)?.warnings ?? []) : []);
   const crossings = $derived(s?.warnings ?? []);
   const overlaps = $derived(
     d
@@ -121,12 +147,62 @@
       {:else}
         <p class="hint">{t('cut.noQuality')}</p>
       {/if}
+
+      <p class="sub">{t('cut.leads')}</p>
+      {#if leadPicked.length}
+        <Segmented label={t('cut.leadShape')} value={commonShape ?? ('' as LeadShape)} onchange={(shape) => doc.setLeads(d.id, leadPicked, { shape })} options={shapeOptions} />
+        <NumField
+          label={t('cut.leadIn')}
+          value={commonIn ?? cutting.lead.lead_in}
+          min={LEAD_MIN}
+          max={LEAD_MAX}
+          decimals={2}
+          step={0.1}
+          hint={t('cut.leadInHint')}
+          modified={own('lead_in')}
+          onreset={() => doc.setLeads(d.id, leadPicked, { lead_in: undefined })}
+          resetHint={t('cut.defaultHint', { v: fmtLen(cutting.lead.lead_in, ui.units, 2) })}
+          onchange={(v) => doc.setLeads(d.id, leadPicked, { lead_in: v })}
+        />
+        <NumField
+          label={t('cut.leadOut')}
+          value={commonOut ?? cutting.lead.lead_out}
+          min={LEAD_MIN}
+          max={LEAD_MAX}
+          decimals={2}
+          step={0.1}
+          hint={t('cut.leadOutHint')}
+          modified={own('lead_out')}
+          onreset={() => doc.setLeads(d.id, leadPicked, { lead_out: undefined })}
+          resetHint={t('cut.defaultHint', { v: fmtLen(cutting.lead.lead_out, ui.units, 2) })}
+          onchange={(v) => doc.setLeads(d.id, leadPicked, { lead_out: v })}
+        />
+      {/if}
+      {#if leadPicked.length < picked.length}
+        <p class="hint">{t('cut.noLead')}</p>
+      {/if}
+      <p class="sub">{t('cut.entry')}</p>
+      {#if single != null}
+        <div class="row">
+          <button class="btn" class:on={cutting.pickingEntry} type="button" aria-pressed={cutting.pickingEntry} use:tip={t('cut.pickEntryHint')} onclick={() => (cutting.pickingEntry = !cutting.pickingEntry)}
+            ><Crosshair size={14} /> {t(cutting.pickingEntry ? 'cut.pickingEntry' : 'cut.pickEntry')}</button
+          >
+          <button class="btn" type="button" disabled={d.entries[single] == null} use:tip={t('cut.autoEntryHint')} onclick={() => doc.setEntry(d.id, single, null)}
+            ><RotateCcw size={14} /> {t('cut.autoEntry')}</button
+          >
+        </div>
+      {:else}
+        <p class="hint">{t('cut.oneForEntry')}</p>
+      {/if}
       <div class="row">
         <button class="btn" type="button" disabled={!manual} use:tip={t('cut.autoHint')} onclick={() => doc.setSides(d.id, picked, null)}
           ><RotateCcw size={14} /> {t('cut.auto')}</button
         >
         <button class="btn" type="button" disabled={!ownQuality} use:tip={t('cut.useDefaultHint')} onclick={() => doc.setQualities(d.id, cutPicked, null)}
           ><RotateCcw size={14} /> {t('cut.useDefault')}</button
+        >
+        <button class="btn" type="button" disabled={!ownLeads} use:tip={t('cut.useDefaultLeadsHint')} onclick={() => doc.setLeads(d.id, leadPicked, null)}
+          ><RotateCcw size={14} /> {t('cut.useDefaultLeads')}</button
         >
       </div>
     {:else}
@@ -142,8 +218,13 @@
     <p class="hint">{t('cut.direction')}</p>
 
     <p class="sub">{t('cut.warnings')}</p>
-    {#if crossings.length || overlaps.length}
+    {#if crossings.length || overlaps.length || leadWarnings.length}
       <ul class="warnings">
+        {#each leadWarnings as w, n (n)}
+          <li>
+            <button type="button" onclick={() => cutting.focus(d.id, w.x, w.y)}>{t('cut.tooShort')} {n + 1}</button>
+          </li>
+        {/each}
         {#each crossings as w, n (n)}
           <li>
             <button type="button" onclick={() => cutting.focus(d.id, w.x, w.y)}>{t('cut.crossing')} {n + 1}</button>
@@ -158,9 +239,14 @@
     {/if}
   {/if}
   <div class="defaults">
+    <p class="title">{t('cut.defaults')}</p>
     <p class="sub">{t('cut.defaultQuality')}</p>
     <Segmented label={t('cut.defaultQuality')} value={String(cutting.quality)} onchange={(q) => cutting.setDefault(Number(q))} options={qualityOptions} />
-    <p class="hint">{t('cut.defaultQualityHint')}</p>
+    <p class="sub">{t('cut.leadShape')}</p>
+    <Segmented label={t('cut.leadShape')} value={cutting.lead.shape} onchange={(shape) => cutting.setLeadDefaults({ shape })} options={shapeOptions} />
+    <NumField label={t('cut.leadIn')} value={cutting.lead.lead_in} min={LEAD_MIN} max={LEAD_MAX} decimals={2} step={0.1} hint={t('cut.leadInHint')} onchange={(v) => cutting.setLeadDefaults({ lead_in: v })} />
+    <NumField label={t('cut.leadOut')} value={cutting.lead.lead_out} min={LEAD_MIN} max={LEAD_MAX} decimals={2} step={0.1} hint={t('cut.leadOutHint')} onchange={(v) => cutting.setLeadDefaults({ lead_out: v })} />
+    <p class="hint">{t('cut.defaultsHint')}</p>
   </div>
 </Section>
 
@@ -229,6 +315,18 @@
     margin-top: var(--s1);
     padding-top: var(--s3);
     border-top: 1px solid var(--divider);
+  }
+
+  .title {
+    margin: 0;
+    color: var(--text-primary);
+    font-size: var(--fs-sm);
+    font-weight: 600;
+  }
+
+  .btn.on {
+    border-color: var(--accent);
+    color: var(--accent-text);
   }
 
   .row {

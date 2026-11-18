@@ -49,7 +49,7 @@ pub struct Contour {
 }
 
 impl Contour {
-    fn points(&self) -> Vec<P> {
+    pub(crate) fn points(&self) -> Vec<P> {
         self.pts.chunks(2).map(|c| P::new(c[0], c[1])).collect()
     }
 }
@@ -325,7 +325,7 @@ fn crossings(edges: &mut [Edge], skip: &dyn Fn(&Edge, &Edge) -> bool) -> Vec<(us
 }
 
 /// Point de croisement de [a, b] et [c, d], s'il est à l'intérieur des deux.
-fn proper(a: P, b: P, c: P, d: P) -> Option<P> {
+pub(crate) fn proper(a: P, b: P, c: P, d: P) -> Option<P> {
     let r = b - a;
     let s = d - c;
     let den = r.x * s.y - r.y * s.x;
@@ -340,7 +340,7 @@ fn proper(a: P, b: P, c: P, d: P) -> Option<P> {
     (t > EPS && t < 1.0 - EPS && u > EPS && u < 1.0 - EPS).then(|| a + r * t)
 }
 
-fn area(pts: &[P]) -> f64 {
+pub(crate) fn area(pts: &[P]) -> f64 {
     let n = pts.len();
     (0..n)
         .map(|i| {
@@ -374,7 +374,7 @@ fn sample(pts: &[P]) -> P {
 }
 
 /// Le point `q` est-il dans le polygone `poly` (pair-impair) ?
-fn inside(q: P, poly: &[P]) -> bool {
+pub(crate) fn inside(q: P, poly: &[P]) -> bool {
     let n = poly.len();
     let mut on = false;
     for i in 0..n {

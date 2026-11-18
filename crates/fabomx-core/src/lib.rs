@@ -8,6 +8,7 @@ pub mod drawing;
 mod dxf;
 pub mod geom;
 pub mod import;
+pub mod lead;
 pub mod machine;
 pub mod place;
 mod svg;

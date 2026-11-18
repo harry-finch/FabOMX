@@ -2,7 +2,7 @@
 // cible, lus par la barre d'état, l'espace de travail et l'inspecteur ; les
 // lectures de fichiers passent par des promesses.
 
-import type { CleanCounts, CleanOptions, CleanPreview, ImportFailure, Placement, Report, Sides, Unit } from './types';
+import type { CleanCounts, CleanOptions, CleanPreview, ImportFailure, LeadSpec, Leads, Placement, Report, Sides, Unit } from './types';
 import type { M } from './affine';
 
 /** Zone de coupe d'une machine, en mm, origine en bas à gauche. */
@@ -91,6 +91,11 @@ class Engine {
   /** Les paires (indices dans `placed`) de dessins placés qui se chevauchent. */
   overlaps(placed: { geo: number; m: M }[]): Promise<[number, number][] | { error: string }> {
     return this.#call({ kind: 'overlaps', placed: JSON.stringify(placed) });
+  }
+
+  /** Amorces et perçages des contours de `geo` placée par `matrix`, un réglage par contour. */
+  leads(geo: number, matrix: M, specs: LeadSpec[]): Promise<Leads | { error: string }> {
+    return this.#call({ kind: 'leads', geo, matrix, specs: JSON.stringify(specs) });
   }
 }
 

@@ -104,3 +104,30 @@ export interface Sides {
   contours: Contour[];
   warnings: CutWarning[];
 }
+
+export type LeadShape = 'line' | 'arc';
+
+/** Réglages d'amorce d'un contour pour le moteur (longueurs en mm du plateau). */
+export interface LeadSpec {
+  side: Side;
+  shape: LeadShape;
+  lead_in: number;
+  lead_out: number;
+  entry: [number, number] | null;
+}
+
+/** Les amorces d'un contour, en repère d'origine ; `lead_in` et `lead_out` : `[x, y, …]`. */
+export interface Lead {
+  pierce: [number, number];
+  entry: [number, number];
+  lead_in: number[];
+  lead_out: number[];
+  reversed: boolean;
+}
+
+export type LeadWarning = { code: 'lead.too_short'; contour: number; x: number; y: number };
+
+export interface Leads {
+  leads: (Lead | null)[];
+  warnings: LeadWarning[];
+}

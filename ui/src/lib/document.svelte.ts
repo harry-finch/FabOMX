@@ -8,7 +8,7 @@
 
 import { engine } from './engine.svelte';
 import { apply, translate, type M, type Pt } from './affine';
-import type { Placement, Report, Side } from './types';
+import type { LeadShape, Placement, Report, Side } from './types';
 
 /** Point de référence : un des 9 points de la boîte (0 à 2, depuis le bas
  * gauche), ou un point du dessin d'origine, qui suit ses transformations. */
@@ -31,8 +31,19 @@ export interface Drawing {
   sides: Record<number, Side>;
   /** Qualités de coupe propres (1 à 5), par indice de contour ; les autres ont la qualité par défaut. */
   qualities: Record<number, number>;
+  /** Forme et longueurs d'amorce propres, par indice de contour. */
+  leads: Record<number, LeadOpts>;
+  /** Points d'entrée choisis à la main (repère d'origine), par indice de contour. */
+  entries: Record<number, [number, number]>;
   /** Un nettoyage a recalculé les côtés et fait perdre des choix faits à la main (côtés, qualités). */
   sidesReset: boolean;
+}
+
+/** Réglages d'amorce propres à un contour ; ce qui manque vient des réglages par défaut. */
+export interface LeadOpts {
+  shape?: LeadShape;
+  lead_in?: number;
+  lead_out?: number;
 }
 
 const HISTORY = 100;
@@ -111,7 +122,7 @@ class Doc {
     const [x0, y0, x1, y1] = report.bbox;
     const matrix = translate(bed.width / 2 - (x0 + x1) / 2, bed.height / 2 - (y0 + y1) / 2);
     const id = this.reserve();
-    const drawing: Drawing = { id, geo, name, report, matrix, ref: { kind: 'box', ix: 1, iy: 1 }, snaps, placement: roughPlacement(report, matrix), sides: {}, qualities: {}, sidesReset: false };
+    const drawing: Drawing = { id, geo, name, report, matrix, ref: { kind: 'box', ix: 1, iy: 1 }, snaps, placement: roughPlacement(report, matrix), sides: {}, qualities: {}, leads: {}, entries: {}, sidesReset: false };
     this.#commit([...this.drawings, drawing]);
     this.selected = id;
     this.#place(drawing);
@@ -156,13 +167,36 @@ class Doc {
     this.#commit(this.drawings.map((x) => (x.id === id ? { ...d, qualities, sidesReset: false } : x)));
   }
 
+  /** Réglages d'amorce propres des contours `indices` de `id`, fusionnés ; `null` : revenir aux réglages par défaut. Une étape. */
+  setLeads(id: number, indices: number[], patch: LeadOpts | null) {
+    const d = this.drawings.find((x) => x.id === id);
+    if (!d || !indices.length) return;
+    const leads = { ...d.leads };
+    for (const i of indices) {
+      const next = Object.fromEntries(Object.entries({ ...leads[i], ...patch }).filter(([, v]) => v != null)) as LeadOpts;
+      if (patch && Object.keys(next).length) leads[i] = next;
+      else delete leads[i];
+    }
+    this.#commit(this.drawings.map((x) => (x.id === id ? { ...d, leads, sidesReset: false } : x)));
+  }
+
+  /** Point d'entrée du contour `i` de `id` (repère d'origine) ; `null` : automatique. Une étape. */
+  setEntry(id: number, i: number, at: [number, number] | null) {
+    const d = this.drawings.find((x) => x.id === id);
+    if (!d) return;
+    const entries = { ...d.entries };
+    if (at) entries[i] = at;
+    else delete entries[i];
+    this.#commit(this.drawings.map((x) => (x.id === id ? { ...d, entries, sidesReset: false } : x)));
+  }
+
   /** Remplace la géométrie d'un dessin nettoyé ; la transformation est gardée,
-   * les côtés sont recalculés (côtés et qualités choisis à la main sont perdus). Une étape. */
+   * les côtés sont recalculés (côtés, qualités, amorces et points d'entrée choisis à la main sont perdus). Une étape. */
   replaceGeometry(id: number, geo: number, report: Report, snaps: number[]) {
     const d = this.drawings.find((x) => x.id === id);
     if (!d) return;
-    const sidesReset = Object.keys(d.sides).length > 0 || Object.keys(d.qualities).length > 0;
-    const next: Drawing = { ...d, geo, report, snaps, sides: {}, qualities: {}, sidesReset, placement: { ...roughPlacement(report, d.matrix), warnings: d.placement.warnings } };
+    const sidesReset = [d.sides, d.qualities, d.leads, d.entries].some((r) => Object.keys(r).length > 0);
+    const next: Drawing = { ...d, geo, report, snaps, sides: {}, qualities: {}, leads: {}, entries: {}, sidesReset, placement: { ...roughPlacement(report, d.matrix), warnings: d.placement.warnings } };
     this.#commit(this.drawings.map((x) => (x.id === id ? next : x)));
     this.#place(next);
   }

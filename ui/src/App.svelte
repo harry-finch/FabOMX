@@ -42,6 +42,7 @@
   // La sélection de contours vit avec l'outil Découpe et le dessin sélectionné.
   $effect(() => {
     if (cutting.selection && (tools.active !== 'cut' || cutting.selection.id !== doc.selected)) cutting.clear();
+    if (cutting.pickingEntry && cutting.selection?.contours.length !== 1) cutting.pickingEntry = false;
   });
 
   function keydown(e: KeyboardEvent) {
@@ -69,9 +70,10 @@
       e.preventDefault();
       remove(doc.selected);
     } else if (e.key === 'Escape') {
-      // Échap : annuler le choix d'un point, vider la sélection de contours,
+      // Échap : annuler le choix d'un point (de référence ou d'entrée), vider la sélection de contours,
       // puis désélectionner, puis revenir à Sélection.
       if (doc.picking) doc.picking = false;
+      else if (cutting.pickingEntry) cutting.pickingEntry = false;
       else if (cutting.selection) cutting.clear();
       else if (doc.selected != null) doc.select(null);
       else tools.select('select');
