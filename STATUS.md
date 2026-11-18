@@ -1,6 +1,6 @@
 # État du projet
 
-**Jalon** : **v0.2 — Découpe jet d’eau**, en cours : R-008 (côtés de coupe) livré le 18/11/2026 ; R-009 (qualité de coupe) livré le 18/11/2026 ; R-010 (amorces et perçages) livré le 18/11/2026 ; R-011 (ordre de coupe et aperçu du parcours) livré le 18/11/2026 ; R-012 (exporter l’OMX) livré le 18/11/2026 ; R-007 (reconnaître des arcs) livré le 18/11/2026 : jalon v0.2 terminé, hors R-014 (gravure, reportée). Jalon **v0.3 — Découpes avancées** commencé : R-015 (onglets de maintien) développé, à tester. v0.1 livré le 18/11/2026 (R-003, R-001, R-002, R-004, R-005) ; le logo (R-006) est reporté au jalon v1.0. Suite : voir [ROADMAP.md](ROADMAP.md).
+**Jalon** : **v0.3 — Découpes avancées**, en cours : R-015 (onglets de maintien) développé, à tester ; R-016 (plaque dans un coin du stock) à spécifier. v0.2 (découpe jet d’eau) livré le 18/11/2026 : R-008, R-009, R-010, R-011, R-012 (export OMX, R-013 fusionné), R-007 ; la gravure (R-014) est reportée. v0.1 livré le 18/11/2026 (R-003, R-001, R-002, R-004, R-005) ; le logo (R-006) est reporté au jalon v1.0. Suite : voir [ROADMAP.md](ROADMAP.md).
 
 | Élément | État |
 | --- | --- |
