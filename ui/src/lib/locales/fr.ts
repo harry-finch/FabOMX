@@ -200,7 +200,7 @@ const fr = {
       import: 'Importer un dessin',
       undo: 'Annuler / rétablir',
       remove: 'Retirer le dessin sélectionné',
-      deselect: 'Désélectionner',
+      deselect: 'Désélectionner ; sans sélection, revenir à l’outil Sélection',
       clean: 'Outil Nettoyer',
       transform: 'Outils Déplacer, Tourner, Mettre à l’échelle',
       nudge: 'Déplacer le dessin de 1 mm (10 mm avec Maj)',

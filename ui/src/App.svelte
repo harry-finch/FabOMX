@@ -62,8 +62,10 @@
       e.preventDefault();
       remove(doc.selected);
     } else if (e.key === 'Escape') {
+      // Échap : annuler le choix d'un point, puis désélectionner, puis revenir à Sélection.
       if (doc.picking) doc.picking = false;
-      else doc.select(null);
+      else if (doc.selected != null) doc.select(null);
+      else tools.select('select');
     } else if (e.key.startsWith('Arrow') && doc.selection) {
       // Flèches : 1 mm, 10 mm avec Maj ; chaque appui est une étape.
       e.preventDefault();

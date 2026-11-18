@@ -202,7 +202,7 @@ const en: Shape<typeof fr> = {
       import: 'Import a drawing',
       undo: 'Undo / redo',
       remove: 'Remove the selected drawing',
-      deselect: 'Deselect',
+      deselect: 'Deselect; with nothing selected, back to the Select tool',
       clean: 'Clean up tool',
       transform: 'Move, Rotate, Scale tools',
       nudge: 'Move the drawing 1 mm (10 mm with Shift)',
