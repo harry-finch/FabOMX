@@ -10,6 +10,10 @@
 //! s'il tient cette règle, sinon refusé (`path.order`) ; les contours qu'il
 //! ne cite pas suivent, dans l'ordre automatique.
 //!
+//! Sur la machine, le départ d'un OMX est là où se trouve la buse quand
+//! l'usinage est lancé (vérifié par l'utilisateur) : `start` en sera le
+//! premier point.
+//!
 //! Un déplacement qui passe au-dessus d'une pièce ou d'un trou déjà
 //! découpés (hors le contour qu'il quitte) est signalé (`path.over_cut`).
 

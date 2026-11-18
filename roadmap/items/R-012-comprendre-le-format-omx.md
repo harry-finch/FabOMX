@@ -19,4 +19,5 @@ Deux paires DXF + OMX produites par LAYOUT, dans `omx/` : `rectangle` (un rectan
 - `Bow` est l'arrondi (bulge) du DXF : 0 = ligne, 1 = demi-cercle, positif = sens trigonométrique. Les arcs restent donc exacts.
 - **Sens** : l'extérieur est coupé dans le sens horaire, le trou dans le sens trigonométrique : la pièce est à **droite** du jet. R-008 la met à gauche : à inverser ici (décision de l'utilisateur, 18/11/2026), dans `cut::reversed`, dans `ui/src/lib/cutting.svelte.ts` et dans le texte d'aide de l'outil Découpe.
 - Les DXF fournis sont des parcours réexportés par LAYOUT : la qualité y est le nom du calque (`0`, `3`, `9`).
+- **Départ** (vérifié par l'utilisateur sur la machine, A-022, 18/11/2026) : le premier point de l'OMX correspond à l'endroit où se trouve la buse quand l'usinage est lancé. Les coordonnées du fichier sont donc relatives à ce départ : le point de départ de l'outil Parcours doit devenir le premier point écrit.
 - Encore inconnus : le code de la gravure, ceux des pauses et délais (XData), le sens d'une fente.

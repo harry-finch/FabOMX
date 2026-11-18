@@ -3,10 +3,10 @@ id: A-021
 type: valider
 titre: "Juger l'outil Parcours"
 element: R-011
-statut: a-faire
+statut: fait
 cree: 2026-11-18
 par: agent
-fait:
+fait: 2026-11-18
 ---
 
 Où : la même version, outil Parcours (P).
@@ -16,3 +16,7 @@ Gestes : change le point de départ (saisie X / Y, « Choisir sur le plateau »,
 À juger : la clarté du panneau, la lisibilité du parcours sur le plateau, la lecture pas à pas.
 
 Réponds « validé », ou ce qu'il faut changer.
+
+## Réponse
+
+Validé.
