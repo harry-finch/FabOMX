@@ -1,6 +1,6 @@
 # État du projet
 
-**Jalon** : **v0.3 — Découpes avancées**, en cours : R-015 (onglets de maintien) livré le 18/11/2026 ; R-017 (côté de coupe d’un tracé ouvert) livré le 18/11/2026 ; R-016 (plaque dans un coin du stock) mis de côté, comme la gravure (R-014). Jalon v1.0 : R-006 (logo) développé, à tester. v0.2 (découpe jet d’eau) livré le 18/11/2026 : R-008, R-009, R-010, R-011, R-012 (export OMX, R-013 fusionné), R-007 ; la gravure (R-014) est reportée. v0.1 livré le 18/11/2026 (R-003, R-001, R-002, R-004, R-005). Suite : voir [ROADMAP.md](ROADMAP.md).
+**Jalon** : **v0.3 — Découpes avancées**, en cours : R-015 (onglets de maintien) livré le 18/11/2026 ; R-017 (côté de coupe d’un tracé ouvert) livré le 18/11/2026 ; R-016 (plaque dans un coin du stock) mis de côté, comme la gravure (R-014). Jalon v1.0 : R-006 (logo) livré le 18/11/2026. v0.2 (découpe jet d’eau) livré le 18/11/2026 : R-008, R-009, R-010, R-011, R-012 (export OMX, R-013 fusionné), R-007 ; la gravure (R-014) est reportée. v0.1 livré le 18/11/2026 (R-003, R-001, R-002, R-004, R-005). Suite : voir [ROADMAP.md](ROADMAP.md).
 
 | Élément | État |
 | --- | --- |
@@ -18,4 +18,4 @@
 
 ## À suivre
 
-- À tester : R-006 (logo). Mis de côté : R-014 (gravure, attend un exemple OMX, A-015), R-016 (plaque dans un coin du stock). Actions en attente : voir FabBoard.
+- Mis de côté : R-014 (gravure, attend un exemple OMX, A-015), R-016 (plaque dans un coin du stock). Actions en attente : voir FabBoard.

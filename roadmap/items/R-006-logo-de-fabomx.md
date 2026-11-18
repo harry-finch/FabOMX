@@ -2,11 +2,11 @@
 id: R-006
 titre: "Logo de FabOMX"
 resume: "Logo définitif : buse, jet d'eau qui frappe la tôle et éclabousse en gouttes (variante A « Gerbe » de la planche), symbole en #2D22BF dans la tuile de la famille ; barre d'application, onglet et icône de l'application Mac."
-statut: a-tester
+statut: livree
 jalon: v1.0
 cree: 2026-11-18
 maj: 2026-11-18
-livree:
+livree: 2026-11-18
 ---
 
 ## But

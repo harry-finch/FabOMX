@@ -4,21 +4,18 @@ Objectif de FabOMX : à partir d'un dessin vectoriel (SVG ou DXF), produire un p
 
 On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la découpe et les spécificités du jet d'eau (v0.2).
 
-**Avancement : 13 livrés sur 16** (81 %)
+**Avancement : 14 livrés sur 16** (88 %)
 
 ## Restant à faire
 
-1. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · À tester · jalon v1.0
-   Logo définitif : buse, jet d'eau qui frappe la tôle et éclabousse en gouttes (variante A « Gerbe » de la planche), symbole en #2D22BF dans la tuile de la famille ; barre d'application, onglet et icône de l'application Mac.
-2. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée
+1. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée
    Marquer un trait sans traverser la plaque (gravure), dès que son code OMX est connu par un exemple de LAYOUT.
-3. **[R-016 Couper une plaque dans un coin du stock](roadmap/items/R-016-couper-une-plaque-dans-un-coin-du-stock.md)** · Idée · jalon v0.3
+2. **[R-016 Couper une plaque dans un coin du stock](roadmap/items/R-016-couper-une-plaque-dans-un-coin-du-stock.md)** · Idée · jalon v0.3
    Couper une plaque dans un coin du stock sans faire le tour complet. À spécifier.
 
 ## Actions à faire
 
 - [ ] [A-015](roadmap/actions/A-015-fournir-un-omx-de-layout-avec-un-trait-grave.md) Fournir un OMX de LAYOUT avec un trait gravé (fournir, R-014)
-- [ ] [A-032](roadmap/actions/A-032-juger-le-logo-de-fabomx-dans-l-application.md) Juger le logo de FabOMX dans l'application (valider, R-006)
 
 ## Livré
 
@@ -56,6 +53,11 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
   Pour un tracé ouvert : sur la ligne, pièce d'un côté ou de l'autre (saignée vers la chute, côté 1 dans l'OMX, sens imposé), avec hachures sur le plateau ; amorces au choix dans le prolongement du tracé pour percer hors de la plaque.
 - [R-015 Onglets de maintien](roadmap/items/R-015-onglets-de-maintien.md) · livrée le 2026-11-18
   Onglets sur les contours extérieurs choisis : onglet de fin sans perçage, onglets le long du contour avec arrêt du jet et reperçage dans la chute ; nombre réparti ou placés au clic ; largeur 1 mm par défaut, réglable.
+
+### v1.0 : Version 1
+
+- [R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md) · livrée le 2026-11-18
+  Logo définitif : buse, jet d'eau qui frappe la tôle et éclabousse en gouttes (variante A « Gerbe » de la planche), symbole en #2D22BF dans la tuile de la famille ; barre d'application, onglet et icône de l'application Mac.
 
 ## Écarté
 
