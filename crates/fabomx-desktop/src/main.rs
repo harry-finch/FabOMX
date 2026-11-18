@@ -3,7 +3,8 @@
 // récents (10, dans le dossier de configuration de l'application), le
 // dialogues Enregistrer (OMX, travail), le titre de la fenêtre, la demande
 // avant de fermer un travail modifié, et le menu macOS, en français ou en anglais
-// selon la langue de l'interface.
+// selon la langue de l'interface (sous Windows, une barre de menus dans la
+// fenêtre, sans les entrées propres au Mac).
 // Les choix du menu sont envoyés à l'interface par l'événement `menu`.
 
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
@@ -247,22 +248,27 @@ fn build_menu<R: Runtime>(
         copyright: Some("© 2026 Stéphane Muller — GPL-3.0-or-later".into()),
         ..Default::default()
     };
+    // Mac : le menu de l'application (À propos, Masquer, Quitter). Windows :
+    // pas de menu d'application ; Quitter va dans Fichier, À propos dans Aide.
+    let mac = cfg!(target_os = "macos");
+    let about_item = PredefinedMenuItem::about(
+        app,
+        Some(l("À propos de FabOMX", "About FabOMX")),
+        Some(about),
+    )?;
+    let quit = PredefinedMenuItem::quit(app, Some(l("Quitter FabOMX", "Quit FabOMX")))?;
     let app_menu = Submenu::with_items(
         app,
         "FabOMX",
         true,
         &[
-            &PredefinedMenuItem::about(
-                app,
-                Some(l("À propos de FabOMX", "About FabOMX")),
-                Some(about),
-            )?,
+            &about_item,
             &PredefinedMenuItem::separator(app)?,
             &PredefinedMenuItem::hide(app, Some(l("Masquer FabOMX", "Hide FabOMX")))?,
             &PredefinedMenuItem::hide_others(app, Some(l("Masquer les autres", "Hide Others")))?,
             &PredefinedMenuItem::show_all(app, Some(l("Tout afficher", "Show All")))?,
             &PredefinedMenuItem::separator(app)?,
-            &PredefinedMenuItem::quit(app, Some(l("Quitter FabOMX", "Quit FabOMX")))?,
+            &quit,
         ],
     )?;
 
@@ -308,6 +314,10 @@ fn build_menu<R: Runtime>(
             &PredefinedMenuItem::close_window(app, Some(l("Fermer la fenêtre", "Close Window")))?,
         ],
     )?;
+    if !mac {
+        file.append(&PredefinedMenuItem::separator(app)?)?;
+        file.append(&quit)?;
+    }
 
     // Annuler et Rétablir passent par l'interface : elle agit sur le dessin,
     // ou sur le texte d'un champ de saisie.
@@ -337,22 +347,32 @@ fn build_menu<R: Runtime>(
         app,
         l("Présentation", "View"),
         true,
-        &[
-            &item(
-                "fit",
-                l("Recadrer sur le plateau (F)", "Fit the Bed (F)"),
-                None,
-            )?,
-            &PredefinedMenuItem::separator(app)?,
-            &PredefinedMenuItem::fullscreen(app, Some(l("Plein écran", "Enter Full Screen")))?,
-        ],
+        &[&item(
+            "fit",
+            l("Recadrer sur le plateau (F)", "Fit the Bed (F)"),
+            None,
+        )?],
     )?;
+    if mac {
+        view.append(&PredefinedMenuItem::separator(app)?)?;
+        view.append(&PredefinedMenuItem::fullscreen(
+            app,
+            Some(l("Plein écran", "Enter Full Screen")),
+        )?)?;
+    }
     let window = Submenu::with_items(
         app,
         l("Fenêtre", "Window"),
         true,
         &[
-            &PredefinedMenuItem::minimize(app, Some(l("Placer dans le Dock", "Minimize")))?,
+            &PredefinedMenuItem::minimize(
+                app,
+                Some(match (mac, fr) {
+                    (true, true) => "Placer dans le Dock",
+                    (false, true) => "Réduire",
+                    _ => "Minimize",
+                }),
+            )?,
             &PredefinedMenuItem::maximize(app, Some(l("Réduire/agrandir", "Zoom")))?,
         ],
     )?;
@@ -362,8 +382,13 @@ fn build_menu<R: Runtime>(
         true,
         &[&item("help", l("Raccourcis (?)", "Shortcuts (?)"), None)?],
     )?;
-
-    Menu::with_items(app, &[&app_menu, &file, &edit, &view, &window, &help])
+    if mac {
+        Menu::with_items(app, &[&app_menu, &file, &edit, &view, &window, &help])
+    } else {
+        help.append(&PredefinedMenuItem::separator(app)?)?;
+        help.append(&about_item)?;
+        Menu::with_items(app, &[&file, &edit, &view, &window, &help])
+    }
 }
 
 fn main() {

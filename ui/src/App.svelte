@@ -15,6 +15,7 @@
   import { doc } from './lib/document.svelte';
   import { cutting } from './lib/cutting.svelte';
   import { pathing } from './lib/pathing.svelte';
+  import { keys } from './lib/keys';
   import { jobs } from './lib/job.svelte';
   import { importer } from './lib/importer.svelte';
   import { tools, type ToolId } from './lib/tools.svelte';
@@ -218,11 +219,11 @@
   <Dialog title={t('help.title')} onclose={() => (ui.help = false)}>
     <h3>{t('help.shortcuts')}</h3>
     <dl class="keys">
-      <dt><kbd>I / ⌘O</kbd></dt>
+      <dt><kbd>{keys('I / ⌘O')}</kbd></dt>
       <dd>{t('help.keys.import')}</dd>
-      <dt><kbd>⌘N</kbd></dt>
+      <dt><kbd>{keys('⌘N')}</kbd></dt>
       <dd>{t('help.keys.newJob')}</dd>
-      <dt><kbd>⌘S / ⇧⌘S</kbd></dt>
+      <dt><kbd>{keys('⌘S / ⇧⌘S')}</kbd></dt>
       <dd>{t('help.keys.save')}</dd>
       <dt><kbd>V</kbd></dt>
       <dd>{t('help.keys.select')}</dd>
@@ -242,7 +243,7 @@
       <dd>{t('help.keys.cut')}</dd>
       <dt><kbd>P</kbd></dt>
       <dd>{t('help.keys.path')}</dd>
-      <dt><kbd>⌘A</kbd></dt>
+      <dt><kbd>{keys('⌘A')}</kbd></dt>
       <dd>{t('help.keys.selectAll')}</dd>
       <dt><kbd>← → ↑ ↓</kbd></dt>
       <dd>{t('help.keys.nudge')}</dd>
@@ -250,7 +251,7 @@
       <dd>{t('help.keys.remove')}</dd>
       <dt><kbd>{t('help.esc')}</kbd></dt>
       <dd>{t('help.keys.deselect')}</dd>
-      <dt><kbd>⌘Z / ⇧⌘Z</kbd></dt>
+      <dt><kbd>{keys('⌘Z / ⇧⌘Z')}</kbd></dt>
       <dd>{t('help.keys.undo')}</dd>
       <dt><kbd>?</kbd></dt>
       <dd>{t('help.keys.help')}</dd>

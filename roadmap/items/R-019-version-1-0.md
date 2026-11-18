@@ -2,7 +2,7 @@
 id: R-019
 titre: "Version 1.0"
 resume: "Version 1.0.0 : CHANGELOG, guide d'utilisation illustré dans le README, raccourcis Ctrl sous Windows, releases Mac (Apple Silicon) et Windows construites par GitHub Actions, sans signature payante."
-statut: specifiee
+statut: en-cours
 jalon: v1.0
 cree: 2026-11-18
 maj: 2026-11-18

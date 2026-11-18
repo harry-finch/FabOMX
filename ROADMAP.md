@@ -8,7 +8,7 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ## Restant à faire
 
-1. **[R-019 Version 1.0](roadmap/items/R-019-version-1-0.md)** · Spécifiée · jalon v1.0
+1. **[R-019 Version 1.0](roadmap/items/R-019-version-1-0.md)** · En cours · jalon v1.0
    Version 1.0.0 : CHANGELOG, guide d'utilisation illustré dans le README, raccourcis Ctrl sous Windows, releases Mac (Apple Silicon) et Windows construites par GitHub Actions, sans signature payante.
 2. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée
    Marquer un trait sans traverser la plaque (gravure), dès que son code OMX est connu par un exemple de LAYOUT.

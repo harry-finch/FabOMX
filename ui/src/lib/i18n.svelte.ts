@@ -3,6 +3,7 @@
 // (vérifié par TypeScript). `t('cle.sous_cle', { n: 3 })` remplace `{n}`.
 
 import fr from './locales/fr';
+import { keys } from './keys';
 import en from './locales/en';
 import { storageKey } from './app';
 
@@ -67,6 +68,7 @@ function lookup(dict: unknown, key: string): string | undefined {
 }
 
 export function t(key: Key, params?: Record<string, string | number>): string {
-  const text = lookup(DICTS[i18n.locale], key) ?? lookup(fr, key) ?? key;
+  // Raccourcis : ⌘ sur Mac, Ctrl ailleurs.
+  const text = keys(lookup(DICTS[i18n.locale], key) ?? lookup(fr, key) ?? key);
   return params ? text.replace(/\{(\w+)\}/g, (_, k: string) => String(params[k] ?? `{${k}}`)) : text;
 }

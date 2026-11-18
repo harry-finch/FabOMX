@@ -56,4 +56,6 @@ Elle est dans `roadmap/` (un fichier par élément, un par action de l’utilisa
 - Moteur pour l’interface : `cd ui && npm run wasm` (wasm-pack, sortie dans `ui/src/wasm/`, hors Git).
 - Développement : `cd ui && npm run dev` → http://localhost:5177 (relancer `npm run wasm` après une modification du moteur).
 - Build : `cd ui && npm run build` (moteur compris), puis `npm run preview`.
+- Releases : étiquette `vX.Y.Z` → `.github/workflows/release.yml` (GitHub Actions) construit le `.dmg` Mac (Apple Silicon) et l’installateur Windows (NSIS) dans un brouillon de release, notes tirées de `CHANGELOG.md` ; `ci.yml` vérifie chaque poussée sur `main`. Version à changer dans `Cargo.toml`, `ui/package.json`, `crates/fabomx-desktop/Cargo.toml` et `tauri.conf.json`.
+- Raccourcis : les textes s’écrivent avec ⌘ et ⇧ ; `ui/src/lib/keys.ts` les affiche en Ctrl+ et Shift+ hors du Mac (appliqué par `t()`). Le menu natif est construit pour le Mac ou pour Windows (`cfg!(target_os = "macos")`).
 - Application macOS : `cd ui && npm run desktop` (Tauri, `dist-desktop/FabOMX.app`, à lancer sur place ; pas de `.dmg` pour les essais). Le crate `fabomx-desktop` est hors du workspace : les tests ci-dessus ne le compilent pas ; le vérifier avec `cd crates/fabomx-desktop && cargo clippy --release`.

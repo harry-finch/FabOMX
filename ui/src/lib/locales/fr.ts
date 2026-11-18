@@ -226,7 +226,7 @@ const fr = {
     tabCountHint: 'Onglets répartis régulièrement le long du contour. Le premier est l’onglet de fin, au point d’entrée, sans perçage de plus ; chacun des autres arrête le jet et repercé dans la chute.',
     tabWidth: 'Largeur',
     tabWidthHint: 'Matière laissée le long du trajet du jet. Le pont réel est plus étroit de la saignée, que MAKE compense.',
-    tabWidthDefault: 'Largeur des onglets',
+    tabWidthDefault: 'Onglets',
     placeTabs: 'Placer des onglets',
     placeTabsHint: 'Un clic sur le contour ajoute un onglet ; un clic sur un onglet le retire. Échap termine.',
     placingTabs: 'Cliquez sur le contour… (Échap termine)',

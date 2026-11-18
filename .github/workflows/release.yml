@@ -1,0 +1,75 @@
+# Applications de bureau : à chaque étiquette v* (par exemple v1.0.0), construit
+# l'application Mac (Apple Silicon, .dmg) et l'installateur Windows (.exe), et
+# les joint à un brouillon de release GitHub, avec les notes du CHANGELOG.
+# Lancé à la main (workflow_dispatch), il construit seulement et garde les
+# fichiers comme artefacts du flux.
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            bundles: dmg
+          - os: windows-latest
+            bundles: nsis
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Rust (rust-toolchain.toml)
+        shell: bash
+        run: |
+          rustup toolchain install
+          rustup target add wasm32-unknown-unknown
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            .
+            crates/fabomx-desktop
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+      - run: npm install -g wasm-pack
+      - working-directory: ui
+        run: npm ci
+      - name: Notes de version (CHANGELOG)
+        id: notes
+        shell: bash
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          {
+            echo 'body<<NOTES_EOF'
+            awk -v v="$version" '/^## /{p = index($0, "[" v "]") > 0; next} p' CHANGELOG.md
+            echo 'NOTES_EOF'
+          } >> "$GITHUB_OUTPUT"
+      - uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        with:
+          projectPath: crates/fabomx-desktop
+          tauriScript: npx --yes @tauri-apps/cli@2.12.3
+          args: --bundles ${{ matrix.bundles }}
+          tagName: ${{ startsWith(github.ref, 'refs/tags/') && github.ref_name || '' }}
+          releaseName: FabOMX ${{ github.ref_name }}
+          releaseBody: ${{ steps.notes.outputs.body }}
+          releaseDraft: true
+          prerelease: ${{ contains(github.ref_name, '-') }}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fabomx-${{ matrix.os }}
+          path: |
+            crates/fabomx-desktop/target/release/bundle/dmg/*.dmg
+            crates/fabomx-desktop/target/release/bundle/nsis/*.exe
+          if-no-files-found: error

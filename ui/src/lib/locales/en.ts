@@ -228,7 +228,7 @@ const en: Shape<typeof fr> = {
     tabCountHint: 'Tabs spread evenly along the contour. The first is the end tab, at the entry point, with no extra pierce; each other one stops the jet and pierces again in the scrap.',
     tabWidth: 'Width',
     tabWidthHint: 'Material left along the jet path. The actual bridge is narrower by the kerf, which MAKE compensates.',
-    tabWidthDefault: 'Tab width',
+    tabWidthDefault: 'Tabs',
     placeTabs: 'Place tabs',
     placeTabsHint: 'A click on the contour adds a tab; a click on a tab removes it. Esc ends.',
     placingTabs: 'Click on the contour… (Esc ends)',
