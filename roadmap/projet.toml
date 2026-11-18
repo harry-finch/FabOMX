@@ -15,6 +15,10 @@ titre = "Interface et dessin"
 id = "v0.2"
 titre = "Découpe jet d'eau"
 
+[[jalons]]
+id = "v1.0"
+titre = "Version 1"
+
 # Versions à tester.
 [[test]]
 type = "build"
