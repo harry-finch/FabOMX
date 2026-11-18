@@ -2,11 +2,11 @@
 id: R-002
 titre: "Redimensionner, déplacer et tourner le dessin"
 resume: "Déplacer, tourner, mettre à l'échelle (proportionnelle ou non) et retourner un dessin, à la souris et par valeurs, autour d'un point de référence choisi ; calcul depuis la géométrie d'origine, débord signalé."
-statut: a-tester
+statut: livree
 jalon: v0.1
 cree: 2026-11-18
 maj: 2026-11-18
-livree:
+livree: 2026-11-18
 ---
 
 ## But

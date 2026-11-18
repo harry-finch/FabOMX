@@ -4,23 +4,16 @@ Objectif de FabOMX : à partir d'un dessin vectoriel (SVG ou DXF), produire un p
 
 On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la découpe et les spécificités du jet d'eau (v0.2).
 
-**Avancement : 2 livrés sur 6** (33 %)
+**Avancement : 3 livrés sur 6** (50 %)
 
 ## Restant à faire
 
-1. **[R-002 Redimensionner, déplacer et tourner le dessin](roadmap/items/R-002-redimensionner-deplacer-tourner-et-nettoyer-le.md)** · À tester · jalon v0.1
-   Déplacer, tourner, mettre à l'échelle (proportionnelle ou non) et retourner un dessin, à la souris et par valeurs, autour d'un point de référence choisi ; calcul depuis la géométrie d'origine, débord signalé.
-2. **[R-004 Nettoyer le dessin](roadmap/items/R-004-nettoyer-le-dessin.md)** · Idée · jalon v0.1
+1. **[R-004 Nettoyer le dessin](roadmap/items/R-004-nettoyer-le-dessin.md)** · Idée · jalon v0.1
    Préparer la géométrie importée pour la découpe : fermer les contours, retirer les doublons, joindre les segments.
-3. **[R-005 Application de bureau macOS](roadmap/items/R-005-application-de-bureau-macos.md)** · Idée · jalon v0.1
+2. **[R-005 Application de bureau macOS](roadmap/items/R-005-application-de-bureau-macos.md)** · Idée · jalon v0.1
    Emballer FabOMX en application de bureau Tauri, comme FabVents et FabWeave.
-4. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v0.1
+3. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v0.1
    Logo définitif de la famille Fab (tuile graphite et symbole à la couleur d'identité), à la place du logo provisoire du kit.
-
-## Actions à faire
-
-- [ ] [A-006](roadmap/actions/A-006-manipuler-tes-dessins-dans-fabomx.md) Manipuler tes dessins dans FabOMX (tester, R-002)
-- [ ] [A-007](roadmap/actions/A-007-tourner-un-dessin-autour-d-un-point-choisi.md) Tourner un dessin autour d'un point choisi (tester, R-002)
 
 ## Livré
 
@@ -28,5 +21,7 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 - [R-003 Poser l'interface](roadmap/items/R-003-poser-l-interface.md) · livrée le 2026-11-18
   Squelette de l'application suivant fab-design-system : palette d'outils en icônes dans le panneau de gauche, paramètres et formulaires dans le panneau de droite, dessin au centre.
+- [R-002 Redimensionner, déplacer et tourner le dessin](roadmap/items/R-002-redimensionner-deplacer-tourner-et-nettoyer-le.md) · livrée le 2026-11-18
+  Déplacer, tourner, mettre à l'échelle (proportionnelle ou non) et retourner un dessin, à la souris et par valeurs, autour d'un point de référence choisi ; calcul depuis la géométrie d'origine, débord signalé.
 - [R-001 Importer un DXF ou un SVG](roadmap/items/R-001-importer-un-dxf-ou-un-svg.md) · livrée le 2026-11-18
   Importer un dessin SVG ou DXF par un dialogue qui montre l'unité, les dimensions, les éléments, ce qu'il faudra nettoyer et les avertissements ; plusieurs dessins centrés sur le plateau, sélection, retrait, annuler.

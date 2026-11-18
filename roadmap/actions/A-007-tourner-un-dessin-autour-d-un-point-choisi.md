@@ -3,10 +3,10 @@ id: A-007
 type: tester
 titre: "Tourner un dessin autour d'un point choisi"
 element: R-002
-statut: a-faire
+statut: fait
 cree: 2026-11-18
 par: agent
-fait:
+fait: 2026-11-18
 ---
 
 Où : même version, panneau droit, section Transformer.
