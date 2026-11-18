@@ -9,7 +9,7 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 ## Restant à faire
 
 1. **[R-011 Ordre de coupe et aperçu du parcours](roadmap/items/R-011-ordre-de-coupe-et-apercu-du-parcours.md)** · Idée · jalon v0.2
-   Calculer l'ordre de coupe (trous avant l'extérieur, déplacements courts) et montrer le parcours complet : coupes, déplacements jet coupé, perçages.
+   Outil Parcours : point de départ (origine, point choisi ou coordonnées) et retour, ordre automatique (contenu avant contenant, plus proche voisin) retouchable à la main, déplacements jet coupé signalés au-dessus de ce qui est découpé, bilan chiffré et lecture pas à pas.
 2. **[R-012 Comprendre le format OMX](roadmap/items/R-012-comprendre-le-format-omx.md)** · Idée · jalon v0.2
    Décrire et reproduire le format OMX de la ProtoMAX à partir de fichiers réels produits par LAYOUT, avec des tests qui relisent ces fichiers.
 3. **[R-007 Reconnaître des arcs dans les segments](roadmap/items/R-007-reconnaitre-des-arcs-dans-les-segments.md)** · Idée · jalon v0.2
