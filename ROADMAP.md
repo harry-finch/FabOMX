@@ -8,14 +8,14 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ## Restant à faire
 
-1. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
-   Logo définitif de la famille Fab (tuile graphite et symbole à la couleur d'identité), à la place du logo provisoire du kit.
-2. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée
+1. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée
    Marquer un trait sans traverser la plaque (gravure), dès que son code OMX est connu par un exemple de LAYOUT.
-3. **[R-016 Couper une plaque dans un coin du stock](roadmap/items/R-016-couper-une-plaque-dans-un-coin-du-stock.md)** · Idée · jalon v0.3
+2. **[R-016 Couper une plaque dans un coin du stock](roadmap/items/R-016-couper-une-plaque-dans-un-coin-du-stock.md)** · Idée · jalon v0.3
    Couper une plaque dans un coin du stock sans faire le tour complet. À spécifier.
-4. **[R-017 Choisir le côté de coupe d'un tracé ouvert](roadmap/items/R-017-choisir-le-cote-de-coupe-d-un-trace-ouvert.md)** · Idée · jalon v0.3
+3. **[R-017 Choisir le côté de coupe d'un tracé ouvert](roadmap/items/R-017-choisir-le-cote-de-coupe-d-un-trace-ouvert.md)** · Idée · jalon v0.3
    Pour un tracé ouvert, pouvoir garder la coupe sur la ligne ou décaler la saignée d'un côté choisi, par exemple pour couper précisément une plaque en deux.
+4. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
+   Logo définitif de la famille Fab (tuile graphite et symbole à la couleur d'identité), à la place du logo provisoire du kit.
 
 ## Actions à faire
 
