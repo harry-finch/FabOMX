@@ -3,10 +3,10 @@ id: A-003
 type: valider
 titre: "Valider les outils de la palette de FabOMX"
 element: R-003
-statut: a-faire
+statut: fait
 cree: 2026-11-18
 par: agent
-fait:
+fait: 2026-11-18
 ---
 
 Où : la palette à gauche de l'application (même version que l'action précédente).

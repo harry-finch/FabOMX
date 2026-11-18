@@ -20,7 +20,3 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
    Emballer FabOMX en application de bureau Tauri, comme FabVents et FabWeave.
 6. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v0.1
    Logo définitif de la famille Fab (tuile graphite et symbole à la couleur d'identité), à la place du logo provisoire du kit.
-
-## Actions à faire
-
-- [ ] [A-003](roadmap/actions/A-003-valider-les-outils-de-la-palette-de-fabomx.md) Valider les outils de la palette de FabOMX (valider, R-003)
