@@ -3,10 +3,10 @@ id: A-009
 type: valider
 titre: "Juger la section Nettoyer de FabOMX"
 element: R-004
-statut: a-faire
+statut: fait
 cree: 2026-11-18
 par: agent
-fait:
+fait: 2026-11-18
 ---
 
 Où : même version, outil Nettoyer (C), panneau droit.

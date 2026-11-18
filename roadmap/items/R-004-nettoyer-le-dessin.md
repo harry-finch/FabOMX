@@ -2,11 +2,11 @@
 id: R-004
 titre: "Nettoyer le dessin"
 resume: "Section Nettoyer : doublons, superpositions, minuscules, jonctions sous un seuil, segments alignés, avec comptes et bilan en direct, liste des défauts et option à l'import ; rien n'est inventé."
-statut: a-tester
+statut: livree
 jalon: v0.1
 cree: 2026-11-18
 maj: 2026-11-18
-livree:
+livree: 2026-11-18
 ---
 
 ## But
