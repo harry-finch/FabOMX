@@ -19,13 +19,13 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - os: macos-14
+          - os: macos-latest
             bundles: dmg
           - os: windows-latest
             bundles: nsis
     runs-on: ${{ matrix.os }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
       - name: Rust (rust-toolchain.toml)
         shell: bash
         run: |
@@ -36,7 +36,7 @@ jobs:
           workspaces: |
             .
             crates/fabomx-desktop
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
           cache: npm
