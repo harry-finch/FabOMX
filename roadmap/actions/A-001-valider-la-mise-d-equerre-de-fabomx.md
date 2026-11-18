@@ -2,10 +2,10 @@
 id: A-001
 type: valider
 titre: "Valider la mise d'équerre de FabOMX"
-statut: a-faire
+statut: fait
 cree: 2026-11-18
 par: agent
-fait:
+fait: 2026-11-18
 motif: equerre
 ---
 
