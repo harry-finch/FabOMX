@@ -236,7 +236,12 @@ fn build_menu<R: Runtime>(
             &PredefinedMenuItem::cut(app, Some(l("Couper", "Cut")))?,
             &PredefinedMenuItem::copy(app, Some(l("Copier", "Copy")))?,
             &PredefinedMenuItem::paste(app, Some(l("Coller", "Paste")))?,
-            &PredefinedMenuItem::select_all(app, Some(l("Tout sélectionner", "Select All")))?,
+            // L'interface sélectionne le texte d'un champ, ou les contours (outil Découpe).
+            &item(
+                "select-all",
+                l("Tout sélectionner", "Select All"),
+                Some("CmdOrCtrl+A"),
+            )?,
         ],
     )?;
 

@@ -5,6 +5,10 @@
 //! se croise ou en croise un autre, est coupé sur la ligne ; un repère
 //! (d'après le fichier) n'est pas coupé. Le sens de parcours est fixé : la
 //! pièce reste à gauche du jet.
+//!
+//! Qualité de coupe : de 1 (rapide, bord rugueux) à 5 (lent, bord net), celle
+//! du contour s'il en a une, sinon la qualité par défaut ; un contour qui
+//! n'est pas coupé n'en a pas.
 
 use crate::drawing::Piece;
 use crate::geom::{Affine, BBox, P};
@@ -62,6 +66,41 @@ pub enum CutWarning {
 pub struct Sides {
     pub contours: Vec<Contour>,
     pub warnings: Vec<CutWarning>,
+}
+
+/// Qualités de coupe valides, comme dans LAYOUT.
+pub const QUALITIES: std::ops::RangeInclusive<u8> = 1..=5;
+
+/// Refus d'un réglage de découpe, par code stable.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CutError {
+    /// Qualité hors de 1 à 5.
+    Quality,
+}
+
+impl CutError {
+    pub fn code(self) -> &'static str {
+        match self {
+            CutError::Quality => "cut.quality",
+        }
+    }
+}
+
+/// La qualité `q` si elle est valide.
+pub fn check_quality(q: u8) -> Result<u8, CutError> {
+    if QUALITIES.contains(&q) {
+        Ok(q)
+    } else {
+        Err(CutError::Quality)
+    }
+}
+
+/// Qualité retenue d'un contour de côté `side` : la sienne (`own`), sinon
+/// `default` ; aucune s'il n'est pas coupé. Une qualité invalide est refusée.
+pub fn quality(side: Side, own: Option<u8>, default: u8) -> Result<Option<u8>, CutError> {
+    let default = check_quality(default)?;
+    let own = own.map(check_quality).transpose()?;
+    Ok((side != Side::Skip).then(|| own.unwrap_or(default)))
 }
 
 /// Les contours d'un dessin et leurs côtés détectés.

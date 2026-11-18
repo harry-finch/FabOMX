@@ -8,7 +8,7 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ## Restant à faire
 
-1. **[R-009 Qualité de coupe](roadmap/items/R-009-qualite-de-coupe.md)** · Idée · jalon v0.2
+1. **[R-009 Qualité de coupe](roadmap/items/R-009-qualite-de-coupe.md)** · À tester · jalon v0.2
    Qualité de coupe de 1 à 5 : une qualité par défaut mémorisée sur le poste, et une qualité propre pour les contours choisis dans l'outil Découpe, affichée près de leur flèche.
 2. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée · jalon v0.2
    Marquer un trait sans traverser la plaque (gravure), dès que son code OMX est connu par un exemple de LAYOUT.
@@ -28,6 +28,8 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 ## Actions à faire
 
 - [ ] [A-015](roadmap/actions/A-015-fournir-un-omx-de-layout-avec-un-trait-grave.md) Fournir un OMX de LAYOUT avec un trait gravé (fournir, R-014)
+- [ ] [A-016](roadmap/actions/A-016-regler-les-qualites-de-coupe-sur-un-de-tes.md) Régler les qualités de coupe sur un de tes dessins (tester, R-009)
+- [ ] [A-017](roadmap/actions/A-017-verifier-a-dans-l-application-mac.md) Vérifier ⌘A dans l'application Mac (tester, R-009)
 
 ## Livré
 

@@ -29,7 +29,9 @@ export interface Drawing {
   placement: Placement;
   /** Côtés choisis à la main, par indice de contour ; les autres sont ceux détectés. */
   sides: Record<number, Side>;
-  /** Un nettoyage a recalculé les côtés et fait perdre des choix faits à la main. */
+  /** Qualités de coupe propres (1 à 5), par indice de contour ; les autres ont la qualité par défaut. */
+  qualities: Record<number, number>;
+  /** Un nettoyage a recalculé les côtés et fait perdre des choix faits à la main (côtés, qualités). */
   sidesReset: boolean;
 }
 
@@ -109,7 +111,7 @@ class Doc {
     const [x0, y0, x1, y1] = report.bbox;
     const matrix = translate(bed.width / 2 - (x0 + x1) / 2, bed.height / 2 - (y0 + y1) / 2);
     const id = this.reserve();
-    const drawing: Drawing = { id, geo, name, report, matrix, ref: { kind: 'box', ix: 1, iy: 1 }, snaps, placement: roughPlacement(report, matrix), sides: {}, sidesReset: false };
+    const drawing: Drawing = { id, geo, name, report, matrix, ref: { kind: 'box', ix: 1, iy: 1 }, snaps, placement: roughPlacement(report, matrix), sides: {}, qualities: {}, sidesReset: false };
     this.#commit([...this.drawings, drawing]);
     this.selected = id;
     this.#place(drawing);
@@ -142,13 +144,25 @@ class Doc {
     this.#commit(this.drawings.map((x) => (x.id === id ? { ...d, sides, sidesReset: false } : x)));
   }
 
+  /** Qualité propre des contours `indices` de `id` ; `null` : revenir à la qualité par défaut. Une étape. */
+  setQualities(id: number, indices: number[], q: number | null) {
+    const d = this.drawings.find((x) => x.id === id);
+    if (!d || !indices.length) return;
+    const qualities = { ...d.qualities };
+    for (const i of indices) {
+      if (q) qualities[i] = q;
+      else delete qualities[i];
+    }
+    this.#commit(this.drawings.map((x) => (x.id === id ? { ...d, qualities, sidesReset: false } : x)));
+  }
+
   /** Remplace la géométrie d'un dessin nettoyé ; la transformation est gardée,
-   * les côtés sont recalculés (les choix faits à la main sont perdus). Une étape. */
+   * les côtés sont recalculés (côtés et qualités choisis à la main sont perdus). Une étape. */
   replaceGeometry(id: number, geo: number, report: Report, snaps: number[]) {
     const d = this.drawings.find((x) => x.id === id);
     if (!d) return;
-    const sidesReset = Object.keys(d.sides).length > 0;
-    const next: Drawing = { ...d, geo, report, snaps, sides: {}, sidesReset, placement: { ...roughPlacement(report, d.matrix), warnings: d.placement.warnings } };
+    const sidesReset = Object.keys(d.sides).length > 0 || Object.keys(d.qualities).length > 0;
+    const next: Drawing = { ...d, geo, report, snaps, sides: {}, qualities: {}, sidesReset, placement: { ...roughPlacement(report, d.matrix), warnings: d.placement.warnings } };
     this.#commit(this.drawings.map((x) => (x.id === id ? next : x)));
     this.#place(next);
   }

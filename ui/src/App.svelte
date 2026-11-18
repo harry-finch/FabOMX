@@ -49,15 +49,16 @@
     if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
     if (importer.pending || ui.help) return;
     const mod = e.metaKey || e.ctrlKey;
-    // Dans l'application de bureau, ⌘O, ⌘Z et ⇧⌘Z sont ceux du menu : pas deux fois.
-    if (isDesktop && mod && ['o', 'z', 'y'].includes(e.key.toLowerCase())) return;
+    // Dans l'application de bureau, ⌘O, ⌘Z, ⇧⌘Z et ⌘A sont ceux du menu : pas deux fois.
+    if (isDesktop && mod && ['o', 'z', 'y', 'a'].includes(e.key.toLowerCase())) return;
     if (mod && !e.altKey) {
       const k = e.key.toLowerCase();
       if (k === 'o') importer.pick();
       else if (k === 'z' && e.shiftKey) doc.redo();
       else if (k === 'z') doc.undo();
       else if (k === 'y') doc.redo();
-      else return;
+      else if (k === 'a' && !selectAll()) return;
+      else if (k !== 'a') return;
       e.preventDefault();
       return;
     }
@@ -89,6 +90,19 @@
     }
   }
 
+  /** Tout sélectionner : le texte d'un champ de saisie, sinon (outil Découpe)
+   * tous les contours du dessin sélectionné. Rend vrai si quelque chose est sélectionné. */
+  function selectAll(): boolean {
+    const el = document.activeElement as HTMLElement | null;
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) {
+      (el as HTMLInputElement).select();
+      return true;
+    }
+    if (tools.active !== 'cut' || !doc.selection || importer.pending) return false;
+    cutting.selectAll(doc.selection);
+    return true;
+  }
+
   /** Annuler / rétablir : le texte d'un champ de saisie, sinon le dessin. */
   function history(redo: boolean) {
     const el = document.activeElement as HTMLElement | null;
@@ -107,6 +121,7 @@
     onMenu(async (id) => {
       if (id === 'import') importer.pick();
       else if (id === 'undo' || id === 'redo') history(id === 'redo');
+      else if (id === 'select-all') selectAll();
       else if (id === 'fit') workspace.fit();
       else if (id === 'help') ui.help = true;
       else if (id === 'recent:clear') clearRecent();
@@ -187,6 +202,8 @@
       <dd>{t('help.keys.clean')}</dd>
       <dt><kbd>D</kbd></dt>
       <dd>{t('help.keys.cut')}</dd>
+      <dt><kbd>⌘A</kbd></dt>
+      <dd>{t('help.keys.selectAll')}</dd>
       <dt><kbd>← → ↑ ↓</kbd></dt>
       <dd>{t('help.keys.nudge')}</dd>
       <dt><kbd>{t('help.del')}</kbd></dt>

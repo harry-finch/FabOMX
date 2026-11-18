@@ -1,17 +1,19 @@
 <script lang="ts">
-  // Section « Découpe » (outil Découpe) : la légende des côtés avec le nombre
-  // de contours de chacun, le côté des contours sélectionnés (sur le
-  // plateau, Maj + clic pour en ajouter) et le retour au côté détecté, puis
-  // les avertissements : contours qui se croisent (un clic centre la vue) et
-  // dessins qui se chevauchent. Un changement de côté est une étape.
-  import { CircleCheck, RotateCcw, TriangleAlert } from '@lucide/svelte';
+  // Section « Découpe » (outil Découpe) : la qualité par défaut (un réglage
+  // du poste), la légende des côtés et les qualités avec le nombre de
+  // contours de chacun, le côté et la qualité des contours sélectionnés (sur
+  // le plateau, Maj + clic pour en ajouter, ⌘A pour tous) et le retour au
+  // côté détecté ou à la qualité par défaut, puis les avertissements :
+  // contours qui se croisent (un clic centre la vue) et dessins qui se
+  // chevauchent. Un changement de côté ou de qualité est une étape.
+  import { CircleCheck, ListChecks, RotateCcw, TriangleAlert } from '@lucide/svelte';
   import Section from './Section.svelte';
   import Segmented from './Segmented.svelte';
-  import { cutting, allowed } from '../lib/cutting.svelte';
+  import { cutting, allowed, QUALITIES } from '../lib/cutting.svelte';
   import { doc, type Drawing } from '../lib/document.svelte';
   import { num } from '../lib/format';
   import { tip } from '../lib/tip';
-  import { t } from '../lib/i18n.svelte';
+  import { t, type Key } from '../lib/i18n.svelte';
   import type { Side } from '../lib/types';
 
   let { drawing: d }: { drawing: Drawing | null } = $props();
@@ -41,6 +43,20 @@
     return picked.every((i) => cutting.sideOf(d, i) === first) ? first : null;
   });
   const manual = $derived(!!d && picked.some((i) => d.sides[i] != null));
+  /** Contours coupés de la sélection : ceux qui ont une qualité. */
+  const cutPicked = $derived(d ? picked.filter((i) => cutting.qualityOf(d, i) != null) : []);
+  const commonQuality = $derived.by(() => {
+    if (!d || !cutPicked.length) return null;
+    const first = cutting.qualityOf(d, cutPicked[0]);
+    return cutPicked.every((i) => cutting.qualityOf(d, i) === first) ? first : null;
+  });
+  const ownQuality = $derived(!!d && cutPicked.some((i) => d.qualities[i] != null));
+  const qualityCounts = $derived(
+    d && s
+      ? QUALITIES.map((q) => ({ q, n: s.contours.filter((_, i) => cutting.qualityOf(d, i) === q).length })).filter((x) => x.n > 0)
+      : [],
+  );
+  const qualityOptions = QUALITIES.map((q) => ({ id: String(q), label: String(q), hint: t(`cut.qualityHints.${q}` as Key) }));
   const crossings = $derived(s?.warnings ?? []);
   const overlaps = $derived(
     d
@@ -53,6 +69,8 @@
 </script>
 
 <Section id="cut" title={t('cut.title')}>
+  <p class="sub" use:tip={t('cut.defaultQualityHint')}>{t('cut.defaultQuality')}</p>
+  <Segmented label={t('cut.defaultQuality')} value={String(cutting.quality)} onchange={(q) => cutting.setDefault(Number(q))} options={qualityOptions} />
   {#if !d}
     <p class="muted">{t('cut.select')}</p>
   {:else}
@@ -66,6 +84,18 @@
         </li>
       {/each}
     </ul>
+    {#if qualityCounts.length}
+      <p class="sub">{t('cut.qualities')}</p>
+      <ul class="legend">
+        {#each qualityCounts as { q, n } (q)}
+          <li use:tip={t(`cut.qualityHints.${q}` as Key)}>
+            <span class="badge tabular" aria-hidden="true">{q}</span>
+            <span class="name">{t('cut.qualityCount', { q })}</span>
+            <span class="count tabular">{num(n)}</span>
+          </li>
+        {/each}
+      </ul>
+    {/if}
 
     {#if picked.length}
       <p class="sub">{t('cut.selected', { n: picked.length })}</p>
@@ -79,11 +109,33 @@
       {#if options.length < SIDES.length}
         <p class="hint">{t('cut.openOnly')}</p>
       {/if}
-      <button class="btn" type="button" disabled={!manual} use:tip={t('cut.autoHint')} onclick={() => doc.setSides(d.id, picked, null)}
-        ><RotateCcw size={14} /> {t('cut.auto')}</button
-      >
+      <p class="sub">{t('cut.quality')}</p>
+      {#if cutPicked.length}
+        <Segmented
+          label={t('cut.quality')}
+          value={commonQuality == null ? '' : String(commonQuality)}
+          onchange={(q) => doc.setQualities(d.id, cutPicked, Number(q))}
+          options={qualityOptions}
+        />
+        {#if cutPicked.length < picked.length}
+          <p class="hint">{t('cut.noQuality')}</p>
+        {/if}
+      {:else}
+        <p class="hint">{t('cut.noQuality')}</p>
+      {/if}
+      <div class="row">
+        <button class="btn" type="button" disabled={!manual} use:tip={t('cut.autoHint')} onclick={() => doc.setSides(d.id, picked, null)}
+          ><RotateCcw size={14} /> {t('cut.auto')}</button
+        >
+        <button class="btn" type="button" disabled={!ownQuality} use:tip={t('cut.useDefaultHint')} onclick={() => doc.setQualities(d.id, cutPicked, null)}
+          ><RotateCcw size={14} /> {t('cut.useDefault')}</button
+        >
+      </div>
     {:else}
       <p class="hint">{t('cut.pickHint')}</p>
+    {/if}
+    {#if s?.contours.length && picked.length < s.contours.length}
+      <button class="btn" type="button" use:tip={t('cut.selectAllHint')} onclick={() => cutting.selectAll(d)}><ListChecks size={14} /> {t('cut.selectAll')}</button>
     {/if}
 
     {#if d.sidesReset}
@@ -158,6 +210,19 @@
 
   .count {
     color: var(--text-secondary);
+  }
+
+  .badge {
+    justify-self: center;
+    color: var(--text-primary);
+    font-size: var(--fs-xs);
+    font-weight: 600;
+  }
+
+  .row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--s2);
   }
 
   .hint {

@@ -2,7 +2,7 @@
 id: R-009
 titre: "Qualité de coupe"
 resume: "Qualité de coupe de 1 à 5 : une qualité par défaut mémorisée sur le poste, et une qualité propre pour les contours choisis dans l'outil Découpe, affichée près de leur flèche."
-statut: idee
+statut: a-tester
 jalon: v0.2
 cree: 2026-11-18
 maj: 2026-11-18

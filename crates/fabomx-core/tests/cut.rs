@@ -1,7 +1,7 @@
 //! Côtés de coupe : critères d'acceptation de R-008, sur les fichiers de `fixtures/`.
 
 use fabomx_core::clean::{clean, Options};
-use fabomx_core::cut::{overlap, reversed, sides, CutWarning, Side};
+use fabomx_core::cut::{overlap, quality, reversed, sides, CutError, CutWarning, Side};
 use fabomx_core::drawing::Piece;
 use fabomx_core::geom::Affine;
 use fabomx_core::import::{import, parse};
@@ -183,4 +183,21 @@ fn placed_drawings_overlap_only_when_their_material_meets() {
     assert!(overlap(&plate, id, &small, Affine::translate(95.0, -40.0)));
     // Ailleurs : rien.
     assert!(!overlap(&plate, id, &small, Affine::translate(150.0, 0.0)));
+}
+
+#[test]
+fn quality_is_own_else_default_and_none_when_not_cut() {
+    assert_eq!(quality(Side::Outside, None, 3), Ok(Some(3)));
+    assert_eq!(quality(Side::Inside, Some(5), 3), Ok(Some(5)));
+    assert_eq!(quality(Side::Line, Some(1), 4), Ok(Some(1)));
+    assert_eq!(quality(Side::Skip, Some(5), 3), Ok(None));
+}
+
+#[test]
+fn quality_outside_1_to_5_is_refused() {
+    for bad in [0, 6, 9] {
+        assert_eq!(quality(Side::Outside, Some(bad), 3), Err(CutError::Quality));
+        assert_eq!(quality(Side::Outside, None, bad), Err(CutError::Quality));
+    }
+    assert_eq!(CutError::Quality.code(), "cut.quality");
 }

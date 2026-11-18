@@ -67,6 +67,7 @@
   const drawings = $derived(doc.drawings);
   const selected = $derived(doc.selected);
   let colors: Record<string, string> = {};
+  let font = 'sans-serif';
   let frame = 0;
 
   const toWorld = (sx: number, sy: number): [number, number] => [(sx - view.ox) / view.s, (view.oy - sy) / view.s];
@@ -85,6 +86,7 @@
 
   function readColors() {
     const cs = getComputedStyle(document.documentElement);
+    font = cs.getPropertyValue('--font').trim() || 'sans-serif';
     colors = Object.fromEntries(TOKENS.map((k) => [k, cs.getPropertyValue(`--${k}`).trim()]));
   }
 
@@ -284,12 +286,28 @@
     ctx.setLineDash([]);
     s.contours.forEach((c, i) => {
       const side = cutting.sideOf(d, i);
-      if (side !== 'skip') arrow(ctx, d.matrix, c.pts, c.closed, reversed(side, c.area, d.matrix), colors[`cut-${side}`]);
+      if (side === 'skip') return;
+      const at = arrow(ctx, d.matrix, c.pts, c.closed, reversed(side, c.area, d.matrix), colors[`cut-${side}`]);
+      const q = cutting.qualityOf(d, i);
+      if (at && q != null) label(ctx, at, String(q), d.qualities[i] != null ? colors['ctrl-active'] : colors['ctrl']);
     });
   }
 
-  /** Flèche du sens de parcours, au milieu de l'arête la plus longue du contour (à l'écran). */
-  function arrow(ctx: CanvasRenderingContext2D, m: M, pts: number[], closed: boolean, back: boolean, color: string) {
+  /** Chiffre de qualité, cerné de la couleur du plateau. */
+  function label(ctx: CanvasRenderingContext2D, at: Pt, text: string, color: string) {
+    ctx.font = `600 11px ${font}`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'middle';
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = colors['ctrl-edge'];
+    ctx.strokeText(text, at[0], at[1]);
+    ctx.fillStyle = color;
+    ctx.fillText(text, at[0], at[1]);
+  }
+
+  /** Flèche du sens de parcours, au milieu de l'arête la plus longue du contour
+   * (à l'écran) ; rend la place d'une étiquette à côté, ou rien si le contour est trop petit. */
+  function arrow(ctx: CanvasRenderingContext2D, m: M, pts: number[], closed: boolean, back: boolean, color: string): Pt | null {
     const scr: Pt[] = [];
     for (let i = 0; i + 1 < pts.length; i += 2) {
       const [x, y] = apply(m, pts[i], pts[i + 1]);
@@ -304,7 +322,7 @@
       total += l;
       if (l > len) [best, len] = [i, l];
     }
-    if (total < 40 || best < 0) return;
+    if (total < 40 || best < 0) return null;
     const [ax, ay] = scr[best - 1];
     const [bx, by] = scr[best];
     const [px, py] = [(ax + bx) / 2, (ay + by) / 2];
@@ -324,6 +342,8 @@
     ctx.strokeStyle = color;
     ctx.lineWidth = 2;
     ctx.stroke();
+    // L'étiquette à 12 px du trait, à droite du sens de parcours à l'écran.
+    return [px - 12 * uy, py + 12 * ux];
   }
 
   /** Outil Découpe : les croisements du dessin sélectionné, celui montré en accent. */
@@ -461,7 +481,7 @@
   });
 
   $effect(() => {
-    void [view, width, height, machine, drawings, selected, tools.active, doc.lock, cleaning.preview, cleaning.focused, cutting.byGeo, cutting.selection, cutting.overlaps, cutting.focused];
+    void [view, width, height, machine, drawings, selected, tools.active, doc.lock, cleaning.preview, cleaning.focused, cutting.byGeo, cutting.selection, cutting.overlaps, cutting.focused, cutting.quality];
     zoom = view.s / PX_PER_MM;
     request();
   });
