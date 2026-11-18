@@ -166,6 +166,9 @@ const fr = {
       simplified: 'segments fusionnés {n}',
     },
   },
+  desktop: {
+    missing: 'Fichier introuvable, retiré des récents : {path}',
+  },
   bed: {
     title: 'Plateau',
     machine: 'Machine',

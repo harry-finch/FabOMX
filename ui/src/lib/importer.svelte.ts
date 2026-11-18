@@ -7,10 +7,13 @@ import { doc } from './document.svelte';
 import { ui } from './ui.svelte';
 import { t } from './i18n.svelte';
 import { cleaning } from './cleaning.svelte';
+import { isDesktop, openFile, openPath, remember } from './desktop';
 import type { ImportFailure, Report, Unit } from './types';
 
 export interface Pending {
   name: string;
+  /** Chemin du fichier, dans l'application de bureau (fichiers récents). */
+  path?: string;
   text: string;
   /** Unité choisie ; absente : celle du fichier. */
   unit?: Unit;
@@ -23,8 +26,14 @@ const isReport = (r: Report | ImportFailure | null): r is Report => !!r && !('er
 class Importer {
   pending = $state<Pending | null>(null);
 
-  /** Ouvre le choix du fichier. */
+  /** Ouvre le choix du fichier : dialogue natif dans l'application de bureau. */
   pick() {
+    if (isDesktop) {
+      openFile()
+        .then((f) => f && this.openText(f.name, f.text, f.path))
+        .catch(() => ui.toast(t('import.errors.unreadable')));
+      return;
+    }
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = '.svg,.dxf,image/svg+xml';
@@ -51,6 +60,21 @@ class Importer {
   async setClean(on: boolean) {
     cleaning.setAtImport(on);
     await this.#read();
+  }
+
+  async openText(name: string, text: string, path?: string) {
+    this.pending = { name, path, text, result: null, busy: true };
+    await this.#read();
+  }
+
+  /** Un fichier récent ; un fichier disparu le dit (et sort de la liste). */
+  async openRecent(path: string) {
+    try {
+      const f = await openPath(path);
+      await this.openText(f.name, f.text, f.path);
+    } catch (e) {
+      ui.toast(t(String(e).includes('missing') ? 'desktop.missing' : 'import.errors.unreadable', { path }));
+    }
   }
 
   async setUnit(unit: Unit) {
@@ -92,6 +116,7 @@ class Importer {
       return;
     }
     doc.add(geo, p.name, report, loaded.snaps, engine.machine);
+    if (isDesktop && p.path) remember(p.path).catch(() => {});
     ui.toast(t('import.added', { name: p.name }));
     this.pending = null;
   }

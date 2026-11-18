@@ -168,6 +168,9 @@ const en: Shape<typeof fr> = {
       simplified: 'merged segments {n}',
     },
   },
+  desktop: {
+    missing: 'File not found, removed from recent files: {path}',
+  },
   bed: {
     title: 'Bed',
     machine: 'Machine',

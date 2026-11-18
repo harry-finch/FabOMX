@@ -17,6 +17,11 @@ titre = "Découpe jet d'eau"
 
 # Versions à tester.
 [[test]]
+type = "build"
+titre = "Application macOS"
+motif = "dist-desktop/*.dmg"
+
+[[test]]
 type = "url"
 titre = "Version web"
 url = "http://localhost:5177"

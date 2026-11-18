@@ -2,7 +2,7 @@
 id: R-005
 titre: "Application de bureau macOS"
 resume: "Application de bureau macOS (Tauri) : .app et .dmg, dialogue Ouvrir natif, fichiers récents, menu natif FR/EN ; mêmes fonctions que la version web."
-statut: specifiee
+statut: a-tester
 jalon: v0.1
 cree: 2026-11-18
 maj: 2026-11-18

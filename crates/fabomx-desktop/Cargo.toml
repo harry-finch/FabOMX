@@ -1,0 +1,29 @@
+# Hors du workspace (voir son `exclude`) : Tauri exige `ui/dist` à la
+# compilation, et les tests du moteur n'ont pas à en dépendre.
+[package]
+name = "fabomx-desktop"
+description = "Application de bureau FabOMX (Tauri) : l'interface et son moteur WebAssembly, dialogue Ouvrir natif, fichiers récents, menu macOS"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.88"
+authors = ["Stéphane Muller"]
+license = "GPL-3.0-or-later"
+publish = false
+resolver = "3"
+
+[[bin]]
+name = "fabomx-desktop"
+path = "src/main.rs"
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+tauri = { version = "2", features = [] }
+tauri-plugin-dialog = "2"
+
+[features]
+# Activée par le CLI Tauri pour les builds de distribution.
+custom-protocol = ["tauri/custom-protocol"]

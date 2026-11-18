@@ -8,12 +8,17 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ## Restant à faire
 
-1. **[R-005 Application de bureau macOS](roadmap/items/R-005-application-de-bureau-macos.md)** · Spécifiée · jalon v0.1
+1. **[R-005 Application de bureau macOS](roadmap/items/R-005-application-de-bureau-macos.md)** · À tester · jalon v0.1
    Application de bureau macOS (Tauri) : .app et .dmg, dialogue Ouvrir natif, fichiers récents, menu natif FR/EN ; mêmes fonctions que la version web.
 2. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v0.1
    Logo définitif de la famille Fab (tuile graphite et symbole à la couleur d'identité), à la place du logo provisoire du kit.
 3. **[R-007 Reconnaître des arcs dans les segments](roadmap/items/R-007-reconnaitre-des-arcs-dans-les-segments.md)** · Idée · jalon v0.2
    Remplacer les suites de petits segments issues des courbes converties par de vrais arcs, pour un parcours de jet d'eau plus fluide.
+
+## Actions à faire
+
+- [ ] [A-010](roadmap/actions/A-010-installer-et-essayer-l-application-fabomx-pour.md) Installer et essayer l'application FabOMX pour Mac (tester, R-005)
+- [ ] [A-011](roadmap/actions/A-011-juger-les-menus-et-les-fichiers-recents-de.md) Juger les menus et les fichiers récents de FabOMX (tester, R-005)
 
 ## Livré
 

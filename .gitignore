@@ -5,6 +5,11 @@
 # Rust
 /target/
 
+# Application de bureau
+/dist-desktop/
+/crates/fabomx-desktop/target/
+/crates/fabomx-desktop/gen/
+
 # Interface
 /ui/node_modules/
 /ui/dist/

@@ -16,6 +16,8 @@
   import { importer } from './lib/importer.svelte';
   import { tools, type ToolId } from './lib/tools.svelte';
   import { then, translate } from './lib/affine';
+  import { clearRecent, isDesktop, onMenu, recentFiles, setMenuLocale } from './lib/desktop';
+  import { i18n } from './lib/i18n.svelte';
   import { ui } from './lib/ui.svelte';
   import { fmtLength, lengthUnit, pct } from './lib/format';
   import { t } from './lib/i18n.svelte';
@@ -41,6 +43,8 @@
     if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
     if (importer.pending || ui.help) return;
     const mod = e.metaKey || e.ctrlKey;
+    // Dans l'application de bureau, ⌘O, ⌘Z et ⇧⌘Z sont ceux du menu : pas deux fois.
+    if (isDesktop && mod && ['o', 'z', 'y'].includes(e.key.toLowerCase())) return;
     if (mod && !e.altKey) {
       const k = e.key.toLowerCase();
       if (k === 'o') importer.pick();
@@ -74,6 +78,34 @@
       } else if (tool) tools.select(tool.id);
     }
   }
+
+  /** Annuler / rétablir : le texte d'un champ de saisie, sinon le dessin. */
+  function history(redo: boolean) {
+    const el = document.activeElement as HTMLElement | null;
+    if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA')) document.execCommand(redo ? 'redo' : 'undo');
+    else if (!importer.pending) {
+      if (redo) doc.redo();
+      else doc.undo();
+    }
+  }
+
+  // Application de bureau : le menu natif suit la langue et agit sur l'interface.
+  $effect(() => {
+    setMenuLocale(i18n.locale);
+  });
+  $effect(() =>
+    onMenu(async (id) => {
+      if (id === 'import') importer.pick();
+      else if (id === 'undo' || id === 'redo') history(id === 'redo');
+      else if (id === 'fit') workspace.fit();
+      else if (id === 'help') ui.help = true;
+      else if (id === 'recent:clear') clearRecent();
+      else if (id.startsWith('recent:')) {
+        const path = (await recentFiles())[Number(id.slice(7))];
+        if (path && !importer.pending) importer.openRecent(path);
+      }
+    }),
+  );
 
   const hasFiles = (e: DragEvent) => !!e.dataTransfer?.types.includes('Files');
 
