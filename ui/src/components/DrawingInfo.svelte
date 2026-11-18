@@ -6,13 +6,17 @@
   import { CircleCheck } from '@lucide/svelte';
   import Segmented from './Segmented.svelte';
   import Alerts, { type Alert } from './Alerts.svelte';
-  import type { Kind, Report, Unit } from '../lib/types';
+  import type { Kind, Placement, Report, Unit } from '../lib/types';
   import { ui } from '../lib/ui.svelte';
   import { engine } from '../lib/engine.svelte';
   import { fmtLen, num } from '../lib/format';
   import { t, labelled, type Key } from '../lib/i18n.svelte';
 
-  let { report, onunit }: { report: Report; onunit?: (u: Unit) => void } = $props();
+  let { report, placement, onunit }: { report: Report; placement?: Placement; onunit?: (u: Unit) => void } = $props();
+
+  // Posé sur le plateau : dimensions et débord du dessin transformé.
+  const width = $derived(placement?.width ?? report.width);
+  const height = $derived(placement?.height ?? report.height);
 
   const KINDS: Kind[] = ['line', 'arc', 'circle', 'ellipse', 'polyline', 'rect', 'spline', 'path'];
   const BASE_UNITS: Unit[] = ['mm', 'cm', 'in', 'px'];
@@ -40,14 +44,21 @@
       .join(' · ');
   }
 
-  const alerts = $derived<Alert[]>(
-    report.warnings.map((w) => {
+  const alerts = $derived<Alert[]>([
+    ...(placement?.warnings ?? []).map((w): Alert => {
+      if (w.code === 'place.overflow')
+        return { code: w.code, severity: 'warning', message: t('import.warnings.overflow', { x: fmtLen(w.x, ui.units, 2), y: fmtLen(w.y, ui.units, 2) }) };
+      return { code: w.code, severity: 'warning', message: t('import.warnings.distorted') };
+    }),
+    ...report.warnings
+      .filter((w) => !(placement && w.code === 'import.larger_than_bed'))
+      .map((w): Alert => {
       if (w.code === 'import.larger_than_bed')
         return { code: w.code, severity: 'warning', message: t('import.warnings.larger', { w: fmtLen(w.width, ui.units, 1), h: fmtLen(w.height, ui.units, 1), bed: fmtLen(engine.machine?.width, ui.units, 1) }) };
       if (w.code === 'import.ignored') return { code: w.code, severity: 'info', message: labelled(t('import.warnings.ignored', { n: w.count }), ignoredList()) };
       return { code: w.code, severity: 'warning', message: t('import.warnings.noClosed') };
     }),
-  );
+  ]);
 </script>
 
 <div class="info">
@@ -61,7 +72,7 @@
       <dd>{t(`units.${report.unit}`)}{report.source === 'assumed' ? ` (${t('import.assumed')})` : ''}</dd>
     {/if}
     <dt>{t('import.size')}</dt>
-    <dd class="tabular strong">{fmtLen(report.width, ui.units, 2)} × {fmtLen(report.height, ui.units, 2)}</dd>
+    <dd class="tabular strong">{fmtLen(width, ui.units, 2)} × {fmtLen(height, ui.units, 2)}</dd>
     {#each KINDS.filter((k) => report.counts[k]) as k (k)}
       <dt>{t(`kinds.${k}`)}</dt>
       <dd class="tabular">{num(report.counts[k])}</dd>

@@ -5,6 +5,7 @@
   import { Trash2 } from '@lucide/svelte';
   import Section from './Section.svelte';
   import DrawingInfo from './DrawingInfo.svelte';
+  import Transform from './Transform.svelte';
   import type { Machine } from '../lib/engine.svelte';
   import type { Drawing } from '../lib/document.svelte';
   import { ui } from '../lib/ui.svelte';
@@ -21,12 +22,13 @@
 </script>
 
 {#if drawing}
+  <Transform {drawing} />
   <Section id="drawing" title={t('drawing.title')}>
     {#snippet actions()}
       <button class="btn quiet icon" type="button" use:tip={t('drawing.removeHint')} aria-label={t('drawing.remove')} onclick={() => onremove(drawing.id)}><Trash2 size={14} /></button>
     {/snippet}
     <p class="name">{drawing.name} <span class="format">{drawing.report.format.toUpperCase()}</span></p>
-    <DrawingInfo report={drawing.report} />
+    <DrawingInfo report={drawing.report} placement={drawing.placement} />
     <button class="btn" type="button" onclick={() => onremove(drawing.id)}><Trash2 size={14} /> {t('drawing.remove')}</button>
   </Section>
 {:else}

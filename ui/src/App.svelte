@@ -15,6 +15,7 @@
   import { doc } from './lib/document.svelte';
   import { importer } from './lib/importer.svelte';
   import { tools, type ToolId } from './lib/tools.svelte';
+  import { then, translate } from './lib/affine';
   import { ui } from './lib/ui.svelte';
   import { fmtLength, lengthUnit, pct } from './lib/format';
   import { t } from './lib/i18n.svelte';
@@ -56,7 +57,16 @@
     else if ((e.key === 'Delete' || e.key === 'Backspace') && doc.selected != null) {
       e.preventDefault();
       remove(doc.selected);
-    } else if (e.key === 'Escape') doc.select(null);
+    } else if (e.key === 'Escape') {
+      if (doc.picking) doc.picking = false;
+      else doc.select(null);
+    } else if (e.key.startsWith('Arrow') && doc.selection) {
+      // Flèches : 1 mm, 10 mm avec Maj ; chaque appui est une étape.
+      e.preventDefault();
+      const k = e.shiftKey ? 10 : 1;
+      const [dx, dy] = { ArrowLeft: [-k, 0], ArrowRight: [k, 0], ArrowUp: [0, k], ArrowDown: [0, -k] }[e.key] ?? [0, 0];
+      doc.update(doc.selection.id, { matrix: then(translate(dx, dy), doc.selection.matrix) });
+    }
     else {
       const tool = tools.byKey(e.key);
       if (tool?.action) {
@@ -97,15 +107,7 @@
     <aside class="panel left">
       <ToolPalette onaction={action} />
     </aside>
-    <Workspace
-      bind:this={workspace}
-      machine={engine.machine}
-      drawings={doc.drawings}
-      selected={doc.selected}
-      onselect={(id) => doc.select(id)}
-      bind:pointer
-      bind:zoom
-    />
+    <Workspace bind:this={workspace} machine={engine.machine} bind:pointer bind:zoom />
     <aside class="panel right">
       <Inspector machine={engine.machine} drawing={doc.selection} count={doc.drawings.length} onremove={remove} />
     </aside>
@@ -137,6 +139,10 @@
       <dd>{t('help.keys.wheel')}</dd>
       <dt><kbd>F</kbd></dt>
       <dd>{t('help.keys.fit')}</dd>
+      <dt><kbd>M · R · S</kbd></dt>
+      <dd>{t('help.keys.transform')}</dd>
+      <dt><kbd>← → ↑ ↓</kbd></dt>
+      <dd>{t('help.keys.nudge')}</dd>
       <dt><kbd>{t('help.del')}</kbd></dt>
       <dd>{t('help.keys.remove')}</dd>
       <dt><kbd>{t('help.esc')}</kbd></dt>

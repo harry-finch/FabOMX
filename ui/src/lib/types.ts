@@ -31,3 +31,13 @@ export interface Report {
 export interface ImportFailure {
   error: 'import.unknown_format' | 'import.unreadable' | 'import.binary_dxf' | 'import.empty';
 }
+
+export type PlaceWarning = { code: 'place.overflow'; x: number; y: number } | { code: 'place.distorted' };
+
+/** Un dessin transformé, sur le plateau (mm). */
+export interface Placement {
+  bbox: [number, number, number, number];
+  width: number;
+  height: number;
+  warnings: PlaceWarning[];
+}

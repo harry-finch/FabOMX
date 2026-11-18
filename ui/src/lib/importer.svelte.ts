@@ -71,11 +71,19 @@ class Importer {
     return isReport(r) ? r : null;
   }
 
-  confirm() {
+  async confirm() {
     const p = this.pending;
     const report = this.report;
     if (!p || !report || p.busy || !engine.machine) return;
-    doc.add(p.name, report, engine.machine);
+    p.busy = true;
+    const id = doc.reserve();
+    const loaded = await engine.load(id, p.text, report.unit).catch(() => null);
+    if (!loaded || 'error' in loaded) {
+      p.result = { error: 'import.unreadable' };
+      p.busy = false;
+      return;
+    }
+    doc.add(id, p.name, report, loaded.snaps, engine.machine);
     ui.toast(t('import.added', { name: p.name }));
     this.pending = null;
   }

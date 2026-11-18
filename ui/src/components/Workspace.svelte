@@ -7,25 +7,26 @@
   // glisser ou le bouton du milieu ; `fit()` recadre (touche F).
   // Les dessins importés sont des objets de l'utilisateur : trait clair sur
   // liseré sombre, contours ouverts en attention, sélection en accent.
-  // L'outil Sélection choisit le dessin dont un tracé passe sous le pointeur,
-  // sinon celui dont la boîte le contient ; un clic dans le vide désélectionne.
+  // Un clic choisit le dessin dont un tracé passe sous le pointeur, sinon
+  // celui dont la boîte le contient ; un clic dans le vide désélectionne.
+  // Outils : Déplacer (glisser le dessin), Tourner (glisser autour du point
+  // de référence, Maj par 15°), Mettre à l'échelle (poignées de la boîte ;
+  // côtés seulement cadenas ouvert). Un geste = une étape d'annulation.
+  // « Choisir sur le plateau » : le clic suivant place le point de référence,
+  // accroché aux points du dessin à HIT px près. Un dessin qui déborde du
+  // plateau a sa boîte en attention.
   import { theme } from '../lib/theme.svelte';
   import { tools } from '../lib/tools.svelte';
   import type { Machine } from '../lib/engine.svelte';
-  import type { Drawing } from '../lib/document.svelte';
+  import { doc, refPoint, type Drawing } from '../lib/document.svelte';
+  import { apply, invert, rotateAbout, scaleAbout, then, translate, type M, type Pt } from '../lib/affine';
 
   let {
     machine,
-    drawings,
-    selected,
-    onselect,
     pointer = $bindable(null),
     zoom = $bindable(1),
   }: {
     machine: Machine | null;
-    drawings: Drawing[];
-    selected: number | null;
-    onselect: (id: number | null) => void;
     /** Position du pointeur sur le plateau, en mm (null hors de la vue). */
     pointer?: [number, number] | null;
     /** Zoom : 1 = taille réelle à l'écran (96 px CSS par pouce). */
@@ -49,6 +50,10 @@
   let auto = $state(true);
   let space = $state(false);
   let drag: { x: number; y: number; ox: number; oy: number } | null = $state(null);
+  /** Geste en cours sur un dessin : départ (mm), matrice et point de référence au départ. */
+  let gesture: { kind: 'move' | 'rotate' | 'scale'; id: number; p0: Pt; m0: M; ref: Pt; hx: number; hy: number } | null = $state(null);
+  const drawings = $derived(doc.drawings);
+  const selected = $derived(doc.selected);
   let colors: Record<string, string> = {};
   let frame = 0;
 
@@ -136,15 +141,30 @@
     drawDrawings(ctx);
   }
 
-  function tracePath(ctx: CanvasRenderingContext2D, d: Drawing, pts: number[]) {
-    const { s, ox, oy } = view;
-    const [dx, dy] = d.offset;
+  const sx = (x: number) => view.ox + x * view.s;
+  const sy = (y: number) => view.oy - y * view.s;
+
+  function tracePath(ctx: CanvasRenderingContext2D, m: M, pts: number[]) {
     for (let i = 0; i < pts.length; i += 2) {
-      const x = ox + (pts[i] + dx) * s;
-      const y = oy - (pts[i + 1] + dy) * s;
-      if (i === 0) ctx.moveTo(x, y);
-      else ctx.lineTo(x, y);
+      const [x, y] = apply(m, pts[i], pts[i + 1]);
+      if (i === 0) ctx.moveTo(sx(x), sy(y));
+      else ctx.lineTo(sx(x), sy(y));
     }
+  }
+
+  const overflows = (d: Drawing) => d.placement.warnings.some((w) => w.code === 'place.overflow');
+
+  /** Poignées d'échelle : coins, et côtés quand le cadenas est ouvert. `(hx, hy)` de 0 à 2 depuis le bas gauche. */
+  function handles(d: Drawing): { hx: number; hy: number; x: number; y: number }[] {
+    const [x0, y0, x1, y1] = d.placement.bbox;
+    const out = [];
+    for (const hx of [0, 1, 2])
+      for (const hy of [0, 1, 2]) {
+        const corner = hx !== 1 && hy !== 1;
+        const side = (hx === 1) !== (hy === 1);
+        if (corner || (side && !doc.lock)) out.push({ hx, hy, x: x0 + (hx * (x1 - x0)) / 2, y: y0 + (hy * (y1 - y0)) / 2 });
+      }
+    return out;
   }
 
   function drawDrawings(ctx: CanvasRenderingContext2D) {
@@ -152,50 +172,78 @@
     ctx.lineCap = 'round';
     for (const d of drawings) {
       const sel = d.id === selected;
-      if (sel) {
-        const [x0, y0, x1, y1] = d.report.bbox;
-        const [dx, dy] = d.offset;
-        const r = [view.ox + (x0 + dx) * view.s, view.oy - (y1 + dy) * view.s, (x1 - x0) * view.s, (y1 - y0) * view.s];
-        ctx.fillStyle = colors['ctrl-active-fill'];
-        ctx.fillRect(r[0], r[1], r[2], r[3]);
+      const over = overflows(d);
+      if (sel || over) {
+        const [x0, y0, x1, y1] = d.placement.bbox;
+        const r = [sx(x0), sy(y1), (x1 - x0) * view.s, (y1 - y0) * view.s];
+        if (sel) {
+          ctx.fillStyle = colors['ctrl-active-fill'];
+          ctx.fillRect(r[0], r[1], r[2], r[3]);
+        }
         ctx.setLineDash([4, 4]);
-        ctx.strokeStyle = colors['ctrl-active'];
+        ctx.strokeStyle = over ? colors['drawing-open'] : colors['ctrl-active'];
         ctx.lineWidth = 1;
         ctx.strokeRect(Math.round(r[0]) - 3.5, Math.round(r[1]) - 3.5, Math.round(r[2]) + 7, Math.round(r[3]) + 7);
         ctx.setLineDash([]);
       }
-      // Liseré sombre sous tous les tracés, puis le trait.
+      // Liseré sous tous les tracés, puis le trait.
       ctx.beginPath();
-      for (const tr of d.report.traces) tracePath(ctx, d, tr.pts);
+      for (const tr of d.report.traces) tracePath(ctx, d.matrix, tr.pts);
       ctx.strokeStyle = colors['ctrl-edge'];
       ctx.lineWidth = 4;
       ctx.stroke();
       for (const open of [false, true]) {
         ctx.beginPath();
-        for (const tr of d.report.traces) if (tr.open === open) tracePath(ctx, d, tr.pts);
+        for (const tr of d.report.traces) if (tr.open === open) tracePath(ctx, d.matrix, tr.pts);
         ctx.strokeStyle = open ? colors['drawing-open'] : sel ? colors['ctrl-active'] : colors['ctrl'];
         ctx.lineWidth = open ? 2 : 1.5;
         ctx.stroke();
       }
     }
+    const d = doc.selection;
+    if (!d) return;
+    // Point de référence : un cercle et sa croix.
+    const [rx, ry] = refPoint(d);
+    const [px, py] = [sx(rx), sy(ry)];
+    ctx.strokeStyle = colors['ctrl-edge'];
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(px, py, 5, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = colors['ctrl-active'];
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(px, py, 5, 0, Math.PI * 2);
+    ctx.moveTo(px - 9, py);
+    ctx.lineTo(px + 9, py);
+    ctx.moveTo(px, py - 9);
+    ctx.lineTo(px, py + 9);
+    ctx.stroke();
+    if (tools.active === 'scale') {
+      for (const h of handles(d)) {
+        ctx.fillStyle = colors['ctrl'];
+        ctx.strokeStyle = colors['ctrl-active'];
+        ctx.lineWidth = 1.5;
+        ctx.fillRect(Math.round(sx(h.x)) - 4, Math.round(sy(h.y)) - 4, 8, 8);
+        ctx.strokeRect(Math.round(sx(h.x)) - 4.5, Math.round(sy(h.y)) - 4.5, 9, 9);
+      }
+    }
   }
 
-  /** Le dessin sous le point d'écran (sx, sy), le plus récent d'abord. */
-  function hit(sx: number, sy: number): number | null {
-    const { s, ox, oy } = view;
+  /** Le dessin sous le point d'écran (px, py), le plus récent d'abord. */
+  function hit(px: number, py: number): number | null {
     const near = (d: Drawing) => {
-      const [dx, dy] = d.offset;
-      const X = (x: number) => ox + (x + dx) * s;
-      const Y = (y: number) => oy - (y + dy) * s;
       for (const { pts: p } of d.report.traces) {
-        for (let i = 0; i + 3 < p.length; i += 2) {
-          const ax = X(p[i]);
-          const ay = Y(p[i + 1]);
-          const vx = X(p[i + 2]) - ax;
-          const vy = Y(p[i + 3]) - ay;
+        let [ax, ay] = apply(d.matrix, p[0], p[1]);
+        for (let i = 2; i + 1 < p.length; i += 2) {
+          const [bx, by] = apply(d.matrix, p[i], p[i + 1]);
+          const [x0, y0, x1, y1] = [sx(ax), sy(ay), sx(bx), sy(by)];
+          const vx = x1 - x0;
+          const vy = y1 - y0;
           const l2 = vx * vx + vy * vy;
-          const t = l2 > 0 ? Math.max(0, Math.min(1, ((sx - ax) * vx + (sy - ay) * vy) / l2)) : 0;
-          if (Math.hypot(ax + vx * t - sx, ay + vy * t - sy) <= HIT) return true;
+          const t = l2 > 0 ? Math.max(0, Math.min(1, ((px - x0) * vx + (py - y0) * vy) / l2)) : 0;
+          if (Math.hypot(x0 + vx * t - px, y0 + vy * t - py) <= HIT) return true;
+          [ax, ay] = [bx, by];
         }
       }
       return false;
@@ -203,15 +251,31 @@
     const list = [...drawings].reverse();
     const onTrace = list.find(near);
     if (onTrace) return onTrace.id;
-    const [wx, wy] = toWorld(sx, sy);
+    const [wx, wy] = toWorld(px, py);
     const inside = list
       .filter((d) => {
-        const [x0, y0, x1, y1] = d.report.bbox;
-        const [dx, dy] = d.offset;
-        return wx >= x0 + dx && wx <= x1 + dx && wy >= y0 + dy && wy <= y1 + dy;
+        const [x0, y0, x1, y1] = d.placement.bbox;
+        return wx >= x0 && wx <= x1 && wy >= y0 && wy <= y1;
       })
-      .sort((a, b) => a.report.width * a.report.height - b.report.width * b.report.height);
+      .sort((a, b) => a.placement.width * a.placement.height - b.placement.width * b.placement.height);
     return inside[0]?.id ?? null;
+  }
+
+  /** Le point de référence choisi par un clic : accroché au point du dessin le plus proche. */
+  function pickRef(d: Drawing, px: number, py: number) {
+    let best: [number, number] | null = null;
+    let dist = HIT;
+    for (let i = 0; i + 1 < d.snaps.length; i += 2) {
+      const [x, y] = apply(d.matrix, d.snaps[i], d.snaps[i + 1]);
+      const k = Math.hypot(sx(x) - px, sy(y) - py);
+      if (k <= dist) {
+        dist = k;
+        best = [d.snaps[i], d.snaps[i + 1]];
+      }
+    }
+    const [x, y] = best ?? apply(invert(d.matrix), ...toWorld(px, py));
+    doc.update(d.id, { ref: { kind: 'point', x, y } });
+    doc.picking = false;
   }
 
   $effect(() => {
@@ -221,7 +285,7 @@
   });
 
   $effect(() => {
-    void [view, width, height, machine, drawings, selected];
+    void [view, width, height, machine, drawings, selected, tools.active, doc.lock];
     zoom = view.s / PX_PER_MM;
     request();
   });
@@ -280,9 +344,22 @@
   }
 
   function pointerdown(e: PointerEvent) {
-    if (e.button === 0 && !panning && tools.active === 'select') {
-      const [sx, sy] = local(e);
-      onselect(hit(sx, sy));
+    if (e.button === 0 && !panning) {
+      const [px, py] = local(e);
+      const sel = doc.selection;
+      if (doc.picking && sel) return pickRef(sel, px, py);
+      const tool = tools.active;
+      if (tool === 'scale' && sel) {
+        const h = handles(sel).find((h) => Math.abs(sx(h.x) - px) <= HIT && Math.abs(sy(h.y) - py) <= HIT);
+        if (h) return start(e, 'scale', sel, h.hx, h.hy);
+      }
+      const id = hit(px, py);
+      if (tool === 'move' && id != null) {
+        doc.select(id);
+        return start(e, 'move', doc.selection!);
+      }
+      if (tool === 'rotate' && sel && (id == null || id === sel.id)) return start(e, 'rotate', sel);
+      doc.select(id);
       return;
     }
     if (!(e.button === 1 || (e.button === 0 && panning))) return;
@@ -291,18 +368,58 @@
     drag = { x: e.clientX, y: e.clientY, ox: view.ox, oy: view.oy };
   }
 
+  function start(e: PointerEvent, kind: 'move' | 'rotate' | 'scale', d: Drawing, hx = 0, hy = 0) {
+    e.preventDefault();
+    canvas.setPointerCapture(e.pointerId);
+    doc.begin();
+    gesture = { kind, id: d.id, p0: toWorld(...local(e)), m0: d.matrix, ref: refPoint(d), hx, hy };
+  }
+
+  function follow(e: PointerEvent, p: Pt) {
+    const g = gesture!;
+    const [dx, dy] = [p[0] - g.p0[0], p[1] - g.p0[1]];
+    let m: M = g.m0;
+    if (g.kind === 'move') m = then(translate(dx, dy), g.m0);
+    else if (g.kind === 'rotate') {
+      const a = (Math.atan2(p[1] - g.ref[1], p[0] - g.ref[0]) - Math.atan2(g.p0[1] - g.ref[1], g.p0[0] - g.ref[0])) * (180 / Math.PI);
+      const deg = e.shiftKey ? Math.round(a / 15) * 15 : a;
+      m = then(rotateAbout(g.ref, deg), g.m0);
+    } else {
+      // Échelle : rapport des distances au point de référence, par axe.
+      const ratio = (now: number, then0: number) => (Math.abs(then0) > 1e-9 ? now / then0 : 1);
+      const v0 = [g.p0[0] - g.ref[0], g.p0[1] - g.ref[1]];
+      const v = [p[0] - g.ref[0], p[1] - g.ref[1]];
+      let kx = g.hx === 1 ? 1 : ratio(v[0], v0[0]);
+      let ky = g.hy === 1 ? 1 : ratio(v[1], v0[1]);
+      if (doc.lock) {
+        const l2 = v0[0] * v0[0] + v0[1] * v0[1];
+        kx = ky = l2 > 1e-12 ? (v[0] * v0[0] + v[1] * v0[1]) / l2 : 1;
+      }
+      const floor = (k: number) => (Math.abs(k) < 0.001 ? (k < 0 ? -0.001 : 0.001) : k);
+      m = then(scaleAbout(g.ref, floor(kx), floor(ky)), g.m0);
+    }
+    doc.update(g.id, { matrix: m });
+  }
+
   function pointermove(e: PointerEvent) {
-    const [sx, sy] = local(e);
-    pointer = toWorld(sx, sy);
+    const [px, py] = local(e);
+    pointer = toWorld(px, py);
+    if (gesture) return follow(e, pointer);
     if (!drag) return;
     view = { s: view.s, ox: drag.ox + e.clientX - drag.x, oy: drag.oy + e.clientY - drag.y };
     auto = false;
   }
 
   function pointerup(e: PointerEvent) {
-    if (drag) canvas.releasePointerCapture(e.pointerId);
+    if (drag || gesture) canvas.releasePointerCapture(e.pointerId);
+    if (gesture) doc.end();
     drag = null;
+    gesture = null;
   }
+
+  const cursor = $derived(
+    doc.picking ? 'crosshair' : tools.active === 'move' ? 'move' : tools.active === 'rotate' && selected != null ? 'alias' : undefined,
+  );
 </script>
 
 <div class="host" bind:this={host}>
@@ -310,6 +427,7 @@
     bind:this={canvas}
     class:grab={panning}
     class:grabbing={drag}
+    style:cursor={panning ? undefined : cursor}
     style:width="{width}px"
     style:height="{height}px"
     onwheel={wheel}

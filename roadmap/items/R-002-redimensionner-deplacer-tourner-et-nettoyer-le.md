@@ -2,7 +2,7 @@
 id: R-002
 titre: "Redimensionner, déplacer et tourner le dessin"
 resume: "Déplacer, tourner, mettre à l'échelle (proportionnelle ou non) et retourner un dessin, à la souris et par valeurs, autour d'un point de référence choisi ; calcul depuis la géométrie d'origine, débord signalé."
-statut: specifiee
+statut: a-tester
 jalon: v0.1
 cree: 2026-11-18
 maj: 2026-11-18
@@ -24,7 +24,7 @@ Poser chaque dessin importé là où il doit être découpé, dans la bonne orie
 - **Déplacer** :
   - glisser le dessin ;
   - flèches du clavier (1 mm, 10 mm avec Maj) ;
-  - X/Y du point de référence ;
+  - X/Y du coin bas gauche de la boîte (« Position » ; les X/Y du point de référence, eux, déplacent le point sans bouger le dessin) ;
   - boutons « À l'origine » (coin bas gauche de la boîte en (0, 0)) et « Centrer sur le plateau ».
 - **Tourner** :
   - glisser autour du point de référence, par pas de 15° avec Maj ;

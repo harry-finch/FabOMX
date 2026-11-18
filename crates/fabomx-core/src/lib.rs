@@ -7,6 +7,7 @@ mod dxf;
 pub mod geom;
 pub mod import;
 pub mod machine;
+pub mod place;
 mod svg;
 pub mod units;
 

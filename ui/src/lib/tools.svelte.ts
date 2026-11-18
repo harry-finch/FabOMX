@@ -27,9 +27,9 @@ export const TOOL_GROUPS: Tool[][] = [
   ],
   [{ id: 'import', icon: FileUp, key: 'i', enabled: true, action: true }],
   [
-    { id: 'move', icon: Move, key: 'm', enabled: false },
-    { id: 'rotate', icon: RotateCw, key: 'r', enabled: false },
-    { id: 'scale', icon: Scaling, key: 's', enabled: false },
+    { id: 'move', icon: Move, key: 'm', enabled: true },
+    { id: 'rotate', icon: RotateCw, key: 'r', enabled: true },
+    { id: 'scale', icon: Scaling, key: 's', enabled: true },
   ],
   [{ id: 'clean', icon: WandSparkles, key: 'c', enabled: false }],
 ];

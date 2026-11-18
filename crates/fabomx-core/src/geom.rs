@@ -187,6 +187,20 @@ impl BBox {
 }
 
 /// Transformation affine `[a, b, c, d, e, f]` : x' = a x + c y + e, y' = b x + d y + f.
+trait RoundIfClose {
+    fn round_if_close(self) -> f64;
+}
+
+impl RoundIfClose for f64 {
+    fn round_if_close(self) -> f64 {
+        if (self - self.round()).abs() < 1e-15 {
+            self.round()
+        } else {
+            self
+        }
+    }
+}
+
 #[derive(Clone, Copy, Debug, PartialEq)]
 pub struct Affine(pub [f64; 6]);
 
@@ -224,6 +238,39 @@ impl Affine {
     pub fn det(&self) -> f64 {
         let [a, b, c, d, _, _] = self.0;
         a * d - b * c
+    }
+
+    pub fn translate(dx: f64, dy: f64) -> Affine {
+        Affine([1.0, 0.0, 0.0, 1.0, dx, dy])
+    }
+
+    /// Rotation de `deg` degrés (sens trigonométrique) autour de `c`.
+    pub fn rotate_about(c: P, deg: f64) -> Affine {
+        let (s, k) = deg.to_radians().sin_cos();
+        // Quarts de tour exacts : pas de 6e-17 parasite.
+        let (s, k) = (s.round_if_close(), k.round_if_close());
+        Affine([
+            k,
+            s,
+            -s,
+            k,
+            c.x - k * c.x + s * c.y,
+            c.y - s * c.x - k * c.y,
+        ])
+    }
+
+    /// Échelle `(kx, ky)` autour de `c` ; un facteur négatif retourne l'axe.
+    pub fn scale_about(c: P, kx: f64, ky: f64) -> Affine {
+        Affine([kx, 0.0, 0.0, ky, c.x - kx * c.x, c.y - ky * c.y])
+    }
+
+    /// Miroir autour de `c` : `horizontal` retourne la gauche et la droite.
+    pub fn mirror_about(c: P, horizontal: bool) -> Affine {
+        if horizontal {
+            Affine::scale_about(c, -1.0, 1.0)
+        } else {
+            Affine::scale_about(c, 1.0, -1.0)
+        }
     }
 
     /// Facteur d'échelle moyen.
