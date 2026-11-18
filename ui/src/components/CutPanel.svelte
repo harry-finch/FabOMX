@@ -13,13 +13,13 @@
   import NumField from './NumField.svelte';
   import Section from './Section.svelte';
   import Segmented from './Segmented.svelte';
-  import { cutting, allowed, QUALITIES, LEAD_MIN, LEAD_MAX } from '../lib/cutting.svelte';
+  import { cutting, allowed, QUALITIES, LEAD_MIN, LEAD_MAX, TAB_MIN, TAB_MAX, TAB_MAX_WIDTH } from '../lib/cutting.svelte';
   import { doc, type Drawing } from '../lib/document.svelte';
   import { fmtLen, num } from '../lib/format';
   import { ui } from '../lib/ui.svelte';
   import { tip } from '../lib/tip';
   import { t, type Key } from '../lib/i18n.svelte';
-  import type { LeadShape, Side } from '../lib/types';
+  import type { LeadShape, Side, TabSpec } from '../lib/types';
 
   let { drawing: d }: { drawing: Drawing | null } = $props();
 
@@ -33,7 +33,7 @@
   });
   $effect(() => {
     const list = doc.drawings;
-    void [cutting.byGeo, cutting.lead.shape, cutting.lead.lead_in, cutting.lead.lead_out];
+    void [cutting.byGeo, cutting.lead.shape, cutting.lead.lead_in, cutting.lead.lead_out, cutting.lead.tab_width];
     const timer = setTimeout(() => list.forEach((x) => cutting.refreshLeads(x)), 60);
     return () => clearTimeout(timer);
   });
@@ -83,6 +83,19 @@
   const shapeOptions = (['line', 'arc'] as LeadShape[]).map((id) => ({ id, label: t(`cut.shapes.${id}`), hint: t(`cut.shapeHints.${id}`) }));
   const single = $derived(d && picked.length === 1 && cutting.sideOf(d, picked[0]) !== 'skip' ? picked[0] : null);
   const leadWarnings = $derived(d ? (cutting.leads(d)?.warnings ?? []) : []);
+  /** Contours sélectionnés qui peuvent avoir des onglets : les extérieurs. */
+  const tabPicked = $derived(d && s ? picked.filter((i) => s.contours[i]?.closed && cutting.sideOf(d, i) === 'outside') : []);
+  /** Nombre d'onglets placés de chaque contour (calculés par le moteur). */
+  const tabCount = (i: number) => (d ? (cutting.leads(d)?.leads[i]?.tabs.length ?? 0) : 0);
+  const commonTabs = $derived(tabPicked.length && tabPicked.every((i) => tabCount(i) === tabCount(tabPicked[0])) ? tabCount(tabPicked[0]) : null);
+  const commonTabWidth = $derived(d && tabPicked.length && tabPicked.every((i) => cutting.spec(d, i).tab_width === cutting.spec(d, tabPicked[0]).tab_width) ? cutting.spec(d, tabPicked[0]).tab_width : null);
+  const ownTabWidth = $derived(!!d && tabPicked.some((i) => d.leads[i]?.tab_width != null));
+  const tabSingle = $derived(tabPicked.length === 1 && picked.length === 1 ? tabPicked[0] : null);
+  function setCount(n: number) {
+    if (!d) return;
+    const spec: TabSpec | null = n > 0 ? { kind: 'count', n: Math.round(n) } : null;
+    doc.setTabs(d.id, tabPicked, spec);
+  }
   const crossings = $derived(s?.warnings ?? []);
   const overlaps = $derived(
     d
@@ -181,6 +194,33 @@
       {#if leadPicked.length < picked.length}
         <p class="hint">{t('cut.noLead')}</p>
       {/if}
+      <p class="sub">{t('cut.tabs')}</p>
+      {#if tabPicked.length}
+        <NumField label={t('cut.tabCount')} kind="count" value={commonTabs ?? 0} min={0} max={TAB_MAX} decimals={0} step={1} hint={t('cut.tabCountHint')} onchange={setCount} />
+        <NumField
+          label={t('cut.tabWidth')}
+          value={commonTabWidth ?? cutting.lead.tab_width}
+          min={TAB_MIN}
+          max={TAB_MAX_WIDTH}
+          decimals={2}
+          step={0.1}
+          hint={t('cut.tabWidthHint')}
+          modified={ownTabWidth}
+          onreset={() => doc.setLeads(d.id, tabPicked, { tab_width: undefined })}
+          resetHint={t('cut.defaultHint', { v: fmtLen(cutting.lead.tab_width, ui.units, 2) })}
+          onchange={(v) => doc.setLeads(d.id, tabPicked, { tab_width: v })}
+        />
+        {#if tabSingle != null}
+          <button class="btn" class:on={cutting.pickingTabs} type="button" aria-pressed={cutting.pickingTabs} use:tip={t('cut.placeTabsHint')} onclick={() => (cutting.pickingTabs = !cutting.pickingTabs)}
+            ><Crosshair size={14} /> {t(cutting.pickingTabs ? 'cut.placingTabs' : 'cut.placeTabs')}</button
+          >
+        {:else}
+          <p class="hint">{t('cut.oneForTabs')}</p>
+        {/if}
+        <p class="hint">{t('cut.kerf')}</p>
+      {:else}
+        <p class="hint">{t('cut.tabsOutsideOnly')}</p>
+      {/if}
       <p class="sub">{t('cut.entry')}</p>
       {#if single != null}
         <div class="row">
@@ -222,7 +262,7 @@
       <ul class="warnings">
         {#each leadWarnings as w, n (n)}
           <li>
-            <button type="button" onclick={() => cutting.focus(d.id, w.x, w.y)}>{t('cut.tooShort')} {n + 1}</button>
+            <button type="button" onclick={() => cutting.focus(d.id, w.x, w.y)}>{t(w.code === 'tab.too_close' ? 'cut.tabTooClose' : 'cut.tooShort')} {n + 1}</button>
           </li>
         {/each}
         {#each crossings as w, n (n)}
@@ -246,6 +286,7 @@
     <Segmented label={t('cut.leadShape')} value={cutting.lead.shape} onchange={(shape) => cutting.setLeadDefaults({ shape })} options={shapeOptions} />
     <NumField label={t('cut.leadIn')} value={cutting.lead.lead_in} min={LEAD_MIN} max={LEAD_MAX} decimals={2} step={0.1} hint={t('cut.leadInHint')} onchange={(v) => cutting.setLeadDefaults({ lead_in: v })} />
     <NumField label={t('cut.leadOut')} value={cutting.lead.lead_out} min={LEAD_MIN} max={LEAD_MAX} decimals={2} step={0.1} hint={t('cut.leadOutHint')} onchange={(v) => cutting.setLeadDefaults({ lead_out: v })} />
+    <NumField label={t('cut.tabWidthDefault')} value={cutting.lead.tab_width} min={TAB_MIN} max={TAB_MAX_WIDTH} decimals={2} step={0.1} hint={t('cut.tabWidthHint')} onchange={(v) => cutting.setLeadDefaults({ tab_width: v })} />
     <p class="hint">{t('cut.defaultsHint')}</p>
   </div>
 </Section>

@@ -116,6 +116,14 @@ pub enum PathWarning {
         x: f64,
         y: f64,
     },
+    /// Un onglet du contour (`key`, `contour`) en touche un autre ou touche les amorces.
+    #[serde(rename = "tab.too_close")]
+    TabTooClose {
+        key: u32,
+        contour: usize,
+        x: f64,
+        y: f64,
+    },
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -147,9 +155,9 @@ struct Item {
     side: Side,
     quality: Option<u8>,
     pierce: P,
-    lead_in: Vec<Seg>,
-    cut: Vec<Seg>,
-    lead_out: Vec<Seg>,
+    /// Après le perçage : amorces, coupes et, aux onglets, sorties,
+    /// déplacements et reperçages (sur le plateau).
+    moves: Vec<(MoveKind, Vec<Seg>)>,
     /// Polygone fermé (plateau), pour le survol ; vide pour un tracé ouvert.
     poly: Vec<P>,
     /// Indices (dans `items`) des contours qu'il contient.
@@ -184,9 +192,7 @@ fn items(jobs: &[Job]) -> Vec<Item> {
                 side,
                 quality: job.qualities.get(i).copied().flatten(),
                 pierce: at(lead.pierce),
-                lead_in: placed(&lead.lead_in, job.m),
-                cut: placed(&route(c, lead), job.m),
-                lead_out: placed(&lead.lead_out, job.m),
+                moves: sequence(c, lead, job.m),
                 poly: if c.closed {
                     c.points().into_iter().map(|p| job.m.apply(p)).collect()
                 } else {
@@ -205,7 +211,11 @@ fn items(jobs: &[Job]) -> Vec<Item> {
             let inner: Vec<usize> = (first..out.len())
                 .filter(|&a| {
                     a != b && {
-                        let probe = out[a].cut.first().map_or(out[a].pierce, Seg::mid);
+                        let probe = out[a]
+                            .moves
+                            .iter()
+                            .find(|(k, s)| *k == MoveKind::Cut && !s.is_empty())
+                            .map_or(out[a].pierce, |(_, s)| s[0].mid());
                         let area_a = if out[a].poly.is_empty() {
                             0.0
                         } else {
@@ -217,6 +227,45 @@ fn items(jobs: &[Job]) -> Vec<Item> {
                 .collect();
             out[b].inner = inner;
         }
+    }
+    out
+}
+
+/// Ce que fait la buse sur un contour après son perçage, sur le plateau :
+/// entrée, coupe jusqu'au premier onglet, sortie, déplacement jet coupé,
+/// reperçage et entrée après l'onglet, et ainsi de suite ; à la fin, la
+/// sortie du contour, ou celle de l'onglet de fin.
+fn sequence(c: &Contour, lead: &Lead, m: Affine) -> Vec<(MoveKind, Vec<Seg>)> {
+    let route = route(c, lead);
+    let total = crate::lead::length(&route);
+    let mut out = vec![(MoveKind::LeadIn, placed(&lead.lead_in, m))];
+    let mut from = 0.0;
+    let mut ended = false;
+    for tab in &lead.tabs {
+        out.push((
+            MoveKind::Cut,
+            placed(&crate::lead::range(&route, from, tab.start), m),
+        ));
+        out.push((MoveKind::LeadOut, placed(&tab.lead_out, m)));
+        if tab.end {
+            ended = true;
+            break;
+        }
+        let a = tab.lead_out.last().map_or(
+            tab.lead_out.first().map_or(P::new(0.0, 0.0), Seg::start),
+            Seg::end,
+        );
+        let b = tab.lead_in.first().map_or(a, Seg::start);
+        out.push((MoveKind::Traverse, placed(&[Seg::Line { a, b }], m)));
+        out.push((MoveKind::LeadIn, placed(&tab.lead_in, m)));
+        from = tab.stop;
+    }
+    if !ended {
+        out.push((
+            MoveKind::Cut,
+            placed(&crate::lead::range(&route, from, total), m),
+        ));
+        out.push((MoveKind::LeadOut, placed(&lead.lead_out, m)));
     }
     out
 }
@@ -269,14 +318,24 @@ pub fn plan(jobs: &[Job], start: P, order: Option<&[(u32, usize)]>) -> Result<Pl
     let mut warnings: Vec<PathWarning> = jobs
         .iter()
         .flat_map(|j| {
-            j.warnings.iter().map(move |w| {
-                let LeadWarning::TooShort { contour, x, y } = *w;
-                let p = j.m.apply(P::new(x, y));
-                PathWarning::LeadTooShort {
-                    key: j.key,
-                    contour,
-                    x: p.x,
-                    y: p.y,
+            j.warnings.iter().map(move |w| match *w {
+                LeadWarning::TooShort { contour, x, y } => {
+                    let p = j.m.apply(P::new(x, y));
+                    PathWarning::LeadTooShort {
+                        key: j.key,
+                        contour,
+                        x: p.x,
+                        y: p.y,
+                    }
+                }
+                LeadWarning::TabTooClose { contour, x, y } => {
+                    let p = j.m.apply(P::new(x, y));
+                    PathWarning::TabTooClose {
+                        key: j.key,
+                        contour,
+                        x: p.x,
+                        y: p.y,
+                    }
                 }
             })
         })
@@ -305,26 +364,28 @@ pub fn plan(jobs: &[Job], start: P, order: Option<&[(u32, usize)]>) -> Result<Pl
             segs: traverse,
         });
         stats.pierces += 1;
-        for (kind, pts) in [
-            (MoveKind::LeadIn, &it.lead_in),
-            (MoveKind::Cut, &it.cut),
-            (MoveKind::LeadOut, &it.lead_out),
-        ] {
+        for (kind, pts) in &it.moves {
+            let kind = *kind;
             if pts.is_empty() {
                 continue;
             }
+            let traverse = kind == MoveKind::Traverse;
             let mv = Move {
                 kind,
                 step: Some(step),
-                side: Some(it.side),
-                quality: it.quality,
+                side: (!traverse).then_some(it.side),
+                quality: if traverse { None } else { it.quality },
                 segs: pts.clone(),
             };
             let l = mv.length();
-            if kind == MoveKind::Cut {
-                *stats.cut.entry(it.quality.unwrap_or(0)).or_default() += l;
-            } else {
-                stats.leads += l;
+            match kind {
+                MoveKind::Cut => *stats.cut.entry(it.quality.unwrap_or(0)).or_default() += l,
+                // Un onglet : jet coupé, puis un nouveau perçage.
+                MoveKind::Traverse => {
+                    stats.traverse += l;
+                    stats.pierces += 1;
+                }
+                _ => stats.leads += l,
             }
             moves.push(mv);
         }
@@ -379,9 +440,10 @@ fn cut_polys<'a>(items: &'a [Item], cut: &'a [usize], from: P) -> impl Iterator<
 /// Où la buse se trouve après un contour : la fin de son amorce de sortie,
 /// sinon de sa coupe.
 fn end_of(it: &Item) -> P {
-    it.lead_out
-        .last()
-        .or(it.cut.last())
+    it.moves
+        .iter()
+        .rev()
+        .find_map(|(_, s)| s.last())
         .map_or(it.pierce, Seg::end)
 }
 

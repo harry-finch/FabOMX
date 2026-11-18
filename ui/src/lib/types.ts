@@ -110,6 +110,9 @@ export interface Sides {
 
 export type LeadShape = 'line' | 'arc';
 
+/** Onglets demandés : aucun, un nombre réparti (le premier est l'onglet de fin), ou placés (repère d'origine). */
+export type TabSpec = { kind: 'none' } | { kind: 'count'; n: number } | { kind: 'at'; end: boolean; points: [number, number][] };
+
 /** Réglages d'amorce d'un contour pour le moteur (longueurs en mm du plateau). */
 export interface LeadSpec {
   side: Side;
@@ -117,6 +120,18 @@ export interface LeadSpec {
   lead_in: number;
   lead_out: number;
   entry: [number, number] | null;
+  tabs: TabSpec;
+  tab_width: number;
+}
+
+/** Un onglet placé (repère d'origine) : centre, onglet de fin ou non, sortie et reprise `[x, y, …]`. */
+export interface Tab {
+  at: [number, number];
+  end: boolean;
+  start: number;
+  stop: number;
+  lead_out: number[];
+  lead_in: number[];
 }
 
 /** Les amorces d'un contour, en repère d'origine ; `lead_in` et `lead_out` : `[x, y, …]`. */
@@ -126,9 +141,10 @@ export interface Lead {
   lead_in: number[];
   lead_out: number[];
   reversed: boolean;
+  tabs: Tab[];
 }
 
-export type LeadWarning = { code: 'lead.too_short'; contour: number; x: number; y: number };
+export type LeadWarning = { code: 'lead.too_short' | 'tab.too_close'; contour: number; x: number; y: number };
 
 export interface Leads {
   leads: (Lead | null)[];
@@ -164,7 +180,7 @@ export interface PathStats {
 
 export type PathWarning =
   | { code: 'path.over_cut'; step: number; x: number; y: number }
-  | { code: 'lead.too_short'; key: number; contour: number; x: number; y: number };
+  | { code: 'lead.too_short' | 'tab.too_close'; key: number; contour: number; x: number; y: number };
 
 export interface Plan {
   start: [number, number];

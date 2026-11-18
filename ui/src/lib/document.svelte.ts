@@ -9,7 +9,7 @@
 
 import { engine } from './engine.svelte';
 import { apply, translate, type M, type Pt } from './affine';
-import type { LeadShape, Placement, Report, Side } from './types';
+import type { LeadShape, Placement, Report, Side, TabSpec } from './types';
 
 /** Point de référence : un des 9 points de la boîte (0 à 2, depuis le bas
  * gauche), ou un point du dessin d'origine, qui suit ses transformations. */
@@ -36,6 +36,8 @@ export interface Drawing {
   leads: Record<number, LeadOpts>;
   /** Points d'entrée choisis à la main (repère d'origine), par indice de contour. */
   entries: Record<number, [number, number]>;
+  /** Onglets demandés, par indice de contour (extérieurs). */
+  tabs: Record<number, TabSpec>;
   /** Un nettoyage a recalculé les côtés et fait perdre des choix faits à la main (côtés, qualités). */
   sidesReset: boolean;
 }
@@ -45,6 +47,7 @@ export interface LeadOpts {
   shape?: LeadShape;
   lead_in?: number;
   lead_out?: number;
+  tab_width?: number;
 }
 
 /** Le travail : point de départ du parcours (plateau) et ordre de coupe
@@ -134,7 +137,7 @@ class Doc {
     const [x0, y0, x1, y1] = report.bbox;
     const matrix = translate(bed.width / 2 - (x0 + x1) / 2, bed.height / 2 - (y0 + y1) / 2);
     const id = this.reserve();
-    const drawing: Drawing = { id, geo, name, report, matrix, ref: { kind: 'box', ix: 1, iy: 1 }, snaps, placement: roughPlacement(report, matrix), sides: {}, qualities: {}, leads: {}, entries: {}, sidesReset: false };
+    const drawing: Drawing = { id, geo, name, report, matrix, ref: { kind: 'box', ix: 1, iy: 1 }, snaps, placement: roughPlacement(report, matrix), sides: {}, qualities: {}, leads: {}, entries: {}, tabs: {}, sidesReset: false };
     this.#commit([...this.drawings, drawing]);
     this.selected = id;
     this.#place(drawing);
@@ -192,6 +195,18 @@ class Doc {
     this.#commit(this.drawings.map((x) => (x.id === id ? { ...d, leads, sidesReset: false } : x)));
   }
 
+  /** Onglets des contours `indices` de `id` ; `null` : aucun. Une étape. */
+  setTabs(id: number, indices: number[], spec: TabSpec | null) {
+    const d = this.drawings.find((x) => x.id === id);
+    if (!d || !indices.length) return;
+    const tabs = { ...d.tabs };
+    for (const i of indices) {
+      if (spec && spec.kind !== 'none') tabs[i] = spec;
+      else delete tabs[i];
+    }
+    this.#commit(this.drawings.map((x) => (x.id === id ? { ...d, tabs, sidesReset: false } : x)));
+  }
+
   /** Point d'entrée du contour `i` de `id` (repère d'origine) ; `null` : automatique. Une étape. */
   setEntry(id: number, i: number, at: [number, number] | null) {
     const d = this.drawings.find((x) => x.id === id);
@@ -207,8 +222,8 @@ class Doc {
   replaceGeometry(id: number, geo: number, report: Report, snaps: number[]) {
     const d = this.drawings.find((x) => x.id === id);
     if (!d) return;
-    const sidesReset = [d.sides, d.qualities, d.leads, d.entries].some((r) => Object.keys(r).length > 0);
-    const next: Drawing = { ...d, geo, report, snaps, sides: {}, qualities: {}, leads: {}, entries: {}, sidesReset, placement: { ...roughPlacement(report, d.matrix), warnings: d.placement.warnings } };
+    const sidesReset = [d.sides, d.qualities, d.leads, d.entries, d.tabs].some((r) => Object.keys(r).length > 0);
+    const next: Drawing = { ...d, geo, report, snaps, sides: {}, qualities: {}, leads: {}, entries: {}, tabs: {}, sidesReset, placement: { ...roughPlacement(report, d.matrix), warnings: d.placement.warnings } };
     this.#commit(this.drawings.map((x) => (x.id === id ? next : x)));
     this.#place(next);
   }

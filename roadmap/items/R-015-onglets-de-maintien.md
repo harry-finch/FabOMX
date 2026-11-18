@@ -2,7 +2,7 @@
 id: R-015
 titre: "Onglets de maintien"
 resume: "Onglets sur les contours extérieurs choisis : onglet de fin sans perçage, onglets le long du contour avec arrêt du jet et reperçage dans la chute ; nombre réparti ou placés au clic ; largeur 1 mm par défaut, réglable."
-statut: idee
+statut: a-tester
 jalon: v0.3
 cree: 2026-11-18
 maj: 2026-11-18

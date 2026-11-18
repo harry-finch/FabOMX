@@ -27,8 +27,15 @@
     const timer = setTimeout(() => cutting.refreshOverlaps(list), 150);
     return () => clearTimeout(timer);
   });
+  // Les amorces et onglets de chaque dessin, pour marquer les onglets sur le plateau.
   $effect(() => {
-    void [doc.drawings, doc.job, cutting.byGeo, cutting.quality, cutting.lead.shape, cutting.lead.lead_in, cutting.lead.lead_out];
+    const list = doc.drawings;
+    void [cutting.byGeo, cutting.lead.shape, cutting.lead.lead_in, cutting.lead.lead_out, cutting.lead.tab_width];
+    const timer = setTimeout(() => list.forEach((x) => cutting.refreshLeads(x)), 60);
+    return () => clearTimeout(timer);
+  });
+  $effect(() => {
+    void [doc.drawings, doc.job, cutting.byGeo, cutting.quality, cutting.lead.shape, cutting.lead.lead_in, cutting.lead.lead_out, cutting.lead.tab_width];
     const timer = setTimeout(() => pathing.refresh(), 80);
     return () => clearTimeout(timer);
   });
@@ -112,7 +119,7 @@
           {#each plan.warnings as w, n (n)}
             <li>
               <button type="button" onclick={() => pathing.focus(w.x, w.y)}
-                >{t(w.code === 'lead.too_short' ? 'path.tooShort' : w.step >= plan.order.length ? 'path.overCutBack' : 'path.overCut')} {n + 1}</button
+                >{t(w.code === 'lead.too_short' ? 'path.tooShort' : w.code === 'tab.too_close' ? 'path.tabTooClose' : w.code === 'path.over_cut' && w.step >= plan.order.length ? 'path.overCutBack' : 'path.overCut')} {n + 1}</button
               >
             </li>
           {/each}

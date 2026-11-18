@@ -126,6 +126,8 @@ class Pathing {
     const over = ws.filter((w) => w.code === 'path.over_cut').length;
     if (short) out.push(t('path.remarks.tooShort', { n: short }));
     if (over) out.push(t('path.remarks.overCut', { n: over }));
+    const close = ws.filter((w) => w.code === 'tab.too_close').length;
+    if (close) out.push(t('path.remarks.tabTooClose', { n: close }));
     return out;
   }
 

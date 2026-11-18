@@ -44,6 +44,7 @@
   $effect(() => {
     if (cutting.selection && (tools.active !== 'cut' || cutting.selection.id !== doc.selected)) cutting.clear();
     if (cutting.pickingEntry && cutting.selection?.contours.length !== 1) cutting.pickingEntry = false;
+    if (cutting.pickingTabs && cutting.selection?.contours.length !== 1) cutting.pickingTabs = false;
   });
   // Le choix du point de départ et la lecture vivent avec l'outil Parcours.
   $effect(() => {
@@ -83,6 +84,7 @@
       if (doc.picking) doc.picking = false;
       else if (pathing.pickingStart) pathing.pickingStart = false;
       else if (cutting.pickingEntry) cutting.pickingEntry = false;
+      else if (cutting.pickingTabs) cutting.pickingTabs = false;
       else if (cutting.selection) cutting.clear();
       else if (doc.selected != null) doc.select(null);
       else tools.select('select');

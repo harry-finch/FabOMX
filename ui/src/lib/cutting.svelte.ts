@@ -34,11 +34,15 @@ export const QUALITIES = [1, 2, 3, 4, 5];
 const KEY = storageKey('cut.v1');
 
 /** Amorces par défaut : celles des exemples LAYOUT (`lead::LEAD_IN`, `LEAD_OUT`). Bornes de `lead::LEAD_RANGE`. */
-export const LEAD_DEFAULTS = { shape: 'line' as LeadShape, lead_in: 3.8, lead_out: 1.3 };
+export const LEAD_DEFAULTS = { shape: 'line' as LeadShape, lead_in: 3.8, lead_out: 1.3, tab_width: 1 };
+/** Bornes des onglets (`lead::TAB_RANGE`, `TAB_MAX`). */
+export const TAB_MIN = 0.2;
+export const TAB_MAX_WIDTH = 10;
+export const TAB_MAX = 20;
 export const LEAD_MIN = 0.5;
 export const LEAD_MAX = 20;
 
-type Saved = { quality: number; shape: LeadShape; lead_in: number; lead_out: number };
+type Saved = { quality: number; shape: LeadShape; lead_in: number; lead_out: number; tab_width: number };
 
 function read(): Saved {
   const out: Saved = { quality: 3, ...LEAD_DEFAULTS };
@@ -47,6 +51,7 @@ function read(): Saved {
     if (QUALITIES.includes(v.quality)) out.quality = v.quality;
     if (v.shape === 'line' || v.shape === 'arc') out.shape = v.shape;
     for (const k of ['lead_in', 'lead_out'] as const) if (typeof v[k] === 'number' && v[k] >= LEAD_MIN && v[k] <= LEAD_MAX) out[k] = v[k];
+    if (typeof v.tab_width === 'number' && v.tab_width >= TAB_MIN && v.tab_width <= TAB_MAX_WIDTH) out.tab_width = v.tab_width;
   } catch {
     /* stockage indisponible ou illisible */
   }
@@ -59,11 +64,13 @@ class Cutting {
   /** Qualité par défaut des contours coupés sans qualité propre. */
   quality = $state(saved.quality);
   /** Amorces par défaut (longueurs en mm du plateau). */
-  lead = $state({ shape: saved.shape, lead_in: saved.lead_in, lead_out: saved.lead_out });
+  lead = $state({ shape: saved.shape, lead_in: saved.lead_in, lead_out: saved.lead_out, tab_width: saved.tab_width });
   /** Amorces calculées, par dessin, avec la clé de ce qui les a produites. */
   leadsOf = $state.raw<Record<number, { key: string; leads: Leads }>>({});
   /** « Choisir le point d'entrée » : le prochain clic sur le contour sélectionné le place. */
   pickingEntry = $state(false);
+  /** « Placer des onglets » : un clic sur le contour sélectionné en ajoute un, ou retire celui qu'il touche. */
+  pickingTabs = $state(false);
   #leadAsked: Record<number, number> = {};
   /** Contours et côtés détectés, par géométrie. */
   byGeo = $state.raw<Record<number, Sides>>({});
@@ -141,6 +148,8 @@ class Cutting {
       lead_in: own.lead_in ?? this.lead.lead_in,
       lead_out: own.lead_out ?? this.lead.lead_out,
       entry: d.entries[i] ?? null,
+      tabs: d.tabs[i] ?? { kind: 'none' },
+      tab_width: own.tab_width ?? this.lead.tab_width,
     };
   }
 
@@ -186,6 +195,7 @@ class Cutting {
   clear() {
     this.selection = null;
     this.pickingEntry = false;
+    this.pickingTabs = false;
   }
 
   focus(id: number, x: number, y: number) {

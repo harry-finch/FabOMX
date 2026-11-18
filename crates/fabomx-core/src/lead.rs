@@ -14,6 +14,11 @@
 //! - Une amorce qui croise un contour coupé du dessin ou sort de la chute
 //!   est raccourcie ; sous `MIN_LEAD`, elle est signalée.
 //! - Fente ou contour coupé sur la ligne : pas d'amorce, perçage au point d'entrée.
+//! - Onglets (contours Extérieur) : l'onglet de fin arrête la coupe avant le
+//!   point d'entrée, à la largeur de l'onglet, et sort dans la chute ; un
+//!   onglet le long du contour arrête la coupe (sortie dans la chute), puis
+//!   la reprend après lui par un nouveau perçage et une entrée. Positions en
+//!   longueur le long du trajet de coupe, depuis le point d'entrée.
 //!
 //! Tout se calcule dans le repère d'origine du dessin ; les longueurs sont
 //! en mm du plateau, ramenées à l'origine par l'échelle de la matrice. Le
@@ -46,15 +51,62 @@ pub enum Shape {
     Arc,
 }
 
+/// Largeur d'onglet par défaut (mm du plateau), et bornes.
+pub const TAB_WIDTH: f64 = 1.0;
+pub const TAB_RANGE: std::ops::RangeInclusive<f64> = 0.2..=10.0;
+/// Nombre maximal d'onglets répartis.
+pub const TAB_MAX: u8 = 20;
+
+/// Onglets demandés pour un contour : aucun, un nombre réparti (le premier est
+/// l'onglet de fin), ou placés (onglet de fin, et points du repère d'origine).
+#[derive(Clone, Debug, Default, PartialEq, Deserialize)]
+#[serde(tag = "kind", rename_all = "lowercase")]
+pub enum TabSpec {
+    #[default]
+    None,
+    Count {
+        n: u8,
+    },
+    At {
+        end: bool,
+        points: Vec<[f64; 2]>,
+    },
+}
+
+fn tab_width() -> f64 {
+    TAB_WIDTH
+}
+
 /// Réglages d'un contour : son côté retenu, la forme et les longueurs
-/// (mm du plateau) de ses amorces, et son point d'entrée choisi (origine).
-#[derive(Clone, Copy, Debug, PartialEq, Deserialize)]
+/// (mm du plateau) de ses amorces, son point d'entrée choisi (origine), et
+/// ses onglets (largeur en mm du plateau).
+#[derive(Clone, Debug, PartialEq, Deserialize)]
 pub struct LeadSpec {
     pub side: Side,
     pub shape: Shape,
     pub lead_in: f64,
     pub lead_out: f64,
     pub entry: Option<[f64; 2]>,
+    #[serde(default)]
+    pub tabs: TabSpec,
+    #[serde(default = "tab_width")]
+    pub tab_width: f64,
+}
+
+/// Un onglet placé : son centre (origine), et l'intervalle non coupé le long
+/// du trajet de coupe (longueurs depuis le point d'entrée, origine).
+#[derive(Clone, Debug, PartialEq, Serialize)]
+pub struct Tab {
+    pub at: [f64; 2],
+    pub end: bool,
+    pub start: f64,
+    pub stop: f64,
+    /// Sortie dans la chute au début de l'onglet.
+    #[serde(serialize_with = "as_points")]
+    pub lead_out: Vec<Seg>,
+    /// Entrée après l'onglet (vide pour l'onglet de fin).
+    #[serde(serialize_with = "as_points")]
+    pub lead_in: Vec<Seg>,
 }
 
 /// Les amorces d'un contour, dans le repère d'origine.
@@ -68,6 +120,8 @@ pub struct Lead {
     pub lead_out: Vec<Seg>,
     /// Parcouru à l'envers de son tracé.
     pub reversed: bool,
+    /// Onglets, dans l'ordre du trajet.
+    pub tabs: Vec<Tab>,
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -76,6 +130,9 @@ pub enum LeadWarning {
     /// L'amorce ne tient pas, même raccourcie à `MIN_LEAD`.
     #[serde(rename = "lead.too_short")]
     TooShort { contour: usize, x: f64, y: f64 },
+    /// Un onglet touche un autre onglet ou l'amorce du point d'entrée.
+    #[serde(rename = "tab.too_close")]
+    TabTooClose { contour: usize, x: f64, y: f64 },
 }
 
 #[derive(Clone, Debug, PartialEq, Serialize)]
@@ -113,7 +170,7 @@ pub fn leads(contours: &[Contour], specs: &[LeadSpec], m: Affine) -> Leads {
         warnings: Vec::new(),
     };
     for (i, c) in contours.iter().enumerate() {
-        let Some(spec) = specs.get(i).copied() else {
+        let Some(spec) = specs.get(i).cloned() else {
             out.leads.push(None);
             continue;
         };
@@ -129,13 +186,16 @@ pub fn leads(contours: &[Contour], specs: &[LeadSpec], m: Affine) -> Leads {
                     own: i,
                     hole: spec.side == Side::Inside,
                 };
-                let (lead, short) = closed(c, &polys[i], &spec, m, k, &ctx);
+                let (mut lead, short) = closed(c, &polys[i], &spec, m, k, &ctx);
                 if short {
                     out.warnings.push(LeadWarning::TooShort {
                         contour: i,
                         x: lead.entry[0],
                         y: lead.entry[1],
                     });
+                }
+                if spec.side == Side::Outside {
+                    lead.tabs = tabs(c, &lead, &spec, k, &ctx, i, &mut out.warnings);
                 }
                 Some(lead)
             }
@@ -167,6 +227,7 @@ fn on_line(c: &Contour, poly: &[P], spec: &LeadSpec, m: Affine) -> Lead {
         lead_in: Vec::new(),
         lead_out: Vec::new(),
         reversed: rev,
+        tabs: Vec::new(),
     }
 }
 
@@ -479,6 +540,7 @@ fn closed(c: &Contour, poly: &[P], spec: &LeadSpec, m: Affine, k: f64, ctx: &Ctx
             lead_in,
             lead_out,
             reversed: rev,
+            tabs: Vec::new(),
         },
         short_in || short_out,
     )
@@ -558,4 +620,206 @@ pub fn route(c: &Contour, lead: &Lead) -> Vec<Seg> {
         segs.push(a);
     }
     segs
+}
+
+/// Longueur d'une suite de segments.
+pub(crate) fn length(segs: &[Seg]) -> f64 {
+    segs.iter().map(Seg::length).sum()
+}
+
+/// Le point et la tangente à la longueur `s` le long de `segs`.
+fn at_length(segs: &[Seg], s: f64) -> (P, P) {
+    let mut run = 0.0;
+    for seg in segs {
+        let l = seg.length();
+        if run + l >= s || std::ptr::eq(seg, segs.last().unwrap()) {
+            let t = if l > 0.0 {
+                ((s - run) / l).clamp(0.0, 1.0)
+            } else {
+                0.0
+            };
+            let (a, _) = seg.split(t);
+            let p = if t <= 0.0 { seg.start() } else { a.end() };
+            let tan = match *seg {
+                Seg::Line { a, b } => unit(b - a),
+                Seg::Arc { c, sweep, .. } => {
+                    let r = p - c;
+                    let t = left(unit(r));
+                    if sweep >= 0.0 {
+                        t
+                    } else {
+                        t * -1.0
+                    }
+                }
+            };
+            return (p, tan);
+        }
+        run += l;
+    }
+    (P::new(0.0, 0.0), P::new(1.0, 0.0))
+}
+
+/// Le morceau de `segs` entre les longueurs `a` et `b`.
+pub(crate) fn range(segs: &[Seg], a: f64, b: f64) -> Vec<Seg> {
+    let mut out = Vec::new();
+    let mut run = 0.0;
+    for seg in segs {
+        let l = seg.length();
+        let (s0, s1) = (run, run + l);
+        run = s1;
+        if s1 <= a + 1e-12 || s0 >= b - 1e-12 || l <= 0.0 {
+            continue;
+        }
+        let (t0, t1) = (((a - s0) / l).max(0.0), ((b - s0) / l).min(1.0));
+        let mut piece = *seg;
+        if t1 < 1.0 {
+            piece = piece.split(t1).0;
+        }
+        if t0 > 0.0 {
+            piece = piece.split(t0 / t1).1;
+        }
+        out.push(piece);
+    }
+    out
+}
+
+/// Les onglets d'un contour Extérieur, avec leurs sorties et reprises.
+fn tabs(
+    c: &Contour,
+    lead: &Lead,
+    spec: &LeadSpec,
+    k: f64,
+    ctx: &Ctx,
+    contour: usize,
+    warnings: &mut Vec<LeadWarning>,
+) -> Vec<Tab> {
+    let route = route(c, lead);
+    let total = length(&route);
+    let w = spec.tab_width.clamp(*TAB_RANGE.start(), *TAB_RANGE.end()) / k;
+    if total <= 2.0 * w {
+        return Vec::new();
+    }
+    // Centres (longueur) des onglets le long du contour, l'onglet de fin à part.
+    let (end, mut centres): (bool, Vec<f64>) = match &spec.tabs {
+        TabSpec::None => return Vec::new(),
+        TabSpec::Count { n } => {
+            let n = (*n).min(TAB_MAX) as usize;
+            if n == 0 {
+                return Vec::new();
+            }
+            (true, (1..n).map(|i| total * i as f64 / n as f64).collect())
+        }
+        TabSpec::At { end, points } => {
+            let along = |p: P| {
+                let mut run = 0.0;
+                let mut best = (f64::INFINITY, 0.0);
+                for seg in &route {
+                    let (q, t) = seg.closest(p);
+                    if q.dist(p) < best.0 {
+                        best = (q.dist(p), run + t * seg.length());
+                    }
+                    run += seg.length();
+                }
+                best.1
+            };
+            (
+                *end,
+                points.iter().map(|&[x, y]| along(P::new(x, y))).collect(),
+            )
+        }
+    };
+    centres.sort_by(f64::total_cmp);
+    let (l_in, l_out, min) = (spec.lead_in / k, spec.lead_out / k, MIN_LEAD / k);
+    let mut out = Vec::new();
+    for s in centres {
+        let (start, stop) = (s - w / 2.0, s + w / 2.0);
+        let (p0, t0) = at_length(&route, start);
+        let (p1, t1) = at_length(&route, stop);
+        let (lead_out, short_out) = side_lead(ctx, p0, t0, spec.shape, l_out, min, false);
+        let (lead_in, short_in) = side_lead(ctx, p1, t1, spec.shape, l_in, min, true);
+        let at = at_length(&route, s).0;
+        if short_out || short_in {
+            warnings.push(LeadWarning::TooShort {
+                contour,
+                x: at.x,
+                y: at.y,
+            });
+        }
+        out.push(Tab {
+            at: [at.x, at.y],
+            end: false,
+            start,
+            stop,
+            lead_out,
+            lead_in,
+        });
+    }
+    if end {
+        let start = total - w;
+        let (p0, t0) = at_length(&route, start);
+        let (lead_out, short) = side_lead(ctx, p0, t0, spec.shape, l_out, min, false);
+        let at = at_length(&route, total - w / 2.0).0;
+        if short {
+            warnings.push(LeadWarning::TooShort {
+                contour,
+                x: at.x,
+                y: at.y,
+            });
+        }
+        out.push(Tab {
+            at: [at.x, at.y],
+            end: true,
+            start,
+            stop: total,
+            lead_out,
+            lead_in: Vec::new(),
+        });
+    }
+    // Trop proches : moins d'une largeur d'onglet de coupe entre deux onglets,
+    // ou entre un onglet et le point d'entrée (où sont les amorces).
+    let has_end = out.last().is_some_and(|t| t.end);
+    let mut prev = 0.0;
+    for tab in &out {
+        let after = if tab.end { tab.start } else { tab.stop + w };
+        let limit = if has_end && !tab.end {
+            total - w
+        } else {
+            total
+        };
+        if tab.start < prev + w - 1e-9 || after > limit + 1e-9 {
+            warnings.push(LeadWarning::TabTooClose {
+                contour,
+                x: tab.at[0],
+                y: tab.at[1],
+            });
+        }
+        prev = tab.stop;
+    }
+    out
+}
+
+/// Amorce d'un point du contour vers la chute (sortie) ou de la chute vers lui
+/// (entrée), d'équerre ou en arc, raccourcie si elle ne tient pas.
+fn side_lead(
+    ctx: &Ctx,
+    p: P,
+    t: P,
+    shape: Shape,
+    l: f64,
+    min: f64,
+    entering: bool,
+) -> (Vec<Seg>, bool) {
+    let ctx = &Ctx { entry: p, ..*ctx };
+    let probe = (l * 0.25).max(1e-6);
+    let n = if ctx.scrap(p + left(t) * probe) {
+        left(t)
+    } else {
+        left(t) * -1.0
+    };
+    match (shape, entering) {
+        (Shape::Line, true) => shrink(ctx, l, min, &|l| line_in(p, n, l)),
+        (Shape::Line, false) => shrink(ctx, l, min, &|l| line_out(p, n, l)),
+        (Shape::Arc, true) => shrink(ctx, l, min, &|l| arc_in(p, t, n, l)),
+        (Shape::Arc, false) => shrink(ctx, l, min, &|l| arc_out(p, t, n, l)),
+    }
 }

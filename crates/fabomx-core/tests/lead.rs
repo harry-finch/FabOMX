@@ -21,6 +21,8 @@ fn specs(cs: &[Contour], shape: Shape) -> Vec<LeadSpec> {
             lead_in: LEAD_IN,
             lead_out: LEAD_OUT,
             entry: None,
+            tabs: Default::default(),
+            tab_width: 1.0,
         })
         .collect()
 }

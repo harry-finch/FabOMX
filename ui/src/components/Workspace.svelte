@@ -22,7 +22,10 @@
   // un ; un dessin qui en chevauche un autre a sa boîte en attention. Les
   // amorces en trait fin de la couleur du contour, le perçage d'un petit
   // cercle ; « Choisir le point d'entrée » : le clic suivant sur le contour
-  // sélectionné le place, accroché aux coins et aux extrémités.
+  // sélectionné le place, accroché aux coins et aux extrémités. Les onglets
+  // sont marqués d'un petit carré sur leur contour (outils Découpe et
+  // Parcours) ; « Placer des onglets » : un clic ajoute un onglet sur le
+  // contour sélectionné, ou retire celui qu'il touche.
   // Outil Parcours : les dessins estompés, le parcours complet (coupes à la
   // couleur de leur côté, amorces, perçages, déplacements en pointillés,
   // survols en attention), le point de départ ; en lecture, ce qui reste à
@@ -302,6 +305,10 @@
       ctx.beginPath();
       if (l.lead_in.length) tracePath(ctx, d.matrix, l.lead_in);
       if (l.lead_out.length) tracePath(ctx, d.matrix, l.lead_out);
+      for (const tab of l.tabs) {
+        if (tab.lead_out.length) tracePath(ctx, d.matrix, tab.lead_out);
+        if (tab.lead_in.length) tracePath(ctx, d.matrix, tab.lead_in);
+      }
       ctx.strokeStyle = colors['ctrl-edge'];
       ctx.lineWidth = 3;
       ctx.stroke();
@@ -318,6 +325,7 @@
       ctx.lineWidth = 1.5;
       ctx.stroke();
     });
+    drawTabs(ctx, d);
     s.contours.forEach((c, i) => {
       const side = cutting.sideOf(d, i);
       if (side === 'skip') return;
@@ -325,6 +333,21 @@
       const q = cutting.qualityOf(d, i);
       if (at && q != null) label(ctx, at, String(q), d.qualities[i] != null ? colors['ctrl-active'] : colors['ctrl']);
     });
+  }
+
+  /** Les onglets d'un dessin : un petit carré sur le contour. */
+  function drawTabs(ctx: CanvasRenderingContext2D, d: Drawing) {
+    for (const l of cutting.leads(d)?.leads ?? []) {
+      for (const tab of l?.tabs ?? []) {
+        const [x, y] = apply(d.matrix, tab.at[0], tab.at[1]);
+        const [px, py] = [Math.round(sx(x)), Math.round(sy(y))];
+        ctx.fillStyle = colors['canvas-bg'];
+        ctx.fillRect(px - 4, py - 4, 8, 8);
+        ctx.strokeStyle = colors['ctrl-active'];
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(px - 3.5, py - 3.5, 7, 7);
+      }
+    }
   }
 
   /** Chiffre de qualité, cerné de la couleur du plateau. */
@@ -517,6 +540,7 @@
         ctx.stroke();
       }
     }
+    for (const d of drawings) drawTabs(ctx, d);
     // Point de départ : un cercle et sa croix.
     const [px, py] = [sx(doc.job.start[0]), sy(doc.job.start[1])];
     ctx.strokeStyle = colors['ctrl-edge'];
@@ -700,6 +724,46 @@
     cutting.pickingEntry = false;
   }
 
+  /** « Placer des onglets » : retire l'onglet sous le clic, sinon en ajoute un au point du contour le plus proche. */
+  function pickTab(d: Drawing, i: number, px: number, py: number) {
+    const c = cutting.sides(d)?.contours[i];
+    const tabs = cutting.leads(d)?.leads[i]?.tabs ?? [];
+    if (!c) return;
+    const scr = (x: number, y: number): Pt => {
+      const [wx, wy] = apply(d.matrix, x, y);
+      return [sx(wx), sy(wy)];
+    };
+    const hitTab = tabs.findIndex((t) => {
+      const [x, y] = scr(t.at[0], t.at[1]);
+      return Math.hypot(x - px, y - py) <= HIT;
+    });
+    let end = tabs.some((t) => t.end);
+    let points = tabs.filter((t) => !t.end).map((t) => t.at);
+    if (hitTab >= 0) {
+      if (tabs[hitTab].end) end = false;
+      else points = points.filter((p) => p !== tabs[hitTab].at);
+    } else {
+      // Le point du trait le plus proche, à l'écran, ramené dans le repère d'origine.
+      const n = c.pts.length / 2;
+      const edges = c.closed ? n : n - 1;
+      let near = { k: Infinity, p: [0, 0] as [number, number] };
+      for (let j = 0; j < edges; j++) {
+        const a: Pt = [c.pts[2 * j], c.pts[2 * j + 1]];
+        const b: Pt = [c.pts[2 * ((j + 1) % n)], c.pts[2 * ((j + 1) % n) + 1]];
+        const [ax, ay] = scr(...a);
+        const [bx, by] = scr(...b);
+        const [vx, vy] = [bx - ax, by - ay];
+        const l2 = vx * vx + vy * vy;
+        const t = l2 > 0 ? Math.max(0, Math.min(1, ((px - ax) * vx + (py - ay) * vy) / l2)) : 0;
+        const dist = Math.hypot(ax + vx * t - px, ay + vy * t - py);
+        if (dist < near.k) near = { k: dist, p: [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t] };
+      }
+      if (near.k > HIT) return;
+      points = [...points, near.p];
+    }
+    doc.setTabs(d.id, [i], end || points.length ? { kind: 'at', end, points } : null);
+  }
+
   /** Le dessin sous le point d'écran (px, py), le plus récent d'abord. */
   function hit(px: number, py: number): number | null {
     const near = (d: Drawing) => d.report.traces.some(({ pts }) => distance(d.matrix, pts, false, px, py) <= HIT);
@@ -740,7 +804,7 @@
   });
 
   $effect(() => {
-    void [view, width, height, machine, drawings, selected, tools.active, doc.lock, cleaning.preview, cleaning.focused, cutting.byGeo, cutting.selection, cutting.overlaps, cutting.focused, cutting.quality, cutting.leadsOf, cutting.pickingEntry, doc.job, pathing.plan, pathing.progress, pathing.picked];
+    void [view, width, height, machine, drawings, selected, tools.active, doc.lock, cleaning.preview, cleaning.focused, cutting.byGeo, cutting.selection, cutting.overlaps, cutting.focused, cutting.quality, cutting.leadsOf, cutting.pickingEntry, cutting.pickingTabs, doc.job, pathing.plan, pathing.progress, pathing.picked];
     zoom = view.s / PX_PER_MM;
     request();
   });
@@ -814,6 +878,7 @@
         return;
       }
       if (tool === 'cut' && cutting.pickingEntry && sel && cutting.selection?.contours.length === 1) return pickEntry(sel, cutting.selection.contours[0], px, py);
+      if (tool === 'cut' && cutting.pickingTabs && sel && cutting.selection?.contours.length === 1) return pickTab(sel, cutting.selection.contours[0], px, py);
       if (tool === 'cut') {
         const c = hitContour(px, py);
         if (!c) {
@@ -896,7 +961,7 @@
   }
 
   const cursor = $derived(
-    doc.picking || cutting.pickingEntry || (tools.active === 'path' && pathing.pickingStart) ? 'crosshair' : tools.active === 'move' || gesture?.kind === 'move' ? 'move' : tools.active === 'rotate' && selected != null ? 'alias' : undefined,
+    doc.picking || cutting.pickingEntry || cutting.pickingTabs || (tools.active === 'path' && pathing.pickingStart) ? 'crosshair' : tools.active === 'move' || gesture?.kind === 'move' ? 'move' : tools.active === 'rotate' && selected != null ? 'alias' : undefined,
   );
 </script>
 

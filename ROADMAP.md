@@ -8,7 +8,7 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ## Restant à faire
 
-1. **[R-015 Onglets de maintien](roadmap/items/R-015-onglets-de-maintien.md)** · Idée · jalon v0.3
+1. **[R-015 Onglets de maintien](roadmap/items/R-015-onglets-de-maintien.md)** · À tester · jalon v0.3
    Onglets sur les contours extérieurs choisis : onglet de fin sans perçage, onglets le long du contour avec arrêt du jet et reperçage dans la chute ; nombre réparti ou placés au clic ; largeur 1 mm par défaut, réglable.
 2. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
    Logo définitif de la famille Fab (tuile graphite et symbole à la couleur d'identité), à la place du logo provisoire du kit.
@@ -21,6 +21,8 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 - [ ] [A-015](roadmap/actions/A-015-fournir-un-omx-de-layout-avec-un-trait-grave.md) Fournir un OMX de LAYOUT avec un trait gravé (fournir, R-014)
 - [ ] [A-023](roadmap/actions/A-023-fournir-un-omx-de-layout-avec-une-fente.md) Fournir un OMX de LAYOUT avec une fente (fournir, R-012)
+- [ ] [A-028](roadmap/actions/A-028-couper-une-piece-avec-des-onglets.md) Couper une pièce avec des onglets (tester, R-015)
+- [ ] [A-029](roadmap/actions/A-029-juger-le-placement-des-onglets.md) Juger le placement des onglets (valider, R-015)
 
 ## Livré
 
