@@ -4,27 +4,23 @@ Objectif de FabOMX : à partir d'un dessin vectoriel (SVG ou DXF), produire un p
 
 On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la découpe et les spécificités du jet d'eau (v0.2).
 
-**Avancement : 10 livrés sur 15** (67 %)
+**Avancement : 11 livrés sur 15** (73 %)
 
 ## Restant à faire
 
-1. **[R-007 Reconnaître des arcs](roadmap/items/R-007-reconnaitre-des-arcs-dans-les-segments.md)** · À tester · jalon v0.2
-   Courbes de Bézier, splines et ellipses lues en arcs tangents à l'import ; opération « Reconnaître des arcs » au nettoyage pour les polylignes en segments ; coins vifs, lignes droites et petits détails intacts ; arcs écrits en Bow dans l'OMX.
-2. **[R-015 Onglets de maintien](roadmap/items/R-015-onglets-de-maintien.md)** · Idée · jalon v0.3
+1. **[R-015 Onglets de maintien](roadmap/items/R-015-onglets-de-maintien.md)** · Idée · jalon v0.3
    Laisser de petits ponts de matière (onglets) sur un contour pour que la pièce reste accrochée à la plaque pendant la coupe.
-3. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
+2. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
    Logo définitif de la famille Fab (tuile graphite et symbole à la couleur d'identité), à la place du logo provisoire du kit.
-4. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée
+3. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée
    Marquer un trait sans traverser la plaque (gravure), dès que son code OMX est connu par un exemple de LAYOUT.
-5. **[R-016 Couper une plaque dans un coin du stock](roadmap/items/R-016-couper-une-plaque-dans-un-coin-du-stock.md)** · Idée · jalon v0.3
+4. **[R-016 Couper une plaque dans un coin du stock](roadmap/items/R-016-couper-une-plaque-dans-un-coin-du-stock.md)** · Idée · jalon v0.3
    Couper une plaque dans un coin du stock sans faire le tour complet. À spécifier.
 
 ## Actions à faire
 
 - [ ] [A-015](roadmap/actions/A-015-fournir-un-omx-de-layout-avec-un-trait-grave.md) Fournir un OMX de LAYOUT avec un trait gravé (fournir, R-014)
 - [ ] [A-023](roadmap/actions/A-023-fournir-un-omx-de-layout-avec-une-fente.md) Fournir un OMX de LAYOUT avec une fente (fournir, R-012)
-- [ ] [A-026](roadmap/actions/A-026-verifier-les-arcs-sur-tes-fichiers-a-courbes.md) Vérifier les arcs sur tes fichiers à courbes (tester, R-007)
-- [ ] [A-027](roadmap/actions/A-027-juger-la-fluidite-d-un-omx-a-courbes-dans-make.md) Juger la fluidité d'un OMX à courbes dans MAKE (tester, R-007)
 
 ## Livré
 
@@ -53,6 +49,8 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
   Qualité de coupe de 1 à 5 : une qualité par défaut mémorisée sur le poste, et une qualité propre pour les contours choisis dans l'outil Découpe, affichée près de leur flèche.
 - [R-008 Côtés de coupe](roadmap/items/R-008-cotes-de-coupe.md) · livrée le 2026-11-18
   Outil Découpe : pour chaque contour, Extérieur, Trou, Sur la ligne (fente) ou Ne pas couper (repère), détecté par imbrication et d'après le fichier (pointillés, calques), modifiable, avec sens de parcours fixé et croisements signalés.
+- [R-007 Reconnaître des arcs](roadmap/items/R-007-reconnaitre-des-arcs-dans-les-segments.md) · livrée le 2026-11-18
+  Courbes de Bézier, splines et ellipses lues en arcs tangents à l'import ; opération « Reconnaître des arcs » au nettoyage pour les polylignes en segments ; coins vifs, lignes droites et petits détails intacts ; arcs écrits en Bow dans l'OMX.
 
 ## Écarté
 
