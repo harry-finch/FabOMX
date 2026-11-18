@@ -1,9 +1,18 @@
 .DS_Store
-node_modules/
-target/
-dist/
+.env
+*.log
+
+# Rust
+/target/
+
+# Interface
+/ui/node_modules/
+/ui/dist/
+# Moteur compilé en WebAssembly (généré par `npm run wasm`)
+/ui/src/wasm/
+
 .venv/
 __pycache__/
-.env
+
 branding/illustrations/*.png
 branding/illustrations/*-source.txt

@@ -13,3 +13,11 @@ titre = "Interface et dessin"
 [[jalons]]
 id = "v0.2"
 titre = "Découpe jet d'eau"
+
+# Versions à tester.
+[[test]]
+type = "url"
+titre = "Version web"
+url = "http://localhost:5177"
+commande = "npm run dev"
+dossier = "ui"

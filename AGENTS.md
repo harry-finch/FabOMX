@@ -2,8 +2,8 @@
 
 > Ce fichier est repris dans CLAUDE.md.
 
-FabOMX : parcours d’outils pour la découpe jet d’eau sur la ProtoMAX (OMAX), dans la famille des applications Fab. Pas encore de code ni de pile technique choisie.
-Lire [README.md](README.md) et [STATUS.md](STATUS.md) avant de modifier.
+FabOMX : parcours d’outils pour la découpe jet d’eau sur la ProtoMAX (OMAX), dans la famille des applications Fab. À partir d’un dessin SVG ou DXF, produire un fichier OMX. Workspace Rust (`fabomx-core` pur, `fabomx-wasm` pour l’interface) + interface Svelte 5 dans `ui/`, même pile que FabVents et FabWeave.
+Lire [README.md](README.md), [STATUS.md](STATUS.md) et la feuille de route ([ROADMAP.md](ROADMAP.md), générée depuis `roadmap/`) avant de modifier.
 
 ## Skills à utiliser (`.agents/skills/`)
 
@@ -27,8 +27,19 @@ Elle est dans `roadmap/` (un fichier par élément, un par action de l’utilisa
 
 ## Règles
 
+- `fabomx-core` reste pur : aucune IO, aucun réseau, aucune dépendance d’interface ; déterministe.
+- Millimètres et degrés dans le moteur et dans les fichiers ; les pouces ne sont qu’un affichage.
+- Repère du moteur : origine en bas à gauche du plateau, Y vers le haut. L’espace de travail retourne l’axe.
+- Les valeurs ne sont jamais corrigées en silence : une valeur hors domaine produit une erreur ou un avertissement à code stable.
+- Disposition propre à FabOMX, écart voulu à `fab-design-system` : palette d’outils étroite (44 px) à gauche, paramètres et formulaires à droite.
+- Un outil de la palette qui n’est pas encore développé reste grisé (« À venir »), il ne réagit ni au clic ni à son raccourci.
+- Interface : aucune couleur en dur dans les composants ni dans le dessin de l’espace de travail, tout passe par les jetons de `ui/src/app.css` ; textes par `t('clé')`, `fr.ts` est la référence et `en.ts` a les mêmes clés.
 - Mettre à jour la documentation dans le même changement que le comportement.
 
 ## Commandes
 
-Aucune pour l’instant : à compléter avec le code (installation, tests, lancement).
+- Installation : `cd ui && npm install` (Rust 1.88 par `rust-toolchain.toml`, `wasm-pack`, Node.js).
+- Tests : `cargo test --workspace`, `cargo clippy --workspace --all-targets`, `cargo fmt --all --check`, `cd ui && npm run check`.
+- Moteur pour l’interface : `cd ui && npm run wasm` (wasm-pack, sortie dans `ui/src/wasm/`, hors Git).
+- Développement : `cd ui && npm run dev` → http://localhost:5177 (relancer `npm run wasm` après une modification du moteur).
+- Build : `cd ui && npm run build` (moteur compris), puis `npm run preview`.

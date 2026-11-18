@@ -8,7 +8,7 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ## Restant à faire
 
-1. **[R-003 Poser l'interface](roadmap/items/R-003-poser-l-interface.md)** · Spécifiée · jalon v0.1
+1. **[R-003 Poser l'interface](roadmap/items/R-003-poser-l-interface.md)** · À tester · jalon v0.1
    Squelette de l'application suivant fab-design-system : palette d'outils en icônes dans le panneau de gauche, paramètres et formulaires dans le panneau de droite, dessin au centre.
 2. **[R-001 Importer un DXF ou un SVG](roadmap/items/R-001-importer-un-dxf-ou-un-svg.md)** · Idée · jalon v0.1
    Lire le dessin 2D des pièces à découper depuis un fichier DXF ou SVG.
@@ -24,3 +24,5 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 ## Actions à faire
 
 - [ ] [A-001](roadmap/actions/A-001-valider-la-mise-d-equerre-de-fabomx.md) Valider la mise d'équerre de FabOMX (valider)
+- [ ] [A-002](roadmap/actions/A-002-juger-la-disposition-de-fabomx.md) Juger la disposition de FabOMX (tester, R-003)
+- [ ] [A-003](roadmap/actions/A-003-valider-les-outils-de-la-palette-de-fabomx.md) Valider les outils de la palette de FabOMX (valider, R-003)

@@ -1,0 +1,12 @@
+[package]
+name = "fabomx-core"
+description = "Moteur FabOMX : dessin 2D et parcours d'outil pour la découpeuse jet d'eau ProtoMAX"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+publish.workspace = true
+
+[dependencies]
+serde.workspace = true
