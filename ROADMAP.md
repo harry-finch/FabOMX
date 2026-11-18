@@ -4,7 +4,7 @@ Objectif de FabOMX : à partir d'un dessin vectoriel (SVG ou DXF), produire un p
 
 On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la découpe et les spécificités du jet d'eau (v0.2).
 
-**Avancement : 16 livrés sur 19** (84 %)
+**Avancement : 16 livrés sur 22** (73 %)
 
 ## Restant à faire
 
@@ -14,6 +14,12 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
    Couper une plaque dans un coin du stock sans faire le tour complet. À spécifier.
 3. **[R-020 Avertissement géométrie trop petite](roadmap/items/R-020-avertissement-geometrie-trop-petite.md)** · Idée
    Emettre un avertissement quand des trous ou des caractèristiques géométriques sont trop petites pour le kerf du jet d’eau (~1mm).
+4. **[R-021 La plaque réelle](roadmap/items/R-021-la-plaque-reelle.md)** · Idée
+   Dire les dimensions et la position de la plaque sur le plateau : FabOMX vérifie que les dessins tiennent dedans, et le point de départ peut s'accrocher à ses coins. Base de R-016 (plaque dans un coin du stock).
+5. **[R-022 Répéter et imbriquer](roadmap/items/R-022-repeter-et-imbriquer.md)** · Idée
+   Couper une pièce plusieurs fois en grille, ou placer automatiquement plusieurs pièces sur la plaque pour économiser la matière.
+6. **[R-023 Ponts de matière trop fins](roadmap/items/R-023-ponts-de-matiere-trop-fins.md)** · Idée
+   Signaler deux contours trop proches l'un de l'autre (un trou trop près du bord, deux trous presque collés), où la matière restante serait trop fine pour tenir. Va avec R-020 (géométrie trop petite pour la saignée).
 
 ## Actions à faire
 
