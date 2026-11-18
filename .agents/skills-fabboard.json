@@ -22,8 +22,14 @@
     "fab-design-system": {
       "fingerprint": "sha256:0a10155ebd24e93f112296153cf54d7b372003f3e3fd9eeb03fcc6501af3b94d"
     },
+    "fab-illustration-system": {
+      "fingerprint": "sha256:6e48a3e4385688ad64e3a88f3de008e005e6956d31b61d24a29b561123fae31c"
+    },
     "fab-roadmap": {
       "fingerprint": "sha256:6d8bc477d3511d8776cc78b54e89a05ed3451f3ce468f611a0d5136c539cb816"
+    },
+    "project-documentation": {
+      "fingerprint": "sha256:f697334142e535c6c51e14cb0ada139e5be7429b6e8001afab1b3d0e0b1e0197"
     },
     "protomax-waterjet": {
       "fingerprint": "sha256:2c8ea52e85f75dab3669fffd0dffca95c3564f06030e37052c01511c5ec04615"
