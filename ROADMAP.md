@@ -8,8 +8,8 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ## Restant à faire
 
-1. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
-   Logo définitif de la famille Fab (tuile graphite et symbole à la couleur d'identité), à la place du logo provisoire du kit.
+1. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · À tester · jalon v1.0
+   Logo définitif : buse, jet d'eau qui frappe la tôle et éclabousse en gouttes (variante A « Gerbe » de la planche), symbole en #2D22BF dans la tuile de la famille ; barre d'application, onglet et icône de l'application Mac.
 2. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée
    Marquer un trait sans traverser la plaque (gravure), dès que son code OMX est connu par un exemple de LAYOUT.
 3. **[R-016 Couper une plaque dans un coin du stock](roadmap/items/R-016-couper-une-plaque-dans-un-coin-du-stock.md)** · Idée · jalon v0.3
@@ -18,6 +18,7 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 ## Actions à faire
 
 - [ ] [A-015](roadmap/actions/A-015-fournir-un-omx-de-layout-avec-un-trait-grave.md) Fournir un OMX de LAYOUT avec un trait gravé (fournir, R-014)
+- [ ] [A-032](roadmap/actions/A-032-juger-le-logo-de-fabomx-dans-l-application.md) Juger le logo de FabOMX dans l'application (valider, R-006)
 
 ## Livré
 
