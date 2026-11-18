@@ -4,7 +4,7 @@ Objectif de FabOMX : à partir d'un dessin vectoriel (SVG ou DXF), produire un p
 
 On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la découpe et les spécificités du jet d'eau (v0.2).
 
-**Avancement : 15 livrés sur 18** (83 %)
+**Avancement : 15 livrés sur 19** (79 %)
 
 ## Restant à faire
 
@@ -14,6 +14,8 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
    Marquer un trait sans traverser la plaque (gravure), dès que son code OMX est connu par un exemple de LAYOUT.
 3. **[R-016 Couper une plaque dans un coin du stock](roadmap/items/R-016-couper-une-plaque-dans-un-coin-du-stock.md)** · Idée · jalon v0.3
    Couper une plaque dans un coin du stock sans faire le tour complet. À spécifier.
+4. **[R-020 Avertissement géométrie trop petite](roadmap/items/R-020-avertissement-geometrie-trop-petite.md)** · Idée
+   Emettre un avertissement quand des trous ou des caractèristiques géométriques sont trop petites pour le kerf du jet d’eau (~1mm).
 
 ## Actions à faire
 
