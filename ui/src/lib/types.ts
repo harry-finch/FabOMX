@@ -131,3 +131,47 @@ export interface Leads {
   leads: (Lead | null)[];
   warnings: LeadWarning[];
 }
+
+export type MoveKind = 'traverse' | 'lead_in' | 'cut' | 'lead_out';
+
+/** Un mouvement de la buse sur le plateau ; `step` : rang du contour (aucun pour le retour). */
+export interface Move {
+  kind: MoveKind;
+  step: number | null;
+  side: Side | null;
+  quality: number | null;
+  pts: number[];
+}
+
+/** Un contour dans l'ordre de coupe (`key` : identifiant du dessin). */
+export interface Step {
+  key: number;
+  contour: number;
+  side: Side;
+  pierce: [number, number];
+}
+
+export interface PathStats {
+  /** Longueur coupée par qualité (mm), amorces à part. */
+  cut: Record<string, number>;
+  leads: number;
+  traverse: number;
+  pierces: number;
+}
+
+export type PathWarning = { code: 'path.over_cut'; step: number; x: number; y: number };
+
+export interface Plan {
+  start: [number, number];
+  order: Step[];
+  moves: Move[];
+  stats: PathStats;
+  warnings: PathWarning[];
+}
+
+/** Ordre refusé : `contour` serait coupé avant `inner`, qu'il contient. */
+export interface OrderRefused {
+  error: 'path.order';
+  contour: [number, number];
+  inner: [number, number];
+}

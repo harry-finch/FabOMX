@@ -2,7 +2,7 @@
 // cible, lus par la barre d'état, l'espace de travail et l'inspecteur ; les
 // lectures de fichiers passent par des promesses.
 
-import type { CleanCounts, CleanOptions, CleanPreview, ImportFailure, LeadSpec, Leads, Placement, Report, Sides, Unit } from './types';
+import type { CleanCounts, CleanOptions, CleanPreview, ImportFailure, LeadSpec, Leads, OrderRefused, Placement, Plan, Report, Sides, Unit } from './types';
 import type { M } from './affine';
 
 /** Zone de coupe d'une machine, en mm, origine en bas à gauche. */
@@ -96,6 +96,15 @@ class Engine {
   /** Amorces et perçages des contours de `geo` placée par `matrix`, un réglage par contour. */
   leads(geo: number, matrix: M, specs: LeadSpec[]): Promise<Leads | { error: string }> {
     return this.#call({ kind: 'leads', geo, matrix, specs: JSON.stringify(specs) });
+  }
+
+  /** Le parcours complet des dessins placés, depuis `start`, dans l'ordre donné ou automatique. */
+  plan(job: {
+    start: [number, number];
+    order: [number, number][] | null;
+    drawings: { key: number; geo: number; m: M; specs: LeadSpec[]; qualities: (number | null)[] }[];
+  }): Promise<Plan | OrderRefused | { error: string }> {
+    return this.#call({ kind: 'plan', job: JSON.stringify(job) });
   }
 }
 

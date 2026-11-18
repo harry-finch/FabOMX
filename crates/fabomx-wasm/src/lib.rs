@@ -245,6 +245,77 @@ pub fn leads(geo: u32, m: &[f64], specs: &str) -> String {
     })
 }
 
+/// Le parcours complet des dessins placés. `job` : JSON
+/// `{"start": [x, y], "order": [[clé, contour], …] | null, "drawings":
+/// [{"key", "geo", "m": [6], "specs": [LeadSpec, …], "qualities": [q | null, …]}]}`.
+/// Rend le plan (`path::Plan`), ou `{"error": "path.order", "contour": [clé,
+/// contour], "inner": [clé, contour]}` pour un ordre refusé.
+#[wasm_bindgen]
+pub fn plan(job: &str) -> String {
+    #[derive(serde::Deserialize)]
+    struct Drawing {
+        key: u32,
+        geo: u32,
+        m: [f64; 6],
+        specs: Vec<fabomx_core::lead::LeadSpec>,
+        qualities: Vec<Option<u8>>,
+    }
+    #[derive(serde::Deserialize)]
+    struct Input {
+        start: [f64; 2],
+        order: Option<Vec<(u32, usize)>>,
+        drawings: Vec<Drawing>,
+    }
+    let Ok(input) = serde_json::from_str::<Input>(job) else {
+        return error("path.job");
+    };
+    GEOMETRIES.with(|g| {
+        let mut g = g.borrow_mut();
+        for d in &input.drawings {
+            if let Some(s) = g.get_mut(&d.geo) {
+                s.sides
+                    .get_or_insert_with(|| fabomx_core::cut::sides(&s.parsed.pieces));
+            }
+        }
+        // Contours, côtés et amorces de chaque dessin connu.
+        let mut prepared = Vec::new();
+        for d in &input.drawings {
+            let Some(contours) = g
+                .get(&d.geo)
+                .and_then(|s| s.sides.as_ref())
+                .map(|s| &s.contours)
+            else {
+                continue;
+            };
+            let m = Affine(d.m);
+            let leads = fabomx_core::lead::leads(contours, &d.specs, m);
+            let sides: Vec<_> = d.specs.iter().map(|s| s.side).collect();
+            prepared.push((d, contours, m, leads, sides));
+        }
+        let jobs: Vec<fabomx_core::path::Job> = prepared
+            .iter()
+            .map(|(d, contours, m, leads, sides)| fabomx_core::path::Job {
+                key: d.key,
+                m: *m,
+                contours,
+                sides,
+                leads: &leads.leads,
+                qualities: &d.qualities,
+            })
+            .collect();
+        let start = fabomx_core::geom::P::new(input.start[0], input.start[1]);
+        match fabomx_core::path::plan(&jobs, start, input.order.as_deref()) {
+            Ok(p) => serde_json::to_string(&p).expect("parcours sérialisable"),
+            Err(e) => serde_json::json!({
+                "error": e.code(),
+                "contour": [e.contour.0, e.contour.1],
+                "inner": [e.inner.0, e.inner.1],
+            })
+            .to_string(),
+        }
+    })
+}
+
 /// Machine cible (zone de coupe en mm), en JSON.
 #[wasm_bindgen]
 pub fn machine() -> String {
@@ -342,6 +413,30 @@ mod tests {
         let err: serde_json::Value =
             serde_json::from_str(&leads(31, &[1.0, 0.0, 0.0, 1.0, 0.0, 0.0], &specs)).unwrap();
         assert_eq!(err["error"], "lead.unknown");
+    }
+
+    #[test]
+    fn plan_and_refused_order() {
+        const PLATE: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100"><rect width="100" height="100"/><circle cx="50" cy="50" r="20"/></svg>"#;
+        load(40, PLATE, "", "");
+        let s: serde_json::Value = serde_json::from_str(&sides(40)).unwrap();
+        let cs = s["contours"].as_array().unwrap();
+        let specs: Vec<serde_json::Value> = cs
+            .iter()
+            .map(|c| serde_json::json!({ "side": c["side"], "shape": "line", "lead_in": 3.8, "lead_out": 1.3, "entry": null }))
+            .collect();
+        let job = |order: serde_json::Value| {
+            serde_json::json!({ "start": [0, 0], "order": order, "drawings": [{ "key": 1, "geo": 40, "m": [1, 0, 0, 1, 0, 0], "specs": specs, "qualities": [3, 3] }] }).to_string()
+        };
+        let p: serde_json::Value =
+            serde_json::from_str(&plan(&job(serde_json::Value::Null))).unwrap();
+        assert_eq!(p["order"].as_array().unwrap().len(), 2);
+        assert_eq!(p["order"][1]["side"], "outside");
+        assert_eq!(p["stats"]["pierces"], 2);
+        let outside = cs.iter().position(|c| c["side"] == "outside").unwrap();
+        let e: serde_json::Value =
+            serde_json::from_str(&plan(&job(serde_json::json!([[1, outside]])))).unwrap();
+        assert_eq!(e["error"], "path.order");
     }
 
     #[test]

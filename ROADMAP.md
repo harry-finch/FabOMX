@@ -8,7 +8,7 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ## Restant à faire
 
-1. **[R-011 Ordre de coupe et aperçu du parcours](roadmap/items/R-011-ordre-de-coupe-et-apercu-du-parcours.md)** · Idée · jalon v0.2
+1. **[R-011 Ordre de coupe et aperçu du parcours](roadmap/items/R-011-ordre-de-coupe-et-apercu-du-parcours.md)** · À tester · jalon v0.2
    Outil Parcours : point de départ (origine, point choisi ou coordonnées) et retour, ordre automatique (contenu avant contenant, plus proche voisin) retouchable à la main, déplacements jet coupé signalés au-dessus de ce qui est découpé, bilan chiffré et lecture pas à pas.
 2. **[R-012 Comprendre le format OMX](roadmap/items/R-012-comprendre-le-format-omx.md)** · Idée · jalon v0.2
    Décrire et reproduire le format OMX de la ProtoMAX à partir de fichiers réels produits par LAYOUT, avec des tests qui relisent ces fichiers.
@@ -24,6 +24,9 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 ## Actions à faire
 
 - [ ] [A-015](roadmap/actions/A-015-fournir-un-omx-de-layout-avec-un-trait-grave.md) Fournir un OMX de LAYOUT avec un trait gravé (fournir, R-014)
+- [ ] [A-020](roadmap/actions/A-020-verifier-l-ordre-de-coupe-sur-tes-vrais-dessins.md) Vérifier l'ordre de coupe sur tes vrais dessins (tester, R-011)
+- [ ] [A-021](roadmap/actions/A-021-juger-l-outil-parcours.md) Juger l'outil Parcours (valider, R-011)
+- [ ] [A-022](roadmap/actions/A-022-verifier-ou-make-place-le-depart-d-un-omx.md) Vérifier où MAKE place le départ d'un OMX (tester, R-011)
 
 ## Livré
 

@@ -505,3 +505,23 @@ fn hits(a: P, b: P, c: P, d: P) -> bool {
     const EPS: f64 = 1e-9;
     t > EPS && t < 1.0 - EPS && (-EPS..=1.0 + EPS).contains(&u)
 }
+
+/// Le trajet de coupe d'un contour (repère d'origine), dans son sens de
+/// parcours, du point d'entrée de `lead` jusqu'à sa fin : un contour fermé
+/// revient au point d'entrée.
+pub fn route(c: &Contour, lead: &Lead, m: Affine) -> Vec<P> {
+    let poly = c.points();
+    if !c.closed {
+        let mut q = poly;
+        if lead.reversed {
+            q.reverse();
+        }
+        return q;
+    }
+    let (q, _) = travel(&poly, lead.reversed);
+    let (mut q, _) = start_at(q, Some(lead.entry), m);
+    if let Some(&first) = q.first() {
+        q.push(first);
+    }
+    q
+}

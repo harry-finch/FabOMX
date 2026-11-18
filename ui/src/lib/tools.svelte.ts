@@ -4,10 +4,10 @@
 // actif est mémorisé sur le poste.
 
 import type { Component } from 'svelte';
-import { FileUp, Hand, MousePointer2, Move, RotateCw, Scaling, Scissors, WandSparkles } from '@lucide/svelte';
+import { FileUp, Hand, MousePointer2, Move, Route, RotateCw, Scaling, Scissors, WandSparkles } from '@lucide/svelte';
 import { storageKey } from './app';
 
-export type ToolId = 'select' | 'hand' | 'import' | 'move' | 'rotate' | 'scale' | 'clean' | 'cut';
+export type ToolId = 'select' | 'hand' | 'import' | 'move' | 'rotate' | 'scale' | 'clean' | 'cut' | 'path';
 
 export interface Tool {
   id: ToolId;
@@ -32,7 +32,10 @@ export const TOOL_GROUPS: Tool[][] = [
     { id: 'scale', icon: Scaling, key: 's', enabled: true },
   ],
   [{ id: 'clean', icon: WandSparkles, key: 'c', enabled: true }],
-  [{ id: 'cut', icon: Scissors, key: 'd', enabled: true }],
+  [
+    { id: 'cut', icon: Scissors, key: 'd', enabled: true },
+    { id: 'path', icon: Route, key: 'p', enabled: true },
+  ],
 ];
 
 const TOOLS = TOOL_GROUPS.flat();

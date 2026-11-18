@@ -2,7 +2,7 @@
 // version et la machine cible, puis répond aux demandes du fil principal.
 // Le calcul ne bloque jamais l'interface.
 
-import init, { clean_apply, clean_preview, engine_version, inspect, leads, load, machine, overlaps, place, sides } from '../wasm/fabomx.js';
+import init, { clean_apply, clean_preview, engine_version, inspect, leads, load, machine, overlaps, place, plan, sides } from '../wasm/fabomx.js';
 
 type Request =
   | { kind: 'inspect'; id: number; text: string; unit: string; clean: string }
@@ -12,7 +12,8 @@ type Request =
   | { kind: 'clean'; id: number; geo: number; opts: string; k: number; next: number }
   | { kind: 'sides'; id: number; geo: number }
   | { kind: 'overlaps'; id: number; placed: string }
-  | { kind: 'leads'; id: number; geo: number; matrix: number[]; specs: string };
+  | { kind: 'leads'; id: number; geo: number; matrix: number[]; specs: string }
+  | { kind: 'plan'; id: number; job: string };
 
 /** `postMessage` du worker (les types DOM ne connaissent que celui de `window`). */
 const post = (msg: unknown) => (self as unknown as Worker).postMessage(msg);
@@ -32,7 +33,8 @@ onmessage = async (ev: MessageEvent<Request>) => {
     else if (req.kind === 'clean') value = clean_apply(req.geo, req.opts, req.k, req.next);
     else if (req.kind === 'sides') value = sides(req.geo);
     else if (req.kind === 'overlaps') value = overlaps(req.placed);
-    else value = leads(req.geo, new Float64Array(req.matrix), req.specs);
+    else if (req.kind === 'leads') value = leads(req.geo, new Float64Array(req.matrix), req.specs);
+    else value = plan(req.job);
     post({ kind: 'result', id: req.id, ok: true, value: JSON.parse(value) });
   } catch (e) {
     post({ kind: 'result', id: req.id, ok: false, error: String(e) });

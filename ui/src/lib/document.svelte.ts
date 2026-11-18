@@ -1,5 +1,6 @@
-// Le document : les dessins posés sur le plateau, la sélection, et
-// l'historique pour annuler / rétablir. Chaque modification remplace la
+// Le document : les dessins posés sur le plateau, le travail (point de
+// départ et ordre de coupe du parcours), la sélection, et l'historique pour
+// annuler / rétablir. Chaque modification remplace la
 // liste (les dessins sont immuables) et empile l'état précédent ; un geste
 // à la souris (`begin` … `end`) ne fait qu'une étape.
 // Un dessin garde sa géométrie d'origine (dans le moteur) et une matrice ;
@@ -46,6 +47,15 @@ export interface LeadOpts {
   lead_out?: number;
 }
 
+/** Le travail : point de départ du parcours (plateau) et ordre de coupe
+ * choisi à la main (`[dessin, contour]`), ou `null` pour l'ordre automatique. */
+export interface Job {
+  start: [number, number];
+  order: [number, number][] | null;
+}
+
+type Snapshot = { drawings: Drawing[]; job: Job };
+
 const HISTORY = 100;
 
 /** Boîte transformée calculée sur les tracés, en attendant le moteur. */
@@ -75,13 +85,14 @@ export function refPoint(d: Drawing): Pt {
 
 class Doc {
   drawings = $state.raw<Drawing[]>([]);
+  job = $state.raw<Job>({ start: [0, 0], order: null });
   selected = $state<number | null>(null);
   /** « Choisir sur le plateau » : le prochain clic place le point de référence. */
   picking = $state(false);
   /** Cadenas de l'échelle : largeur et hauteur liées. */
   lock = $state(true);
-  #undo: Drawing[][] = [];
-  #redo: Drawing[][] = [];
+  #undo: Snapshot[] = [];
+  #redo: Snapshot[] = [];
   #gesture: Drawing[] | null = null;
   #next = 1;
   /** Taille des piles, pour l'état des commandes. */
@@ -96,17 +107,18 @@ class Doc {
     return this.#next++;
   }
 
-  #commit(next: Drawing[]) {
+  #commit(next: Drawing[], job: Job = this.job) {
     if (this.#gesture) {
       this.drawings = next;
       return;
     }
-    this.#push(this.drawings);
+    this.#push({ drawings: this.drawings, job: this.job });
     this.drawings = next;
+    this.job = job;
     this.#sync();
   }
 
-  #push(state: Drawing[]) {
+  #push(state: Snapshot) {
     this.#undo.push(state);
     if (this.#undo.length > HISTORY) this.#undo.shift();
     this.#redo = [];
@@ -210,7 +222,7 @@ class Doc {
     const before = this.#gesture;
     this.#gesture = null;
     if (before && before !== this.drawings) {
-      this.#push(before);
+      this.#push({ drawings: before, job: this.job });
       this.#sync();
     }
   }
@@ -233,17 +245,29 @@ class Doc {
   undo() {
     const prev = this.#undo.pop();
     if (!prev) return;
-    this.#redo.push(this.drawings);
-    this.drawings = prev;
+    this.#redo.push({ drawings: this.drawings, job: this.job });
+    this.drawings = prev.drawings;
+    this.job = prev.job;
     this.#sync();
   }
 
   redo() {
     const next = this.#redo.pop();
     if (!next) return;
-    this.#undo.push(this.drawings);
-    this.drawings = next;
+    this.#undo.push({ drawings: this.drawings, job: this.job });
+    this.drawings = next.drawings;
+    this.job = next.job;
     this.#sync();
+  }
+
+  /** Point de départ du parcours (plateau). Une étape. */
+  setStart(at: [number, number]) {
+    this.#commit(this.drawings, { ...this.job, start: at });
+  }
+
+  /** Ordre de coupe choisi à la main ; `null` : automatique. Une étape. */
+  setOrder(order: [number, number][] | null) {
+    this.#commit(this.drawings, { ...this.job, order });
   }
 
   select(id: number | null) {

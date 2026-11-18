@@ -10,6 +10,7 @@ pub mod geom;
 pub mod import;
 pub mod lead;
 pub mod machine;
+pub mod path;
 pub mod place;
 mod svg;
 pub mod units;

@@ -14,6 +14,7 @@
   import { engine } from './lib/engine.svelte';
   import { doc } from './lib/document.svelte';
   import { cutting } from './lib/cutting.svelte';
+  import { pathing } from './lib/pathing.svelte';
   import { importer } from './lib/importer.svelte';
   import { tools, type ToolId } from './lib/tools.svelte';
   import { then, translate } from './lib/affine';
@@ -44,6 +45,13 @@
     if (cutting.selection && (tools.active !== 'cut' || cutting.selection.id !== doc.selected)) cutting.clear();
     if (cutting.pickingEntry && cutting.selection?.contours.length !== 1) cutting.pickingEntry = false;
   });
+  // Le choix du point de départ et la lecture vivent avec l'outil Parcours.
+  $effect(() => {
+    if (tools.active !== 'path') {
+      pathing.pickingStart = false;
+      pathing.pause();
+    }
+  });
 
   function keydown(e: KeyboardEvent) {
     const el = e.target as HTMLElement | null;
@@ -73,6 +81,7 @@
       // Échap : annuler le choix d'un point (de référence ou d'entrée), vider la sélection de contours,
       // puis désélectionner, puis revenir à Sélection.
       if (doc.picking) doc.picking = false;
+      else if (pathing.pickingStart) pathing.pickingStart = false;
       else if (cutting.pickingEntry) cutting.pickingEntry = false;
       else if (cutting.selection) cutting.clear();
       else if (doc.selected != null) doc.select(null);
@@ -204,6 +213,8 @@
       <dd>{t('help.keys.clean')}</dd>
       <dt><kbd>D</kbd></dt>
       <dd>{t('help.keys.cut')}</dd>
+      <dt><kbd>P</kbd></dt>
+      <dd>{t('help.keys.path')}</dd>
       <dt><kbd>⌘A</kbd></dt>
       <dd>{t('help.keys.selectAll')}</dd>
       <dt><kbd>← → ↑ ↓</kbd></dt>

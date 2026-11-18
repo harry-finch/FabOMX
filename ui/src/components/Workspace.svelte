@@ -23,6 +23,12 @@
   // amorces en trait fin de la couleur du contour, le perçage d'un petit
   // cercle ; « Choisir le point d'entrée » : le clic suivant sur le contour
   // sélectionné le place, accroché aux coins et aux extrémités.
+  // Outil Parcours : les dessins estompés, le parcours complet (coupes à la
+  // couleur de leur côté, amorces, perçages, déplacements en pointillés,
+  // survols en attention), le point de départ ; en lecture, ce qui reste à
+  // couper est estompé et la buse est marquée. Un clic sur une coupe la
+  // choisit dans la liste ; « Choisir sur le plateau » place le point de
+  // départ, accroché aux coins du plateau, des dessins et à leurs points.
   import { untrack } from 'svelte';
   import { theme } from '../lib/theme.svelte';
   import { tools } from '../lib/tools.svelte';
@@ -30,7 +36,8 @@
   import { doc, refPoint, type Drawing } from '../lib/document.svelte';
   import { cleaning } from '../lib/cleaning.svelte';
   import { cutting, reversed } from '../lib/cutting.svelte';
-  import type { Side } from '../lib/types';
+  import { pathing } from '../lib/pathing.svelte';
+  import type { Move, Side } from '../lib/types';
   import { apply, invert, rotateAbout, scaleAbout, then, translate, type M, type Pt } from '../lib/affine';
 
   let {
@@ -49,7 +56,7 @@
   const MARGIN = 32;
   const MIN_SCALE = 0.05 * PX_PER_MM;
   const MAX_SCALE = 40 * PX_PER_MM;
-  const TOKENS = ['canvas-bg', 'bed-fill', 'bed-edge', 'bed-grid', 'bed-grid-major', 'bed-origin', 'ctrl', 'ctrl-edge', 'ctrl-active', 'ctrl-active-fill', 'drawing-open', 'cut-outside', 'cut-inside', 'cut-line', 'cut-skip'];
+  const TOKENS = ['canvas-bg', 'bed-fill', 'bed-edge', 'bed-grid', 'bed-grid-major', 'bed-origin', 'ctrl', 'ctrl-edge', 'ctrl-active', 'ctrl-active-fill', 'drawing-open', 'cut-outside', 'cut-inside', 'cut-line', 'cut-skip', 'path-traverse'];
   /** Distance de prise d'un tracé, en px. */
   const HIT = 8;
 
@@ -188,6 +195,7 @@
   function drawDrawings(ctx: CanvasRenderingContext2D) {
     ctx.lineJoin = 'round';
     ctx.lineCap = 'round';
+    if (tools.active === 'path') return drawPath(ctx);
     for (const d of drawings) {
       const sel = d.id === selected;
       const over = overflows(d);
@@ -396,6 +404,173 @@
     ctx.stroke();
   }
 
+  /** Polyligne du plateau `[x, y, …]`, jusqu'à la longueur `upto` (mm) si elle est donnée. */
+  function bedPath(ctx: CanvasRenderingContext2D, pts: number[], upto = Infinity) {
+    let run = 0;
+    ctx.moveTo(sx(pts[0]), sy(pts[1]));
+    for (let i = 2; i + 1 < pts.length; i += 2) {
+      const l = Math.hypot(pts[i] - pts[i - 2], pts[i + 1] - pts[i - 1]);
+      if (run + l >= upto) {
+        const k = l > 0 ? (upto - run) / l : 0;
+        ctx.lineTo(sx(pts[i - 2] + (pts[i] - pts[i - 2]) * k), sy(pts[i - 1] + (pts[i + 1] - pts[i - 1]) * k));
+        return;
+      }
+      run += l;
+      ctx.lineTo(sx(pts[i]), sy(pts[i + 1]));
+    }
+  }
+
+  function strokeMove(ctx: CanvasRenderingContext2D, m: Move, over: boolean, upto = Infinity) {
+    ctx.beginPath();
+    bedPath(ctx, m.pts, upto);
+    if (m.kind === 'traverse') {
+      ctx.setLineDash([5, 4]);
+      ctx.strokeStyle = over ? colors['drawing-open'] : colors['path-traverse'];
+      ctx.lineWidth = over ? 1.75 : 1.25;
+      ctx.stroke();
+      ctx.setLineDash([]);
+      return;
+    }
+    const color = colors[`cut-${m.side ?? 'line'}`];
+    ctx.strokeStyle = colors['ctrl-edge'];
+    ctx.lineWidth = m.kind === 'cut' ? 4 : 3;
+    ctx.stroke();
+    ctx.strokeStyle = color;
+    ctx.lineWidth = m.kind === 'cut' ? 2 : 1.25;
+    ctx.stroke();
+  }
+
+  /** Le point du parcours à la longueur `upto` (mm) depuis le départ. */
+  function pointAt(moves: Move[], upto: number): Pt | null {
+    let run = 0;
+    for (const m of moves) {
+      for (let i = 2; i + 1 < m.pts.length; i += 2) {
+        const l = Math.hypot(m.pts[i] - m.pts[i - 2], m.pts[i + 1] - m.pts[i - 1]);
+        if (run + l >= upto) {
+          const k = l > 0 ? (upto - run) / l : 0;
+          return [m.pts[i - 2] + (m.pts[i] - m.pts[i - 2]) * k, m.pts[i - 1] + (m.pts[i + 1] - m.pts[i - 1]) * k];
+        }
+        run += l;
+      }
+    }
+    return null;
+  }
+
+  /** Outil Parcours. */
+  function drawPath(ctx: CanvasRenderingContext2D) {
+    ctx.globalAlpha = 0.35;
+    ctx.beginPath();
+    for (const d of drawings) for (const tr of d.report.traces) tracePath(ctx, d.matrix, tr.pts);
+    ctx.strokeStyle = colors['ctrl'];
+    ctx.lineWidth = 1;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+    const plan = pathing.plan;
+    if (plan) {
+      const { ends, total } = pathing.lengths;
+      const upto = pathing.progress * total;
+      const playing = upto < total - 1e-9;
+      const over = new Set(plan.warnings.map((w) => w.step));
+      const isOver = (m: Move) => m.kind === 'traverse' && over.has(m.step ?? plan.order.length);
+      if (pathing.picked != null) {
+        ctx.beginPath();
+        for (const m of plan.moves) if (m.step === pathing.picked && m.kind === 'cut') bedPath(ctx, m.pts);
+        ctx.strokeStyle = colors['ctrl-active'];
+        ctx.lineWidth = 7;
+        ctx.stroke();
+      }
+      ctx.globalAlpha = playing ? 0.3 : 1;
+      for (const m of plan.moves) strokeMove(ctx, m, isOver(m));
+      ctx.globalAlpha = 1;
+      if (playing) {
+        plan.moves.forEach((m, i) => {
+          const begin = i ? ends[i - 1] : 0;
+          if (begin < upto) strokeMove(ctx, m, isOver(m), ends[i] <= upto ? Infinity : upto - begin);
+        });
+      }
+      // Perçages.
+      plan.order.forEach((s, i) => {
+        const done = !playing || (ends[plan.moves.findIndex((m) => m.step === i)] ?? 0) <= upto;
+        ctx.globalAlpha = done ? 1 : 0.3;
+        ctx.beginPath();
+        ctx.arc(sx(s.pierce[0]), sy(s.pierce[1]), 3, 0, Math.PI * 2);
+        ctx.strokeStyle = colors['ctrl-edge'];
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        ctx.strokeStyle = colors[`cut-${s.side}`];
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      });
+      ctx.globalAlpha = 1;
+      // La buse, pendant la lecture.
+      if (playing) {
+        const at = pointAt(plan.moves, upto) ?? plan.start;
+        ctx.beginPath();
+        ctx.arc(sx(at[0]), sy(at[1]), 6, 0, Math.PI * 2);
+        ctx.fillStyle = colors['ctrl-active-fill'];
+        ctx.fill();
+        ctx.strokeStyle = colors['ctrl-edge'];
+        ctx.lineWidth = 4;
+        ctx.stroke();
+        ctx.strokeStyle = colors['ctrl-active'];
+        ctx.lineWidth = 2;
+        ctx.stroke();
+      }
+    }
+    // Point de départ : un cercle et sa croix.
+    const [px, py] = [sx(doc.job.start[0]), sy(doc.job.start[1])];
+    ctx.strokeStyle = colors['ctrl-edge'];
+    ctx.lineWidth = 4;
+    ctx.beginPath();
+    ctx.arc(px, py, 6, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.strokeStyle = colors['ctrl-active'];
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(px, py, 6, 0, Math.PI * 2);
+    ctx.moveTo(px - 10, py);
+    ctx.lineTo(px + 10, py);
+    ctx.moveTo(px, py - 10);
+    ctx.lineTo(px, py + 10);
+    ctx.stroke();
+  }
+
+  /** Point de départ choisi par un clic : accroché aux coins du plateau, des dessins et à leurs points. */
+  function pickStart(px: number, py: number) {
+    const targets: Pt[] = [];
+    if (machine) targets.push([0, 0], [machine.width, 0], [0, machine.height], [machine.width, machine.height]);
+    for (const d of drawings) {
+      const [x0, y0, x1, y1] = d.placement.bbox;
+      targets.push([x0, y0], [x1, y0], [x0, y1], [x1, y1]);
+      for (let i = 0; i + 1 < d.snaps.length; i += 2) targets.push(apply(d.matrix, d.snaps[i], d.snaps[i + 1]));
+    }
+    let best: Pt | null = null;
+    let dist = HIT;
+    for (const p of targets) {
+      const k = Math.hypot(sx(p[0]) - px, sy(p[1]) - py);
+      if (k <= dist) [best, dist] = [p, k];
+    }
+    const at = best ?? toWorld(px, py);
+    doc.setStart([Math.round(at[0] * 1e6) / 1e6, Math.round(at[1] * 1e6) / 1e6]);
+    pathing.pickingStart = false;
+  }
+
+  /** Le rang de la coupe sous le point d'écran, s'il y en a une. */
+  function hitStep(px: number, py: number): number | null {
+    for (const m of pathing.plan?.moves ?? []) {
+      if (m.kind !== 'cut' || m.step == null) continue;
+      for (let i = 2; i + 1 < m.pts.length; i += 2) {
+        const [x0, y0, x1, y1] = [sx(m.pts[i - 2]), sy(m.pts[i - 1]), sx(m.pts[i]), sy(m.pts[i + 1])];
+        const vx = x1 - x0;
+        const vy = y1 - y0;
+        const l2 = vx * vx + vy * vy;
+        const t = l2 > 0 ? Math.max(0, Math.min(1, ((px - x0) * vx + (py - y0) * vy) / l2)) : 0;
+        if (Math.hypot(x0 + vx * t - px, y0 + vy * t - py) <= HIT) return m.step;
+      }
+    }
+    return null;
+  }
+
   /** Outil Nettoyer : les défauts de l'aperçu, le défaut choisi en accent. */
   function drawDefects(ctx: CanvasRenderingContext2D, d: Drawing) {
     const pv = cleaning.preview;
@@ -428,6 +603,17 @@
     untrack(() => {
       const s = Math.max(view.s, 20 * PX_PER_MM);
       view = { s, ox: width / 2 - wx * s, oy: height / 2 + wy * s };
+      auto = false;
+    });
+  });
+
+  // Une remarque du parcours choisie : la vue se centre dessus.
+  $effect(() => {
+    const f = pathing.focused;
+    if (!f) return;
+    untrack(() => {
+      const s = Math.max(view.s, 6 * PX_PER_MM);
+      view = { s, ox: width / 2 - f.x * s, oy: height / 2 + f.y * s };
       auto = false;
     });
   });
@@ -554,7 +740,7 @@
   });
 
   $effect(() => {
-    void [view, width, height, machine, drawings, selected, tools.active, doc.lock, cleaning.preview, cleaning.focused, cutting.byGeo, cutting.selection, cutting.overlaps, cutting.focused, cutting.quality, cutting.leadsOf, cutting.pickingEntry];
+    void [view, width, height, machine, drawings, selected, tools.active, doc.lock, cleaning.preview, cleaning.focused, cutting.byGeo, cutting.selection, cutting.overlaps, cutting.focused, cutting.quality, cutting.leadsOf, cutting.pickingEntry, doc.job, pathing.plan, pathing.progress, pathing.picked];
     zoom = view.s / PX_PER_MM;
     request();
   });
@@ -621,6 +807,11 @@
       if (tool === 'scale' && sel) {
         const h = handles(sel).find((h) => Math.abs(sx(h.x) - px) <= HIT && Math.abs(sy(h.y) - py) <= HIT);
         if (h) return start(e, 'scale', sel, h.hx, h.hy);
+      }
+      if (tool === 'path') {
+        if (pathing.pickingStart) return pickStart(px, py);
+        pathing.picked = hitStep(px, py);
+        return;
       }
       if (tool === 'cut' && cutting.pickingEntry && sel && cutting.selection?.contours.length === 1) return pickEntry(sel, cutting.selection.contours[0], px, py);
       if (tool === 'cut') {
@@ -705,7 +896,7 @@
   }
 
   const cursor = $derived(
-    doc.picking || cutting.pickingEntry ? 'crosshair' : tools.active === 'move' || gesture?.kind === 'move' ? 'move' : tools.active === 'rotate' && selected != null ? 'alias' : undefined,
+    doc.picking || cutting.pickingEntry || (tools.active === 'path' && pathing.pickingStart) ? 'crosshair' : tools.active === 'move' || gesture?.kind === 'move' ? 'move' : tools.active === 'rotate' && selected != null ? 'alias' : undefined,
   );
 </script>
 

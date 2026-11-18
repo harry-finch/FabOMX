@@ -8,6 +8,7 @@
   import Transform from './Transform.svelte';
   import CleanPanel from './CleanPanel.svelte';
   import CutPanel from './CutPanel.svelte';
+  import PathPanel from './PathPanel.svelte';
   import { tools } from '../lib/tools.svelte';
   import type { Machine } from '../lib/engine.svelte';
   import type { Drawing } from '../lib/document.svelte';
@@ -28,9 +29,11 @@
   <CleanPanel {drawing} />
 {:else if tools.active === 'cut'}
   <CutPanel {drawing} />
+{:else if tools.active === 'path'}
+  <PathPanel />
 {/if}
 {#if drawing}
-  {#if tools.active !== 'clean' && tools.active !== 'cut'}<Transform {drawing} />{/if}
+  {#if !['clean', 'cut', 'path'].includes(tools.active)}<Transform {drawing} />{/if}
   <Section id="drawing" title={t('drawing.title')}>
     {#snippet actions()}
       <button class="btn quiet icon" type="button" use:tip={t('drawing.removeHint')} aria-label={t('drawing.remove')} onclick={() => onremove(drawing.id)}><Trash2 size={14} /></button>
@@ -39,7 +42,7 @@
     <DrawingInfo report={drawing.report} placement={drawing.placement} />
     <button class="btn" type="button" onclick={() => onremove(drawing.id)}><Trash2 size={14} /> {t('drawing.remove')}</button>
   </Section>
-{:else if tools.active !== 'clean' && tools.active !== 'cut'}
+{:else if !['clean', 'cut', 'path'].includes(tools.active)}
   <p class="empty">{t(count ? 'bed.select' : 'bed.empty')}</p>
 {/if}
 {#if machine}

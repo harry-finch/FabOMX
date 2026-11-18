@@ -2,7 +2,7 @@
 id: R-011
 titre: "Ordre de coupe et aperçu du parcours"
 resume: "Outil Parcours : point de départ (origine, point choisi ou coordonnées) et retour, ordre automatique (contenu avant contenant, plus proche voisin) retouchable à la main, déplacements jet coupé signalés au-dessus de ce qui est découpé, bilan chiffré et lecture pas à pas."
-statut: idee
+statut: a-tester
 jalon: v0.2
 cree: 2026-11-18
 maj: 2026-11-18

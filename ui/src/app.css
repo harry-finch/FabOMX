@@ -86,6 +86,8 @@
   --cut-inside: #e070d4;
   --cut-line: #4fc3d9;
   --cut-skip: #8a8f96;
+  /* Parcours (outil Parcours) : déplacements jet coupé. */
+  --path-traverse: #b9bec6;
 
   /* Fenêtres et infobulles. */
   --backdrop: rgb(0 0 0 / 0.5);
@@ -176,6 +178,7 @@
   --cut-inside: #a8239f;
   --cut-line: #0b78b0;
   --cut-skip: #7a7f86;
+  --path-traverse: #5b6068;
 
   --segment-track: #e3e3e3;
   --track: #e0e0e0;
