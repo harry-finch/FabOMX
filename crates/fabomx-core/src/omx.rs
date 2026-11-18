@@ -219,7 +219,7 @@ pub fn read(text: &str) -> Result<Omx, OmxError> {
 
 /// Côté de décalage écrit pour un contour de côté `side` : 1 quand MAKE doit
 /// décaler la saignée (extérieur, trou : pièce à droite du jet, comme les
-/// exemples) ; 0 pour une fente, coupée sur le trait (hypothèse, A-023).
+/// exemples) ; 0 pour une fente, coupée sur le trait (confirmé à la coupe, A-023).
 fn offset_side(side: Option<Side>) -> u8 {
     match side {
         Some(Side::Outside) | Some(Side::Inside) => 1,

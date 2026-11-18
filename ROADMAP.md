@@ -4,7 +4,7 @@ Objectif de FabOMX : à partir d'un dessin vectoriel (SVG ou DXF), produire un p
 
 On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la découpe et les spécificités du jet d'eau (v0.2).
 
-**Avancement : 12 livrés sur 15** (80 %)
+**Avancement : 12 livrés sur 16** (75 %)
 
 ## Restant à faire
 
@@ -14,11 +14,12 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
    Marquer un trait sans traverser la plaque (gravure), dès que son code OMX est connu par un exemple de LAYOUT.
 3. **[R-016 Couper une plaque dans un coin du stock](roadmap/items/R-016-couper-une-plaque-dans-un-coin-du-stock.md)** · Idée · jalon v0.3
    Couper une plaque dans un coin du stock sans faire le tour complet. À spécifier.
+4. **[R-017 Choisir le côté de coupe d'un tracé ouvert](roadmap/items/R-017-choisir-le-cote-de-coupe-d-un-trace-ouvert.md)** · Idée · jalon v0.3
+   Pour un tracé ouvert, pouvoir garder la coupe sur la ligne ou décaler la saignée d'un côté choisi, par exemple pour couper précisément une plaque en deux.
 
 ## Actions à faire
 
 - [ ] [A-015](roadmap/actions/A-015-fournir-un-omx-de-layout-avec-un-trait-grave.md) Fournir un OMX de LAYOUT avec un trait gravé (fournir, R-014)
-- [ ] [A-023](roadmap/actions/A-023-fournir-un-omx-de-layout-avec-une-fente.md) Fournir un OMX de LAYOUT avec une fente (fournir, R-012)
 
 ## Livré
 
