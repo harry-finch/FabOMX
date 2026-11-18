@@ -5,3 +5,5 @@ dist/
 .venv/
 __pycache__/
 .env
+branding/illustrations/*.png
+branding/illustrations/*-source.txt
