@@ -3,10 +3,10 @@ id: A-004
 type: tester
 titre: "Importer tes propres dessins dans FabOMX"
 element: R-001
-statut: a-faire
+statut: fait
 cree: 2026-11-18
 par: agent
-fait:
+fait: 2026-11-18
 ---
 
 Où : branche r-001-import. Lancer « cd ui && npm install && npm run wasm && npm run dev », puis ouvrir http://localhost:5177 (bouton « Version web » de FabBoard).

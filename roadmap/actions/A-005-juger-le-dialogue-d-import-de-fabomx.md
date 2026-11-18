@@ -3,10 +3,10 @@ id: A-005
 type: valider
 titre: "Juger le dialogue d'import de FabOMX"
 element: R-001
-statut: a-faire
+statut: fait
 cree: 2026-11-18
 par: agent
-fait:
+fait: 2026-11-18
 ---
 
 Où : même version que l'action précédente, dialogue qui s'ouvre à l'import.

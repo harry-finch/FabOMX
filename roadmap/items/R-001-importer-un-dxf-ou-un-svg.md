@@ -2,11 +2,11 @@
 id: R-001
 titre: "Importer un DXF ou un SVG"
 resume: "Importer un dessin SVG ou DXF par un dialogue qui montre l'unité, les dimensions, les éléments, ce qu'il faudra nettoyer et les avertissements ; plusieurs dessins centrés sur le plateau, sélection, retrait, annuler."
-statut: a-tester
+statut: livree
 jalon: v0.1
 cree: 2026-11-18
 maj: 2026-11-18
-livree:
+livree: 2026-11-18
 ---
 
 ## But

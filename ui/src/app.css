@@ -160,8 +160,10 @@
   --bed-grid: rgb(0 0 0 / 0.05);
   --bed-grid-major: rgb(0 0 0 / 0.12);
   --bed-origin: #4a4e54;
-  --ctrl: #ffffff;
-  --ctrl-edge: #1e1e1e;
+  /* Thème clair : trait sombre sur un liseré de la couleur du plateau (qui
+     détache le trait de la grille), pas de trait clair cerné de noir. */
+  --ctrl: #2a2d31;
+  --ctrl-edge: rgb(250 250 250 / 0.9);
   --ctrl-active: #1473e6;
   --ctrl-active-fill: rgb(20 115 230 / 0.06);
 
