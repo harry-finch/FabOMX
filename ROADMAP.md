@@ -15,7 +15,7 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 3. **[R-015 Onglets de maintien](roadmap/items/R-015-onglets-de-maintien.md)** · Idée · jalon v0.3
    Laisser de petits ponts de matière (onglets) sur un contour pour que la pièce reste accrochée à la plaque pendant la coupe.
 4. **[R-016 Couper une plaque dans un coin du stock](roadmap/items/R-016-couper-une-plaque-dans-un-coin-du-stock.md)** · Idée · jalon v0.3
-   Découper une plaque dans un coin du stock sans en faire le tour complet : seuls les côtés qui ne sont pas déjà les bords du stock sont coupés. À spécifier.
+   Couper une plaque dans un coin du stock sans faire le tour complet. À spécifier.
 5. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
    Logo définitif de la famille Fab (tuile graphite et symbole à la couleur d'identité), à la place du logo provisoire du kit.
 
