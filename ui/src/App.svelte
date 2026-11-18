@@ -1,15 +1,20 @@
 <script lang="ts">
   // Fenêtre de FabOMX : barre d'application, palette d'outils (gauche),
   // espace de travail avec le plateau (centre), paramètres (droite), barre
-  // d'état. Raccourcis : touches des outils, F (recadrer), ? (aide).
+  // d'état. Raccourcis : touches des outils, I ou ⌘O (importer), F
+  // (recadrer), Suppr (retirer), Échap (désélectionner), ⌘Z / ⇧⌘Z, ? (aide).
+  // Un fichier déposé n'importe où dans la fenêtre ouvre le dialogue d'import.
   import AppBar from './components/AppBar.svelte';
   import StatusBar from './components/StatusBar.svelte';
   import Dialog from './components/Dialog.svelte';
   import ToolPalette from './components/ToolPalette.svelte';
   import Workspace from './components/Workspace.svelte';
   import Inspector from './components/Inspector.svelte';
+  import ImportDialog from './components/ImportDialog.svelte';
   import { engine } from './lib/engine.svelte';
-  import { tools } from './lib/tools.svelte';
+  import { doc } from './lib/document.svelte';
+  import { importer } from './lib/importer.svelte';
+  import { tools, type ToolId } from './lib/tools.svelte';
   import { ui } from './lib/ui.svelte';
   import { fmtLength, lengthUnit, pct } from './lib/format';
   import { t } from './lib/i18n.svelte';
@@ -18,30 +23,91 @@
   let pointer = $state<[number, number] | null>(null);
   let zoom = $state(1);
 
+  let dropping = $state(false);
+
+  function action(id: ToolId) {
+    if (id === 'import') importer.pick();
+  }
+
+  function remove(id: number) {
+    const d = doc.drawings.find((x) => x.id === id);
+    doc.remove(id);
+    if (d) ui.toast(t('drawing.removed', { name: d.name }));
+  }
+
   function keydown(e: KeyboardEvent) {
     const el = e.target as HTMLElement | null;
     if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
-    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    if (importer.pending || ui.help) return;
+    const mod = e.metaKey || e.ctrlKey;
+    if (mod && !e.altKey) {
+      const k = e.key.toLowerCase();
+      if (k === 'o') importer.pick();
+      else if (k === 'z' && e.shiftKey) doc.redo();
+      else if (k === 'z') doc.undo();
+      else if (k === 'y') doc.redo();
+      else return;
+      e.preventDefault();
+      return;
+    }
+    if (mod || e.altKey) return;
     if (e.key === '?') ui.help = true;
     else if (e.key === 'f' || e.key === 'F') workspace.fit();
+    else if ((e.key === 'Delete' || e.key === 'Backspace') && doc.selected != null) {
+      e.preventDefault();
+      remove(doc.selected);
+    } else if (e.key === 'Escape') doc.select(null);
     else {
       const tool = tools.byKey(e.key);
-      if (tool) tools.select(tool.id);
+      if (tool?.action) {
+        if (tool.enabled) action(tool.id);
+      } else if (tool) tools.select(tool.id);
     }
+  }
+
+  const hasFiles = (e: DragEvent) => !!e.dataTransfer?.types.includes('Files');
+
+  function dragover(e: DragEvent) {
+    if (!hasFiles(e) || importer.pending) return;
+    e.preventDefault();
+    dropping = true;
+  }
+
+  function drop(e: DragEvent) {
+    if (!hasFiles(e)) return;
+    e.preventDefault();
+    dropping = false;
+    const file = e.dataTransfer?.files[0];
+    if (file && !importer.pending) importer.open(file);
   }
 </script>
 
-<svelte:window onkeydown={keydown} />
+<svelte:window
+  onkeydown={keydown}
+  ondragover={dragover}
+  ondragleave={(e) => {
+    if (!e.relatedTarget) dropping = false;
+  }}
+  ondrop={drop}
+/>
 
 <div class="app">
   <AppBar />
   <div class="main">
     <aside class="panel left">
-      <ToolPalette />
+      <ToolPalette onaction={action} />
     </aside>
-    <Workspace bind:this={workspace} machine={engine.machine} bind:pointer bind:zoom />
+    <Workspace
+      bind:this={workspace}
+      machine={engine.machine}
+      drawings={doc.drawings}
+      selected={doc.selected}
+      onselect={(id) => doc.select(id)}
+      bind:pointer
+      bind:zoom
+    />
     <aside class="panel right">
-      <Inspector machine={engine.machine} />
+      <Inspector machine={engine.machine} drawing={doc.selection} count={doc.drawings.length} onremove={remove} />
     </aside>
   </div>
   <StatusBar state={engine.state} version={engine.version}>
@@ -59,6 +125,8 @@
   <Dialog title={t('help.title')} onclose={() => (ui.help = false)}>
     <h3>{t('help.shortcuts')}</h3>
     <dl class="keys">
+      <dt><kbd>I / ⌘O</kbd></dt>
+      <dd>{t('help.keys.import')}</dd>
       <dt><kbd>V</kbd></dt>
       <dd>{t('help.keys.select')}</dd>
       <dt><kbd>H</kbd></dt>
@@ -69,10 +137,24 @@
       <dd>{t('help.keys.wheel')}</dd>
       <dt><kbd>F</kbd></dt>
       <dd>{t('help.keys.fit')}</dd>
+      <dt><kbd>{t('help.del')}</kbd></dt>
+      <dd>{t('help.keys.remove')}</dd>
+      <dt><kbd>{t('help.esc')}</kbd></dt>
+      <dd>{t('help.keys.deselect')}</dd>
+      <dt><kbd>⌘Z / ⇧⌘Z</kbd></dt>
+      <dd>{t('help.keys.undo')}</dd>
       <dt><kbd>?</kbd></dt>
       <dd>{t('help.keys.help')}</dd>
     </dl>
   </Dialog>
+{/if}
+
+{#if importer.pending}
+  <ImportDialog />
+{/if}
+
+{#if dropping}
+  <div class="drop" aria-hidden="true">{t('import.drop')}</div>
 {/if}
 
 <div class="toasts" aria-live="polite">
@@ -136,6 +218,20 @@
     background: var(--bg-control);
     font: 500 var(--fs-sm) var(--font);
     color: var(--text-primary);
+  }
+
+  /* Voile de dépôt : plein écran, bord pointillé accent. */
+  .drop {
+    position: fixed;
+    inset: 0;
+    z-index: 800;
+    display: grid;
+    place-content: center;
+    background: var(--backdrop);
+    border: 2px dashed var(--accent);
+    color: var(--text-primary);
+    font-size: var(--fs-lg);
+    pointer-events: none;
   }
 
   .toasts {

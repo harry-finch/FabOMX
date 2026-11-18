@@ -1,6 +1,7 @@
 // Outils de la palette (panneau gauche). Tous les outils du jalon v0.1 y
 // figurent ; ceux qui ne sont pas encore développés sont grisés (« à venir »).
-// L'outil actif est mémorisé sur le poste.
+// Une action (Importer) agit au clic sans devenir l'outil actif. L'outil
+// actif est mémorisé sur le poste.
 
 import type { Component } from 'svelte';
 import { FileUp, Hand, MousePointer2, Move, RotateCw, Scaling, WandSparkles } from '@lucide/svelte';
@@ -14,6 +15,8 @@ export interface Tool {
   /** Touche du raccourci, en minuscule. */
   key: string;
   enabled: boolean;
+  /** Action immédiate, pas un mode. */
+  action?: boolean;
 }
 
 /** Les outils par groupes, dans l'ordre de la palette. */
@@ -22,7 +25,7 @@ export const TOOL_GROUPS: Tool[][] = [
     { id: 'select', icon: MousePointer2, key: 'v', enabled: true },
     { id: 'hand', icon: Hand, key: 'h', enabled: true },
   ],
-  [{ id: 'import', icon: FileUp, key: 'i', enabled: false }],
+  [{ id: 'import', icon: FileUp, key: 'i', enabled: true, action: true }],
   [
     { id: 'move', icon: Move, key: 'm', enabled: false },
     { id: 'rotate', icon: RotateCw, key: 'r', enabled: false },
@@ -38,7 +41,7 @@ function read(): ToolId {
   try {
     const v = localStorage.getItem(KEY);
     const tool = TOOLS.find((x) => x.id === v);
-    if (tool?.enabled) return tool.id;
+    if (tool?.enabled && !tool.action) return tool.id;
   } catch {
     /* stockage indisponible */
   }
@@ -48,9 +51,10 @@ function read(): ToolId {
 class Tools {
   active = $state<ToolId>(read());
 
-  /** Active un outil disponible ; un outil grisé ne réagit pas. */
+  /** Active un outil disponible ; un outil grisé ou une action ne change rien. */
   select(id: ToolId) {
-    if (!TOOLS.find((x) => x.id === id)?.enabled) return;
+    const tool = TOOLS.find((x) => x.id === id);
+    if (!tool?.enabled || tool.action) return;
     this.active = id;
     try {
       localStorage.setItem(KEY, id);

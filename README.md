@@ -31,7 +31,7 @@ Consignes de développement : [AGENTS.md](AGENTS.md).
 
 | Dossier | Rôle |
 | --- | --- |
-| `crates/fabomx-core` | Moteur pur : machine, géométrie, et plus tard parcours et OMX |
+| `crates/fabomx-core` | Moteur pur : machine, géométrie, import SVG et DXF, et plus tard parcours et OMX |
 | `crates/fabomx-wasm` | Le moteur compilé en WebAssembly pour l’interface |
 | `ui/` | Interface Svelte 5 (kit `fab-design-system`) |
 | `branding/` | Figure au trait de la carte FabBoard |

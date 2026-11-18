@@ -1,16 +1,37 @@
 <script lang="ts">
-  // Panneau droit : paramètres et formulaires. Sans sélection ni dessin, il
-  // montre le plateau de la machine (en lecture seule) et dit quoi faire.
+  // Panneau droit : paramètres et formulaires. Avec un dessin sélectionné,
+  // ses informations (celles du dialogue d'import, en lecture seule) et le
+  // bouton Retirer ; sinon, le plateau de la machine et ce qu'il faut faire.
+  import { Trash2 } from '@lucide/svelte';
   import Section from './Section.svelte';
+  import DrawingInfo from './DrawingInfo.svelte';
   import type { Machine } from '../lib/engine.svelte';
+  import type { Drawing } from '../lib/document.svelte';
   import { ui } from '../lib/ui.svelte';
   import { fmtLen } from '../lib/format';
+  import { tip } from '../lib/tip';
   import { t } from '../lib/i18n.svelte';
 
-  let { machine }: { machine: Machine | null } = $props();
+  let {
+    machine,
+    drawing,
+    count,
+    onremove,
+  }: { machine: Machine | null; drawing: Drawing | null; count: number; onremove: (id: number) => void } = $props();
 </script>
 
-<p class="empty">{t('bed.empty')}</p>
+{#if drawing}
+  <Section id="drawing" title={t('drawing.title')}>
+    {#snippet actions()}
+      <button class="btn quiet icon" type="button" use:tip={t('drawing.removeHint')} aria-label={t('drawing.remove')} onclick={() => onremove(drawing.id)}><Trash2 size={14} /></button>
+    {/snippet}
+    <p class="name">{drawing.name} <span class="format">{drawing.report.format.toUpperCase()}</span></p>
+    <DrawingInfo report={drawing.report} />
+    <button class="btn" type="button" onclick={() => onremove(drawing.id)}><Trash2 size={14} /> {t('drawing.remove')}</button>
+  </Section>
+{:else}
+  <p class="empty">{t(count ? 'bed.select' : 'bed.empty')}</p>
+{/if}
 {#if machine}
   <Section id="bed" title={t('bed.title')}>
     <dl class="props">
@@ -33,6 +54,24 @@
     border-bottom: 1px solid var(--divider);
     color: var(--text-muted);
     font-size: var(--fs-sm);
+  }
+
+  .name {
+    margin: 0;
+    font-weight: 600;
+    overflow-wrap: anywhere;
+  }
+
+  .format {
+    padding: 1px 5px;
+    border-radius: 3px;
+    background: var(--neutral-tint);
+    color: var(--text-secondary);
+    font-size: var(--fs-xs);
+  }
+
+  .btn {
+    align-self: flex-start;
   }
 
   .props {

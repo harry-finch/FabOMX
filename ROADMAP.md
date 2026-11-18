@@ -8,7 +8,7 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ## Restant à faire
 
-1. **[R-001 Importer un DXF ou un SVG](roadmap/items/R-001-importer-un-dxf-ou-un-svg.md)** · Spécifiée · jalon v0.1
+1. **[R-001 Importer un DXF ou un SVG](roadmap/items/R-001-importer-un-dxf-ou-un-svg.md)** · À tester · jalon v0.1
    Importer un dessin SVG ou DXF par un dialogue qui montre l'unité, les dimensions, les éléments, ce qu'il faudra nettoyer et les avertissements ; plusieurs dessins centrés sur le plateau, sélection, retrait, annuler.
 2. **[R-002 Redimensionner, déplacer et tourner le dessin](roadmap/items/R-002-redimensionner-deplacer-tourner-et-nettoyer-le.md)** · Idée · jalon v0.1
    Ajuster le dessin importé : mise à l'échelle, position et rotation.
@@ -18,6 +18,11 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
    Emballer FabOMX en application de bureau Tauri, comme FabVents et FabWeave.
 5. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v0.1
    Logo définitif de la famille Fab (tuile graphite et symbole à la couleur d'identité), à la place du logo provisoire du kit.
+
+## Actions à faire
+
+- [ ] [A-004](roadmap/actions/A-004-importer-tes-propres-dessins-dans-fabomx.md) Importer tes propres dessins dans FabOMX (tester, R-001)
+- [ ] [A-005](roadmap/actions/A-005-juger-le-dialogue-d-import-de-fabomx.md) Juger le dialogue d'import de FabOMX (valider, R-001)
 
 ## Livré
 

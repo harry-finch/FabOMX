@@ -5,16 +5,27 @@
   // Vue : cadrée sur le plateau tant qu'on n'y a pas touché ; zoom à la
   // molette autour du pointeur ; déplacement avec l'outil Main, espace +
   // glisser ou le bouton du milieu ; `fit()` recadre (touche F).
+  // Les dessins importés sont des objets de l'utilisateur : trait clair sur
+  // liseré sombre, contours ouverts en attention, sélection en accent.
+  // L'outil Sélection choisit le dessin dont un tracé passe sous le pointeur,
+  // sinon celui dont la boîte le contient ; un clic dans le vide désélectionne.
   import { theme } from '../lib/theme.svelte';
   import { tools } from '../lib/tools.svelte';
   import type { Machine } from '../lib/engine.svelte';
+  import type { Drawing } from '../lib/document.svelte';
 
   let {
     machine,
+    drawings,
+    selected,
+    onselect,
     pointer = $bindable(null),
     zoom = $bindable(1),
   }: {
     machine: Machine | null;
+    drawings: Drawing[];
+    selected: number | null;
+    onselect: (id: number | null) => void;
     /** Position du pointeur sur le plateau, en mm (null hors de la vue). */
     pointer?: [number, number] | null;
     /** Zoom : 1 = taille réelle à l'écran (96 px CSS par pouce). */
@@ -25,7 +36,9 @@
   const MARGIN = 32;
   const MIN_SCALE = 0.05 * PX_PER_MM;
   const MAX_SCALE = 40 * PX_PER_MM;
-  const TOKENS = ['canvas-bg', 'bed-fill', 'bed-edge', 'bed-grid', 'bed-grid-major', 'bed-origin'];
+  const TOKENS = ['canvas-bg', 'bed-fill', 'bed-edge', 'bed-grid', 'bed-grid-major', 'bed-origin', 'ctrl', 'ctrl-edge', 'ctrl-active', 'ctrl-active-fill', 'drawing-open'];
+  /** Distance de prise d'un tracé, en px. */
+  const HIT = 8;
 
   let host: HTMLDivElement;
   let canvas: HTMLCanvasElement;
@@ -119,6 +132,86 @@
     ctx.beginPath();
     ctx.arc(x0, y0, 3, 0, Math.PI * 2);
     ctx.fill();
+
+    drawDrawings(ctx);
+  }
+
+  function tracePath(ctx: CanvasRenderingContext2D, d: Drawing, pts: number[]) {
+    const { s, ox, oy } = view;
+    const [dx, dy] = d.offset;
+    for (let i = 0; i < pts.length; i += 2) {
+      const x = ox + (pts[i] + dx) * s;
+      const y = oy - (pts[i + 1] + dy) * s;
+      if (i === 0) ctx.moveTo(x, y);
+      else ctx.lineTo(x, y);
+    }
+  }
+
+  function drawDrawings(ctx: CanvasRenderingContext2D) {
+    ctx.lineJoin = 'round';
+    ctx.lineCap = 'round';
+    for (const d of drawings) {
+      const sel = d.id === selected;
+      if (sel) {
+        const [x0, y0, x1, y1] = d.report.bbox;
+        const [dx, dy] = d.offset;
+        const r = [view.ox + (x0 + dx) * view.s, view.oy - (y1 + dy) * view.s, (x1 - x0) * view.s, (y1 - y0) * view.s];
+        ctx.fillStyle = colors['ctrl-active-fill'];
+        ctx.fillRect(r[0], r[1], r[2], r[3]);
+        ctx.setLineDash([4, 4]);
+        ctx.strokeStyle = colors['ctrl-active'];
+        ctx.lineWidth = 1;
+        ctx.strokeRect(Math.round(r[0]) - 3.5, Math.round(r[1]) - 3.5, Math.round(r[2]) + 7, Math.round(r[3]) + 7);
+        ctx.setLineDash([]);
+      }
+      // Liseré sombre sous tous les tracés, puis le trait.
+      ctx.beginPath();
+      for (const tr of d.report.traces) tracePath(ctx, d, tr.pts);
+      ctx.strokeStyle = colors['ctrl-edge'];
+      ctx.lineWidth = 4;
+      ctx.stroke();
+      for (const open of [false, true]) {
+        ctx.beginPath();
+        for (const tr of d.report.traces) if (tr.open === open) tracePath(ctx, d, tr.pts);
+        ctx.strokeStyle = open ? colors['drawing-open'] : sel ? colors['ctrl-active'] : colors['ctrl'];
+        ctx.lineWidth = open ? 2 : 1.5;
+        ctx.stroke();
+      }
+    }
+  }
+
+  /** Le dessin sous le point d'écran (sx, sy), le plus récent d'abord. */
+  function hit(sx: number, sy: number): number | null {
+    const { s, ox, oy } = view;
+    const near = (d: Drawing) => {
+      const [dx, dy] = d.offset;
+      const X = (x: number) => ox + (x + dx) * s;
+      const Y = (y: number) => oy - (y + dy) * s;
+      for (const { pts: p } of d.report.traces) {
+        for (let i = 0; i + 3 < p.length; i += 2) {
+          const ax = X(p[i]);
+          const ay = Y(p[i + 1]);
+          const vx = X(p[i + 2]) - ax;
+          const vy = Y(p[i + 3]) - ay;
+          const l2 = vx * vx + vy * vy;
+          const t = l2 > 0 ? Math.max(0, Math.min(1, ((sx - ax) * vx + (sy - ay) * vy) / l2)) : 0;
+          if (Math.hypot(ax + vx * t - sx, ay + vy * t - sy) <= HIT) return true;
+        }
+      }
+      return false;
+    };
+    const list = [...drawings].reverse();
+    const onTrace = list.find(near);
+    if (onTrace) return onTrace.id;
+    const [wx, wy] = toWorld(sx, sy);
+    const inside = list
+      .filter((d) => {
+        const [x0, y0, x1, y1] = d.report.bbox;
+        const [dx, dy] = d.offset;
+        return wx >= x0 + dx && wx <= x1 + dx && wy >= y0 + dy && wy <= y1 + dy;
+      })
+      .sort((a, b) => a.report.width * a.report.height - b.report.width * b.report.height);
+    return inside[0]?.id ?? null;
   }
 
   $effect(() => {
@@ -128,7 +221,7 @@
   });
 
   $effect(() => {
-    void [view, width, height, machine];
+    void [view, width, height, machine, drawings, selected];
     zoom = view.s / PX_PER_MM;
     request();
   });
@@ -187,6 +280,11 @@
   }
 
   function pointerdown(e: PointerEvent) {
+    if (e.button === 0 && !panning && tools.active === 'select') {
+      const [sx, sy] = local(e);
+      onselect(hit(sx, sy));
+      return;
+    }
     if (!(e.button === 1 || (e.button === 0 && panning))) return;
     e.preventDefault();
     canvas.setPointerCapture(e.pointerId);

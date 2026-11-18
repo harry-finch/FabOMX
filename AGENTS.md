@@ -33,13 +33,15 @@ Elle est dans `roadmap/` (un fichier par élément, un par action de l’utilisa
 - Les valeurs ne sont jamais corrigées en silence : une valeur hors domaine produit une erreur ou un avertissement à code stable.
 - Disposition propre à FabOMX, écart voulu à `fab-design-system` : palette d’outils étroite (44 px) à gauche, paramètres et formulaires à droite.
 - Un outil de la palette qui n’est pas encore développé reste grisé (« À venir »), il ne réagit ni au clic ni à son raccourci.
+- Importer est une action, pas un outil : il ouvre le choix du fichier sans changer l’outil actif. Le dialogue d’import signale ce qu’il faudra nettoyer, il ne répare rien (R-004).
+- Import : lignes, arcs et cercles restent exacts ; les autres courbes sont mises en segments à 0,01 mm près (`CURVE_TOL`). Seuils de détection dans `fabomx-core/src/import.rs` (`JOINED`, `GAP`, `TINY`).
 - Interface : aucune couleur en dur dans les composants ni dans le dessin de l’espace de travail, tout passe par les jetons de `ui/src/app.css` ; textes par `t('clé')`, `fr.ts` est la référence et `en.ts` a les mêmes clés.
 - Mettre à jour la documentation dans le même changement que le comportement.
 
 ## Commandes
 
 - Installation : `cd ui && npm install` (Rust 1.88 par `rust-toolchain.toml`, `wasm-pack`, Node.js).
-- Tests : `cargo test --workspace`, `cargo clippy --workspace --all-targets`, `cargo fmt --all --check`, `cd ui && npm run check`.
+- Tests : `cargo test --workspace` (fichiers d’exemple SVG et DXF dans `crates/fabomx-core/tests/fixtures/`), `cargo clippy --workspace --all-targets`, `cargo fmt --all --check`, `cd ui && npm run check`.
 - Moteur pour l’interface : `cd ui && npm run wasm` (wasm-pack, sortie dans `ui/src/wasm/`, hors Git).
 - Développement : `cd ui && npm run dev` → http://localhost:5177 (relancer `npm run wasm` après une modification du moteur).
 - Build : `cd ui && npm run build` (moteur compris), puis `npm run preview`.

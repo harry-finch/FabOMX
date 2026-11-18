@@ -2,9 +2,17 @@
 //! d'interface) et déterministe. Millimètres et degrés ; repère de la
 //! machine : origine en bas à gauche du plateau, Y vers le haut.
 
+pub mod drawing;
+mod dxf;
+pub mod geom;
+pub mod import;
 pub mod machine;
+mod svg;
+pub mod units;
 
+pub use import::{import, ImportError, Report};
 pub use machine::{Machine, PROTOMAX};
+pub use units::{Source, Unit};
 
 /// Version du moteur (celle du workspace).
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");

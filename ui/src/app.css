@@ -73,6 +73,13 @@
   --bed-grid: rgb(255 255 255 / 0.05);
   --bed-grid-major: rgb(255 255 255 / 0.11);
   --bed-origin: #c8ccd2;
+  /* Dessins importés : objets de l'utilisateur (trait clair sur liseré
+     sombre), contours ouverts en attention, sélection en accent. */
+  --ctrl: #f2f2f2;
+  --ctrl-edge: #1a1a1a;
+  --ctrl-active: #4b9cf5;
+  --ctrl-active-fill: rgb(75 156 245 / 0.06);
+  --drawing-open: var(--warning);
 
   /* Fenêtres et infobulles. */
   --backdrop: rgb(0 0 0 / 0.5);
@@ -153,6 +160,10 @@
   --bed-grid: rgb(0 0 0 / 0.05);
   --bed-grid-major: rgb(0 0 0 / 0.12);
   --bed-origin: #4a4e54;
+  --ctrl: #ffffff;
+  --ctrl-edge: #1e1e1e;
+  --ctrl-active: #1473e6;
+  --ctrl-active-fill: rgb(20 115 230 / 0.06);
 
   --segment-track: #e3e3e3;
   --track: #e0e0e0;
