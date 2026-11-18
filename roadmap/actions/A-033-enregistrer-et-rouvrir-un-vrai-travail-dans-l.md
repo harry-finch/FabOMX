@@ -3,10 +3,10 @@ id: A-033
 type: tester
 titre: "Enregistrer et rouvrir un vrai travail dans l'application Mac"
 element: R-018
-statut: a-faire
+statut: fait
 cree: 2026-11-18
 par: agent
-fait:
+fait: 2026-11-18
 ---
 
 Où : `dist-desktop/FabOMX.app` (à lancer sur place).
@@ -16,3 +16,7 @@ Gestes : prépare un vrai travail (un ou deux dessins, nettoyage, côtés, quali
 À observer : tout est revenu comme à l'enregistrement, et l'OMX exporté est le même.
 
 Réponds « ça marche », ou ce qui manque.
+
+## Réponse
+
+Validé.

@@ -2,11 +2,11 @@
 id: R-018
 titre: "Enregistrer et rouvrir un travail"
 resume: "Fichier de travail .fabomx autonome (géométrie, placements, réglages faits à la main, point de départ, ordre) : Nouveau, Ouvrir, Enregistrer, Enregistrer sous, récents, dépôt ; repère « modifié » et demande avant de perdre des changements."
-statut: a-tester
+statut: livree
 jalon: v1.0
 cree: 2026-11-18
 maj: 2026-11-18
-livree:
+livree: 2026-11-18
 ---
 
 ## But
