@@ -16,7 +16,7 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
    Couper une plaque dans un coin du stock sans faire le tour complet. À spécifier.
 4. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
    Logo définitif de la famille Fab (tuile graphite et symbole à la couleur d'identité), à la place du logo provisoire du kit.
-5. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée · jalon v0.2
+5. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée
    Marquer un trait sans traverser la plaque (gravure), dès que son code OMX est connu par un exemple de LAYOUT.
 
 ## Actions à faire
