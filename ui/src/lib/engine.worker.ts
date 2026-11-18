@@ -2,7 +2,7 @@
 // version et la machine cible, puis répond aux demandes du fil principal.
 // Le calcul ne bloque jamais l'interface.
 
-import init, { clean_apply, clean_preview, engine_version, inspect, leads, load, machine, omx, overlaps, place, plan, sides } from '../wasm/fabomx.js';
+import init, { clean_apply, clean_preview, engine_version, geo_export, geo_import, inspect, job_check, leads, load, machine, omx, overlaps, place, plan, sides } from '../wasm/fabomx.js';
 
 type Request =
   | { kind: 'inspect'; id: number; text: string; unit: string; clean: string }
@@ -14,7 +14,10 @@ type Request =
   | { kind: 'overlaps'; id: number; placed: string }
   | { kind: 'leads'; id: number; geo: number; matrix: number[]; specs: string }
   | { kind: 'plan'; id: number; job: string }
-  | { kind: 'omx'; id: number; job: string; date: number; comment: string };
+  | { kind: 'omx'; id: number; job: string; date: number; comment: string }
+  | { kind: 'geo_export'; id: number; geo: number }
+  | { kind: 'geo_import'; id: number; geo: number; json: string }
+  | { kind: 'job_check'; id: number; text: string };
 
 /** `postMessage` du worker (les types DOM ne connaissent que celui de `window`). */
 const post = (msg: unknown) => (self as unknown as Worker).postMessage(msg);
@@ -36,7 +39,10 @@ onmessage = async (ev: MessageEvent<Request>) => {
     else if (req.kind === 'overlaps') value = overlaps(req.placed);
     else if (req.kind === 'leads') value = leads(req.geo, new Float64Array(req.matrix), req.specs);
     else if (req.kind === 'plan') value = plan(req.job);
-    else value = omx(req.job, req.date, req.comment);
+    else if (req.kind === 'omx') value = omx(req.job, req.date, req.comment);
+    else if (req.kind === 'geo_export') value = geo_export(req.geo);
+    else if (req.kind === 'geo_import') value = geo_import(req.geo, req.json);
+    else value = job_check(req.text);
     post({ kind: 'result', id: req.id, ok: true, value: JSON.parse(value) });
   } catch (e) {
     post({ kind: 'result', id: req.id, ok: false, error: String(e) });

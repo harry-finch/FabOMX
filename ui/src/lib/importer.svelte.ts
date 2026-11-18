@@ -1,6 +1,7 @@
 // Import d'un dessin : choix du fichier (bouton Importer, ⌘O, dépôt), puis
 // le dialogue d'import montre l'état du dessin ; rien n'est posé avant
-// « Importer ». Changer l'unité relit le fichier dans cette unité.
+// « Importer ». Changer l'unité relit le fichier dans cette unité. Un
+// fichier de travail `.fabomx` ne s'importe pas : il s'ouvre comme travail.
 
 import { engine } from './engine.svelte';
 import { doc } from './document.svelte';
@@ -9,7 +10,10 @@ import { t } from './i18n.svelte';
 import { cleaning } from './cleaning.svelte';
 import { tools } from './tools.svelte';
 import { isDesktop, openFile, openPath, remember } from './desktop';
+import { jobs } from './job.svelte';
 import type { ImportFailure, Report, Unit } from './types';
+
+const isJob = (name: string) => /\.fabomx$/i.test(name);
 
 export interface Pending {
   name: string;
@@ -37,7 +41,7 @@ class Importer {
     }
     const input = document.createElement('input');
     input.type = 'file';
-    input.accept = '.svg,.dxf,image/svg+xml';
+    input.accept = '.svg,.dxf,.fabomx,image/svg+xml';
     input.onchange = () => {
       const file = input.files?.[0];
       if (file) this.open(file);
@@ -53,6 +57,7 @@ class Importer {
       this.pending = { name: file.name, text: '', result: { error: 'import.unreadable' }, busy: false };
       return;
     }
+    if (isJob(file.name)) return jobs.open(text, file.name);
     this.pending = { name: file.name, text, result: null, busy: true };
     await this.#read();
   }
@@ -64,6 +69,7 @@ class Importer {
   }
 
   async openText(name: string, text: string, path?: string) {
+    if (isJob(name)) return jobs.open(text, name, path);
     this.pending = { name, path, text, result: null, busy: true };
     await this.#read();
   }

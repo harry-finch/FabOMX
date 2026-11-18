@@ -10,7 +10,7 @@ import { cutting } from './cutting.svelte';
 import { doc } from './document.svelte';
 import { ui } from './ui.svelte';
 import { t } from './i18n.svelte';
-import { isDesktop, saveFile } from './desktop';
+import { baseName, isDesktop, saveFile } from './desktop';
 import type { Move, OrderRefused, Plan } from './types';
 
 const MAX_PLAY = 20;
@@ -152,8 +152,8 @@ class Pathing {
     const name = this.fileName();
     if (isDesktop) {
       try {
-        const path = await saveFile(name, res.omx);
-        if (path) ui.toast(t('path.exported', { name: path.split('/').pop() ?? name }));
+        const path = await saveFile(name, res.omx, 'omx');
+        if (path) ui.toast(t('path.exported', { name: baseName(path) }));
       } catch {
         ui.toast(t('path.exportFailed'));
       }

@@ -8,7 +8,7 @@
 
 use crate::arcs::{biarcs, MIN_RADIUS};
 use crate::geom::{Affine, Seg, P};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use std::f64::consts::TAU;
 
@@ -16,7 +16,7 @@ use std::f64::consts::TAU;
 pub const CURVE_TOL: f64 = 0.01;
 
 /// Type d'un élément du fichier, pour les comptes du dialogue d'import.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, PartialOrd, Ord, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Kind {
     Line,
@@ -29,7 +29,7 @@ pub enum Kind {
     Path,
 }
 
-#[derive(Clone, Debug, PartialEq)]
+#[derive(Clone, Debug, PartialEq, Serialize, Deserialize)]
 pub struct Piece {
     pub kind: Kind,
     pub segs: Vec<Seg>,
@@ -37,6 +37,7 @@ pub struct Piece {
     pub closed: bool,
     /// Repère ou trait de construction d'après le fichier (pointillés,
     /// calque de construction) : proposé « Ne pas couper ».
+    #[serde(default)]
     pub construction: bool,
 }
 

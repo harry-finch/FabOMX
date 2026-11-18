@@ -18,8 +18,20 @@ export interface Opened {
 /** Dialogue Ouvrir natif (SVG, DXF) ; `null` si annulé. */
 export const openFile = () => tauri!.core.invoke<Opened | null>('open_file');
 
-/** Dialogue Enregistrer natif (OMX) puis écriture ; le chemin, ou `null` si annulé. Rejette `unwritable`. */
-export const saveFile = (name: string, text: string) => tauri!.core.invoke<string | null>('save_file', { name, text });
+/** Dialogue Enregistrer natif (OMX ou travail) puis écriture ; le chemin, ou `null` si annulé. Rejette `unwritable`. */
+export const saveFile = (name: string, text: string, kind: 'omx' | 'job') => tauri!.core.invoke<string | null>('save_file', { name, text, kind });
+
+/** Écrit un fichier déjà choisi (Enregistrer). Rejette `unwritable`. */
+export const writeFile = (path: string, text: string) => tauri!.core.invoke<void>('write_file', { path, text });
+
+/** Titre de la fenêtre et modifications non enregistrées (la fermeture demande alors à l'interface). */
+export const jobState = (title: string, dirty: boolean) => (isDesktop ? tauri!.core.invoke<void>('job_state', { title, dirty }) : Promise.resolve());
+
+/** Fermer l'application sans plus rien demander. */
+export const forceClose = () => tauri!.core.invoke<void>('force_close');
+
+/** Le nom d'un fichier dans un chemin (macOS ou Windows). */
+export const baseName = (path: string) => path.split(/[\\/]/).pop() ?? path;
 
 /** Relit un fichier ; rejette `missing` s'il n'existe plus (il sort alors des récents). */
 export const openPath = (path: string) => tauri!.core.invoke<Opened>('open_path', { path });

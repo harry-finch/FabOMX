@@ -214,3 +214,31 @@ fn shapes_are_counted_by_kind() {
     assert_eq!(r.counts[&Kind::Path], 1);
     assert_eq!((r.closed, r.open), (4, 0));
 }
+
+#[test]
+fn a_geometry_survives_a_job_file() {
+    use fabomx_core::clean::{clean, Options};
+    use fabomx_core::job::{check, Geometry, JobError};
+    let (format, parsed, detected, source) = parse(&fixture("shapes.svg"), None).unwrap();
+    let (pieces, _, _) = clean(&parsed.pieces, &Options::default(), 1.0);
+    let g = Geometry {
+        format,
+        unit: detected,
+        detected,
+        source,
+        pieces,
+        ignored: parsed.ignored,
+    };
+    let back: Geometry = serde_json::from_str(&serde_json::to_string(&g).unwrap()).unwrap();
+    assert_eq!(back, g);
+    assert_eq!(check("pas du json"), Err(JobError::Unreadable));
+    assert_eq!(
+        check(r#"{"format":"autre","version":1,"drawings":[]}"#),
+        Err(JobError::Unreadable)
+    );
+    assert_eq!(
+        check(r#"{"format":"fabomx","version":2,"drawings":[]}"#),
+        Err(JobError::Newer)
+    );
+    assert_eq!(JobError::Newer.code(), "job.newer");
+}

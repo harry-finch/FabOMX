@@ -111,6 +111,21 @@ class Engine {
   omx(job: Parameters<Engine['plan']>[0], date: number, comment: string): Promise<{ omx: string } | OrderRefused | { error: string }> {
     return this.#call({ kind: 'omx', job: JSON.stringify(job), date, comment });
   }
+
+  /** La géométrie gardée sous `geo`, pour un fichier de travail. */
+  geoExport(geo: number): Promise<object | { error: string }> {
+    return this.#call({ kind: 'geo_export', geo });
+  }
+
+  /** Range sous `geo` une géométrie lue dans un fichier de travail. */
+  geoImport(geo: number, geometry: object): Promise<{ report: Report; snaps: number[] } | { error: string }> {
+    return this.#call({ kind: 'geo_import', geo, json: JSON.stringify(geometry) });
+  }
+
+  /** Le contenu d'un fichier de travail, s'il est lisible (`job.unreadable`, `job.newer` sinon). */
+  jobCheck(text: string): Promise<Record<string, unknown> | { error: string }> {
+    return this.#call({ kind: 'job_check', text });
+  }
 }
 
 export const engine = new Engine();

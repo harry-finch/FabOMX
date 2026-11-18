@@ -26,6 +26,10 @@ npm run desktop   # dist-desktop/FabOMX.app
 
 Lancer `dist-desktop/FabOMX.app` sur place, ou la copier dans Applications. La signature est locale (pas de notarisation Apple) : la première fois, clic droit sur l’application, puis Ouvrir. Pour un `.dmg` à distribuer : `tauri build` sans `--bundles app` dans `crates/fabomx-desktop`.
 
+## Enregistrer un travail
+
+Fichier > Enregistrer (⌘S) écrit un fichier `.fabomx` autonome : les dessins (nettoyages compris), leur placement, les réglages de découpe faits à la main, le point de départ et l’ordre de coupe. Il se rouvre par Fichier > Ouvrir (⌘O), par dépôt sur la fenêtre ou depuis les fichiers récents, même si les SVG ou DXF d’origine ont bougé. Dans le navigateur, Enregistrer télécharge le fichier.
+
 ## Développer
 
 ```sh

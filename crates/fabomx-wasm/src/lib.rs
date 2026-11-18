@@ -338,6 +338,62 @@ pub fn omx(job: &str, date: f64, comment: &str) -> String {
     }
 }
 
+/// La géométrie gardée sous `geo`, pour un fichier de travail (`job::Geometry`, JSON).
+#[wasm_bindgen]
+pub fn geo_export(geo: u32) -> String {
+    GEOMETRIES.with(|g| match g.borrow().get(&geo) {
+        Some(s) => serde_json::to_string(&fabomx_core::job::Geometry {
+            format: s.format,
+            unit: s.unit,
+            detected: s.detected,
+            source: s.source,
+            pieces: s.parsed.pieces.clone(),
+            ignored: s.parsed.ignored.clone(),
+        })
+        .expect("géométrie sérialisable"),
+        None => error("job.unknown"),
+    })
+}
+
+/// Range sous `geo` une géométrie lue dans un fichier de travail ; rend
+/// `{"report", "snaps"}` comme un import, ou `{"error": "job.unreadable"}`.
+#[wasm_bindgen]
+pub fn geo_import(geo: u32, json: &str) -> String {
+    let Ok(file) = serde_json::from_str::<fabomx_core::job::Geometry>(json) else {
+        return error("job.unreadable");
+    };
+    let parsed = file.parsed();
+    let report = analyze(
+        file.format,
+        parsed.clone(),
+        file.unit,
+        file.detected,
+        file.source,
+        &PROTOMAX,
+    );
+    let out = serde_json::json!({ "report": report, "snaps": snaps(&parsed) }).to_string();
+    let stored = Stored {
+        parsed,
+        format: file.format,
+        unit: file.unit,
+        detected: file.detected,
+        source: file.source,
+        sides: None,
+    };
+    GEOMETRIES.with(|g| g.borrow_mut().insert(geo, stored));
+    out
+}
+
+/// Le contenu d'un fichier de travail, s'il est lisible par ce moteur, ou
+/// `{"error": "job.unreadable" | "job.newer"}`.
+#[wasm_bindgen]
+pub fn job_check(text: &str) -> String {
+    match fabomx_core::job::check(text) {
+        Ok(v) => v.to_string(),
+        Err(e) => error(e.code()),
+    }
+}
+
 /// Machine cible (zone de coupe en mm), en JSON.
 #[wasm_bindgen]
 pub fn machine() -> String {
@@ -468,6 +524,31 @@ mod tests {
         let text = f["omx"].as_str().unwrap();
         assert!(text.contains("[COMMENT]\r\nCreated with FabOMX\r\n[END]"));
         assert!(text.ends_with("[END]\r\n"));
+    }
+
+    #[test]
+    fn geometry_round_trip_and_job_checks() {
+        const PLATE: &str = r#"<svg xmlns="http://www.w3.org/2000/svg" width="100mm" height="100mm" viewBox="0 0 100 100"><rect width="100" height="100"/><path d="M30 50 C30 20 70 20 70 50 C70 80 30 80 30 50 Z"/></svg>"#;
+        load(50, PLATE, "", "");
+        let opts = serde_json::to_string(&Options::default()).unwrap();
+        clean_apply(50, &opts, 1.0, 51);
+        let exported = geo_export(51);
+        let r: serde_json::Value = serde_json::from_str(&geo_import(52, &exported)).unwrap();
+        assert_eq!(r["report"]["closed"], 2);
+        // Même géométrie, mêmes côtés, même rapport.
+        assert_eq!(geo_export(52), exported);
+        assert_eq!(sides(52), sides(51));
+        assert_eq!(geo_import(53, "nope"), error("job.unreadable"));
+        assert_eq!(job_check("{}"), error("job.unreadable"));
+        assert_eq!(
+            job_check(r#"{"format":"fabomx","version":99,"drawings":[]}"#),
+            error("job.newer")
+        );
+        let ok: serde_json::Value = serde_json::from_str(&job_check(
+            r#"{"format":"fabomx","version":1,"drawings":[]}"#,
+        ))
+        .unwrap();
+        assert_eq!(ok["version"], 1);
     }
 
     #[test]

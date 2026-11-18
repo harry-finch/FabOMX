@@ -8,9 +8,9 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ## Restant à faire
 
-1. **[R-018 Enregistrer et rouvrir un travail](roadmap/items/R-018-enregistrer-et-rouvrir-un-travail.md)** · Idée · jalon v1.0
+1. **[R-018 Enregistrer et rouvrir un travail](roadmap/items/R-018-enregistrer-et-rouvrir-un-travail.md)** · À tester · jalon v1.0
    Fichier de travail .fabomx autonome (géométrie, placements, réglages faits à la main, point de départ, ordre) : Nouveau, Ouvrir, Enregistrer, Enregistrer sous, récents, dépôt ; repère « modifié » et demande avant de perdre des changements.
-2. **[R-019 Version 1.0](roadmap/items/R-019-version-1-0.md)** · Idée · jalon v1.0
+2. **[R-019 Version 1.0](roadmap/items/R-019-version-1-0.md)** · Spécifiée · jalon v1.0
    Version 1.0.0 : CHANGELOG, guide d'utilisation illustré dans le README, raccourcis Ctrl sous Windows, releases Mac (Apple Silicon) et Windows construites par GitHub Actions, sans signature payante.
 3. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée
    Marquer un trait sans traverser la plaque (gravure), dès que son code OMX est connu par un exemple de LAYOUT.
@@ -20,6 +20,7 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 ## Actions à faire
 
 - [ ] [A-015](roadmap/actions/A-015-fournir-un-omx-de-layout-avec-un-trait-grave.md) Fournir un OMX de LAYOUT avec un trait gravé (fournir, R-014)
+- [ ] [A-033](roadmap/actions/A-033-enregistrer-et-rouvrir-un-vrai-travail-dans-l.md) Enregistrer et rouvrir un vrai travail dans l'application Mac (tester, R-018)
 
 ## Livré
 

@@ -46,7 +46,7 @@ impl Unit {
 }
 
 /// D'où vient l'unité : lue dans le fichier, ou supposée faute d'indication.
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "lowercase")]
 pub enum Source {
     File,

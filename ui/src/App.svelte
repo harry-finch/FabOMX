@@ -15,6 +15,7 @@
   import { doc } from './lib/document.svelte';
   import { cutting } from './lib/cutting.svelte';
   import { pathing } from './lib/pathing.svelte';
+  import { jobs } from './lib/job.svelte';
   import { importer } from './lib/importer.svelte';
   import { tools, type ToolId } from './lib/tools.svelte';
   import { then, translate } from './lib/affine';
@@ -40,6 +41,19 @@
     if (d) ui.toast(t('drawing.removed', { name: d.name }));
   }
 
+  // Le titre (nom du travail, « modifié ») et, dans le navigateur, l'alerte avant de quitter.
+  $effect(() => {
+    void [jobs.name, doc.revision, jobs.saved, doc.drawings.length, i18n.locale];
+    jobs.sync();
+  });
+  $effect(() => {
+    const before = (e: BeforeUnloadEvent) => {
+      if (jobs.dirty && !isDesktop) e.preventDefault();
+    };
+    window.addEventListener('beforeunload', before);
+    return () => window.removeEventListener('beforeunload', before);
+  });
+
   // La sélection de contours vit avec l'outil Découpe et le dessin sélectionné.
   $effect(() => {
     if (cutting.selection && (tools.active !== 'cut' || cutting.selection.id !== doc.selected)) cutting.clear();
@@ -59,11 +73,14 @@
     if (el && (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA' || el.isContentEditable)) return;
     if (importer.pending || ui.help) return;
     const mod = e.metaKey || e.ctrlKey;
-    // Dans l'application de bureau, ⌘O, ⌘Z, ⇧⌘Z et ⌘A sont ceux du menu : pas deux fois.
-    if (isDesktop && mod && ['o', 'z', 'y', 'a'].includes(e.key.toLowerCase())) return;
+    // Dans l'application de bureau, ⌘N, ⌘O, ⌘S, ⌘Z, ⇧⌘Z et ⌘A sont ceux du menu : pas deux fois.
+    if (isDesktop && mod && ['n', 'o', 's', 'z', 'y', 'a'].includes(e.key.toLowerCase())) return;
     if (mod && !e.altKey) {
       const k = e.key.toLowerCase();
       if (k === 'o') importer.pick();
+      else if (k === 's' && e.shiftKey) jobs.saveAs();
+      else if (k === 's') jobs.save();
+      else if (k === 'n') jobs.newJob();
       else if (k === 'z' && e.shiftKey) doc.redo();
       else if (k === 'z') doc.undo();
       else if (k === 'y') doc.redo();
@@ -133,6 +150,10 @@
   $effect(() =>
     onMenu(async (id) => {
       if (id === 'import') importer.pick();
+      else if (id === 'new') jobs.newJob();
+      else if (id === 'save') jobs.save();
+      else if (id === 'save-as') jobs.saveAs();
+      else if (id === 'close') jobs.close();
       else if (id === 'undo' || id === 'redo') history(id === 'redo');
       else if (id === 'select-all') selectAll();
       else if (id === 'fit') workspace.fit();
@@ -199,6 +220,10 @@
     <dl class="keys">
       <dt><kbd>I / ⌘O</kbd></dt>
       <dd>{t('help.keys.import')}</dd>
+      <dt><kbd>⌘N</kbd></dt>
+      <dd>{t('help.keys.newJob')}</dd>
+      <dt><kbd>⌘S / ⇧⌘S</kbd></dt>
+      <dd>{t('help.keys.save')}</dd>
       <dt><kbd>V</kbd></dt>
       <dd>{t('help.keys.select')}</dd>
       <dt><kbd>H</kbd></dt>
@@ -237,6 +262,29 @@
   <ImportDialog />
 {/if}
 
+{#if jobs.asking}
+  <Dialog title={t('job.askTitle')} width={440} onclose={() => jobs.answer('cancel')}>
+    <p class="ask">{t('job.askText', { name: jobs.name ?? t('job.untitled') })}</p>
+    {#snippet footer()}
+      <button class="btn" type="button" onclick={() => jobs.answer('cancel')}>{t('common.cancel')}</button>
+      <button class="btn" type="button" onclick={() => jobs.answer('discard')}>{t('job.discard')}</button>
+      <button class="btn primary" type="button" onclick={() => jobs.answer('save')}>{t('job.save')}</button>
+    {/snippet}
+  </Dialog>
+{/if}
+
+{#if jobs.otherDefaults}
+  {@const d = jobs.otherDefaults}
+  <Dialog title={t('job.defaultsTitle')} width={460} onclose={() => (jobs.otherDefaults = null)}>
+    <p class="ask">{t('job.defaultsText')}</p>
+    <p class="ask tabular">{t('job.defaultsList', { q: d.quality, shape: t(`cut.shapes.${d.shape}`).toLowerCase(), li: fmtLength(d.lead_in, ui.units, 2), lo: fmtLength(d.lead_out, ui.units, 2), tw: fmtLength(d.tab_width, ui.units, 2), u: lengthUnit(ui.units) })}</p>
+    {#snippet footer()}
+      <button class="btn" type="button" onclick={() => (jobs.otherDefaults = null)}>{t('job.keepMine')}</button>
+      <button class="btn primary" type="button" onclick={() => jobs.adoptDefaults()}>{t('job.adopt')}</button>
+    {/snippet}
+  </Dialog>
+{/if}
+
 {#if dropping}
   <div class="drop" aria-hidden="true">{t('import.drop')}</div>
 {/if}
@@ -248,6 +296,11 @@
 </div>
 
 <style>
+  .ask {
+    margin: 0 0 var(--s2);
+    color: var(--text-secondary);
+  }
+
   .app {
     display: grid;
     grid-template-rows: auto 1fr auto;

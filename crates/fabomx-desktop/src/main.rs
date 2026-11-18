@@ -1,7 +1,8 @@
 // Application de bureau FabOMX : l'interface (`ui/dist`) et son moteur
 // WebAssembly dans une fenêtre, le dialogue Ouvrir natif, les fichiers
 // récents (10, dans le dossier de configuration de l'application), le
-// dialogue Enregistrer de l'OMX et le menu macOS, en français ou en anglais
+// dialogues Enregistrer (OMX, travail), le titre de la fenêtre, la demande
+// avant de fermer un travail modifié, et le menu macOS, en français ou en anglais
 // selon la langue de l'interface.
 // Les choix du menu sont envoyés à l'interface par l'événement `menu`.
 
@@ -18,6 +19,9 @@ const RECENT_MAX: usize = 10;
 
 /// Langue des menus, suivie depuis l'interface.
 struct Locale(Mutex<String>);
+
+/// Le travail ouvert a des modifications non enregistrées.
+struct Dirty(Mutex<bool>);
 
 #[derive(Serialize)]
 struct Opened {
@@ -82,11 +86,11 @@ async fn open_file(app: AppHandle) -> Result<Option<Opened>, String> {
         .file()
         .add_filter(
             if fr {
-                "Dessins SVG et DXF"
+                "Dessins SVG et DXF, travaux FabOMX"
             } else {
-                "SVG and DXF drawings"
+                "SVG and DXF drawings, FabOMX jobs"
             },
-            &["svg", "dxf", "SVG", "DXF"],
+            &["svg", "dxf", "fabomx", "SVG", "DXF", "FABOMX"],
         )
         .blocking_pick_file();
     match picked.and_then(|f| f.into_path().ok()) {
@@ -95,10 +99,16 @@ async fn open_file(app: AppHandle) -> Result<Option<Opened>, String> {
     }
 }
 
-/// Dialogue Enregistrer natif, filtré sur OMX, puis écriture de `text` ;
-/// rend le chemin, ou `None` si annulé.
+/// Dialogue Enregistrer natif, filtré sur OMX (`kind` = `omx`) ou sur les
+/// travaux FabOMX (`job`), puis écriture de `text` ; rend le chemin, ou
+/// `None` si annulé.
 #[tauri::command]
-async fn save_file(app: AppHandle, name: String, text: String) -> Result<Option<String>, String> {
+async fn save_file(
+    app: AppHandle,
+    name: String,
+    text: String,
+    kind: String,
+) -> Result<Option<String>, String> {
     let fr = app
         .state::<Locale>()
         .0
@@ -110,12 +120,17 @@ async fn save_file(app: AppHandle, name: String, text: String) -> Result<Option<
         .file()
         .set_file_name(&name)
         .add_filter(
-            if fr {
-                "Parcours OMX (ProtoMAX)"
-            } else {
-                "OMX toolpath (ProtoMAX)"
+            match (kind.as_str(), fr) {
+                ("job", true) => "Travail FabOMX",
+                ("job", false) => "FabOMX job",
+                (_, true) => "Parcours OMX (ProtoMAX)",
+                (_, false) => "OMX toolpath (ProtoMAX)",
             },
-            &["omx", "OMX"],
+            if kind == "job" {
+                &["fabomx"]
+            } else {
+                &["omx", "OMX"]
+            },
         )
         .blocking_save_file();
     match picked.and_then(|f| f.into_path().ok()) {
@@ -124,6 +139,37 @@ async fn save_file(app: AppHandle, name: String, text: String) -> Result<Option<
             .map_err(|_| "unwritable".to_string()),
         None => Ok(None),
     }
+}
+
+/// Écrit `text` dans `path` (Enregistrer un travail déjà nommé).
+#[tauri::command]
+fn write_file(path: String, text: String) -> Result<(), String> {
+    std::fs::write(path, text).map_err(|_| "unwritable".to_string())
+}
+
+/// Le travail de l'interface : titre de la fenêtre, et modifications non
+/// enregistrées (la fermeture demande alors à l'interface).
+#[tauri::command]
+fn job_state(app: AppHandle, title: String, dirty: bool) {
+    if let Ok(mut d) = app.state::<Dirty>().0.lock() {
+        *d = dirty;
+    }
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.set_title(&title);
+    }
+}
+
+/// Fermer sans plus rien demander (l'interface a déjà demandé).
+#[tauri::command]
+fn force_close(app: AppHandle) {
+    if let Ok(mut d) = app.state::<Dirty>().0.lock() {
+        *d = false;
+    }
+    app.exit(0);
+}
+
+fn dirty(app: &AppHandle) -> bool {
+    app.state::<Dirty>().0.lock().map(|d| *d).unwrap_or(false)
 }
 
 /// Relit un fichier récent. Un fichier disparu sort de la liste (`missing`).
@@ -248,8 +294,16 @@ fn build_menu<R: Runtime>(
         l("Fichier", "File"),
         true,
         &[
-            &item("import", l("Importer…", "Import…"), Some("CmdOrCtrl+O"))?,
+            &item("new", l("Nouveau travail", "New Job"), Some("CmdOrCtrl+N"))?,
+            &item("import", l("Ouvrir…", "Open…"), Some("CmdOrCtrl+O"))?,
             &recent_menu,
+            &PredefinedMenuItem::separator(app)?,
+            &item("save", l("Enregistrer", "Save"), Some("CmdOrCtrl+S"))?,
+            &item(
+                "save-as",
+                l("Enregistrer sous…", "Save As…"),
+                Some("CmdOrCtrl+Shift+S"),
+            )?,
             &PredefinedMenuItem::separator(app)?,
             &PredefinedMenuItem::close_window(app, Some(l("Fermer la fenêtre", "Close Window")))?,
         ],
@@ -316,6 +370,7 @@ fn main() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .manage(Locale(Mutex::new("fr".into())))
+        .manage(Dirty(Mutex::new(false)))
         .setup(|app| {
             let handle = app.handle().clone();
             let menu = build_menu(&handle, true, &read_recent(&handle))?;
@@ -325,15 +380,36 @@ fn main() {
         .on_menu_event(|app, event| {
             let _ = app.emit("menu", event.id().as_ref());
         })
+        // Fermer la fenêtre avec un travail modifié : l'interface demande d'abord.
+        .on_window_event(|window, event| {
+            if let tauri::WindowEvent::CloseRequested { api, .. } = event {
+                if dirty(window.app_handle()) {
+                    api.prevent_close();
+                    let _ = window.app_handle().emit("menu", "close");
+                }
+            }
+        })
         .invoke_handler(tauri::generate_handler![
             open_file,
             open_path,
             save_file,
+            write_file,
+            job_state,
+            force_close,
             remember,
             recent_files,
             clear_recent,
             set_locale
         ])
-        .run(tauri::generate_context!())
-        .expect("lancement de FabOMX");
+        .build(tauri::generate_context!())
+        .expect("lancement de FabOMX")
+        // Quitter (⌘Q) avec un travail modifié : l'interface demande d'abord.
+        .run(|app, event| {
+            if let tauri::RunEvent::ExitRequested { api, code, .. } = event {
+                if code.is_none() && dirty(app) {
+                    api.prevent_exit();
+                    let _ = app.emit("menu", "close");
+                }
+            }
+        });
 }

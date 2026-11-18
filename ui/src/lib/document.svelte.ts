@@ -70,7 +70,7 @@ export interface OpenOpts {
 const HISTORY = 100;
 
 /** Boîte transformée calculée sur les tracés, en attendant le moteur. */
-function roughPlacement(report: Report, m: M): Placement {
+export function roughPlacement(report: Report, m: M): Placement {
   let x0 = Infinity;
   let y0 = Infinity;
   let x1 = -Infinity;
@@ -108,9 +108,24 @@ class Doc {
   #next = 1;
   /** Taille des piles, pour l'état des commandes. */
   depth = $state({ undo: 0, redo: 0 });
+  /** Compteur des changements faits par l'utilisateur (pas des calculs du moteur) : un travail enregistré retient le sien. */
+  revision = $state(0);
 
   get selection(): Drawing | null {
     return this.drawings.find((d) => d.id === this.selected) ?? null;
+  }
+
+  /** Remplace tout par un travail ouvert (ou vide) ; l'historique repart de zéro. */
+  replaceAll(drawings: Drawing[], job: Job) {
+    this.#gesture = null;
+    this.#undo = [];
+    this.#redo = [];
+    this.drawings = drawings;
+    this.job = job;
+    this.selected = null;
+    this.picking = false;
+    this.#sync();
+    for (const d of drawings) this.#place(d);
   }
 
   /** Un identifiant neuf : dessin, ou géométrie que le moteur garde. */
@@ -136,6 +151,7 @@ class Doc {
   }
 
   #sync() {
+    this.revision++;
     if (this.selected != null && !this.drawings.some((d) => d.id === this.selected)) this.selected = null;
     this.depth = { undo: this.#undo.length, redo: this.#redo.length };
   }

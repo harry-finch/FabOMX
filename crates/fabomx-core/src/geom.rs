@@ -2,10 +2,10 @@
 //! boîtes englobantes, transformations affines et mise en segments des
 //! courbes à une tolérance donnée. Millimètres, Y vers le haut.
 
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use std::f64::consts::{PI, TAU};
 
-#[derive(Clone, Copy, Debug, PartialEq, Serialize)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
 pub struct P {
     pub x: f64,
     pub y: f64,
@@ -61,7 +61,8 @@ pub fn polar(c: P, r: f64, a: f64) -> P {
 
 /// Un segment exact : une ligne, ou un arc de cercle (angle de départ et
 /// balayage signé, en radians ; positif = sens trigonométrique).
-#[derive(Clone, Copy, Debug, PartialEq)]
+#[derive(Clone, Copy, Debug, PartialEq, Serialize, Deserialize)]
+#[serde(tag = "t", rename_all = "lowercase")]
 pub enum Seg {
     Line { a: P, b: P },
     Arc { c: P, r: f64, a0: f64, sweep: f64 },
