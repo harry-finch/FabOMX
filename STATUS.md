@@ -1,6 +1,6 @@
 # État du projet
 
-**Jalon** : aucun pour l’instant. Projet créé le 18/11/2026, pas encore de code. Suite : voir [ROADMAP.md](ROADMAP.md).
+**Jalon** : **v0.1 — Interface et dessin**, pas commencé. Projet créé le 18/11/2026, pas encore de code. Suite : voir [ROADMAP.md](ROADMAP.md).
 
 | Élément | État |
 | --- | --- |
@@ -15,4 +15,4 @@
 
 ## À suivre
 
-- Idées à spécifier : R-001, R-002.
+- Idées du jalon v0.1 à spécifier, dans l’ordre : R-003, R-001, R-002, R-004. Action en attente : A-001.

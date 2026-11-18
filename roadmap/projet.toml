@@ -4,3 +4,12 @@ resume = "Parcours d’outils pour la ProtoMAX"
 identite = "#2D22BF"
 agent = "claude"
 figure = "waterjet"
+
+# Jalons, dans l'ordre.
+[[jalons]]
+id = "v0.1"
+titre = "Interface et dessin"
+
+[[jalons]]
+id = "v0.2"
+titre = "Découpe jet d'eau"
