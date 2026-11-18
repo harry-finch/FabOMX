@@ -19,7 +19,7 @@
   const failure = $derived(p.result && 'error' in p.result ? p.result.error : null);
 
   function cleanedList(c: CleanCounts): string {
-    const parts = (['duplicates', 'overlaps', 'tiny', 'joins', 'simplified'] as const).filter((k) => c[k] > 0).map((k) => t(`clean.counts.${k}`, { n: num(c[k]) }));
+    const parts = (['duplicates', 'overlaps', 'tiny', 'joins', 'simplified', 'arcs'] as const).filter((k) => c[k] > 0).map((k) => t(`clean.counts.${k}`, { n: num(c[k]) }));
     return parts.length ? t('clean.cleaned', { list: parts.join(', ') }) : t('clean.cleanedNothing');
   }
 </script>

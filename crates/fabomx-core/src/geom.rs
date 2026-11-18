@@ -157,7 +157,7 @@ impl Seg {
     }
 
     /// Le segment transformé par `m` : exact pour une similitude, sinon des
-    /// lignes à `tol` près.
+    /// arcs tangents à `tol` près.
     pub fn transformed(&self, m: Affine, tol: f64, out: &mut Vec<Seg>) {
         match *self {
             Seg::Line { a, b } => out.push(Seg::Line {
@@ -165,15 +165,18 @@ impl Seg {
                 b: m.apply(b),
             }),
             Seg::Arc { c, r, a0, sweep } if m.is_similarity() => out.push(m.arc(c, r, a0, sweep)),
-            _ => {
-                let mut pts = Vec::new();
-                self.points(tol / m.factor().max(1e-12), &mut pts);
-                for w in pts.windows(2) {
-                    out.push(Seg::Line {
-                        a: m.apply(w[0]),
-                        b: m.apply(w[1]),
-                    });
-                }
+            Seg::Arc { c, r, a0, sweep } => {
+                // Une ellipse : en arcs tangents, sur le plateau.
+                let f = |t: f64| m.apply(polar(c, r, a0 + sweep * t));
+                let steps = ((sweep.abs() / TAU) * 16.0).ceil().max(2.0) as usize;
+                out.extend(crate::arcs::biarcs(
+                    &f,
+                    0.0,
+                    1.0,
+                    tol,
+                    crate::arcs::MIN_RADIUS,
+                    steps,
+                ));
             }
         }
     }

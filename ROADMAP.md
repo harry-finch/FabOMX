@@ -8,7 +8,7 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ## Restant à faire
 
-1. **[R-007 Reconnaître des arcs](roadmap/items/R-007-reconnaitre-des-arcs-dans-les-segments.md)** · Idée · jalon v0.2
+1. **[R-007 Reconnaître des arcs](roadmap/items/R-007-reconnaitre-des-arcs-dans-les-segments.md)** · À tester · jalon v0.2
    Courbes de Bézier, splines et ellipses lues en arcs tangents à l'import ; opération « Reconnaître des arcs » au nettoyage pour les polylignes en segments ; coins vifs, lignes droites et petits détails intacts ; arcs écrits en Bow dans l'OMX.
 2. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée · jalon v0.2
    Marquer un trait sans traverser la plaque (gravure), dès que son code OMX est connu par un exemple de LAYOUT.
@@ -23,6 +23,8 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 - [ ] [A-015](roadmap/actions/A-015-fournir-un-omx-de-layout-avec-un-trait-grave.md) Fournir un OMX de LAYOUT avec un trait gravé (fournir, R-014)
 - [ ] [A-023](roadmap/actions/A-023-fournir-un-omx-de-layout-avec-une-fente.md) Fournir un OMX de LAYOUT avec une fente (fournir, R-012)
+- [ ] [A-026](roadmap/actions/A-026-verifier-les-arcs-sur-tes-fichiers-a-courbes.md) Vérifier les arcs sur tes fichiers à courbes (tester, R-007)
+- [ ] [A-027](roadmap/actions/A-027-juger-la-fluidite-d-un-omx-a-courbes-dans-make.md) Juger la fluidité d'un OMX à courbes dans MAKE (tester, R-007)
 
 ## Livré
 

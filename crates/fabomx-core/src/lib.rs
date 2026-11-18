@@ -2,6 +2,7 @@
 //! d'interface) et déterministe. Millimètres et degrés ; repère de la
 //! machine : origine en bas à gauche du plateau, Y vers le haut.
 
+pub mod arcs;
 pub mod clean;
 pub mod cut;
 pub mod drawing;

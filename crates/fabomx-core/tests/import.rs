@@ -153,7 +153,7 @@ fn bulged_polyline_keeps_its_arc_and_is_closed() {
 }
 
 #[test]
-fn bezier_is_converted_within_10_microns() {
+fn bezier_is_read_as_arcs_within_10_microns() {
     let (_, parsed, _, _) = parse(&fixture("bezier.svg"), None).unwrap();
     let segs = &parsed.pieces[0].segs;
     // La courbe en mm (Y retourné) : M10 90 C20 10, 80 10, 90 90.
@@ -167,20 +167,20 @@ fn bezier_is_converted_within_10_microns() {
     };
     let dist_to_segs = |p: P| {
         segs.iter()
-            .map(|s| {
-                let (a, b) = (s.start(), s.end());
-                let ab = b - a;
-                let t = (((p.x - a.x) * ab.x + (p.y - a.y) * ab.y) / (ab.x * ab.x + ab.y * ab.y))
-                    .clamp(0.0, 1.0);
-                p.dist(a.lerp(b, t))
-            })
+            .map(|s| s.closest(p).0.dist(p))
             .fold(f64::INFINITY, f64::min)
     };
     let worst = (0..=2000)
         .map(|k| dist_to_segs(f(k as f64 / 2000.0)))
         .fold(0.0, f64::max);
     assert!(worst <= 0.01, "écart {worst} mm");
-    assert!(segs.len() > 10);
+    // Des arcs tangents (R-007), pas des dizaines de petits segments.
+    let arcs = segs.iter().filter(|s| matches!(s, Seg::Arc { .. })).count();
+    assert!(
+        arcs >= 2 && segs.len() < 40,
+        "{arcs} arcs sur {} segments",
+        segs.len()
+    );
 }
 
 #[test]

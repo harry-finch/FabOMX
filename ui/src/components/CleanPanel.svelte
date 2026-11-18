@@ -27,13 +27,14 @@
   const pv = $derived(d && cleaning.preview?.geo === d.geo ? cleaning.preview.preview : null);
   let busy = $state(false);
 
-  type Op = 'duplicates' | 'overlaps' | 'tiny' | 'join' | 'simplify';
+  type Op = 'duplicates' | 'overlaps' | 'tiny' | 'join' | 'simplify' | 'arcs';
   const OPS: { op: Op; count: keyof CleanCounts }[] = [
     { op: 'duplicates', count: 'duplicates' },
     { op: 'overlaps', count: 'overlaps' },
     { op: 'tiny', count: 'tiny' },
     { op: 'join', count: 'joins' },
     { op: 'simplify', count: 'simplified' },
+    { op: 'arcs', count: 'arcs' },
   ];
   const KINDS: Defect['kind'][] = ['gap', 'duplicate', 'overlap', 'tiny', 'open'];
   const MAX_SHOWN = 30;
@@ -59,7 +60,7 @@
     if (!res || 'error' in res) return;
     doc.replaceGeometry(d.id, next, res.report, res.snaps);
     const c = res.counts;
-    ui.toast(t('clean.done', { n: c.duplicates + c.overlaps + c.tiny + c.joins + c.simplified }));
+    ui.toast(t('clean.done', { n: c.duplicates + c.overlaps + c.tiny + c.joins + c.simplified + c.arcs }));
   }
 </script>
 
@@ -83,6 +84,10 @@
         {:else if op === 'join'}
           <div class="indent">
             <NumField label={t('clean.joinGap')} value={cleaning.options.join_gap} min={0.001} max={1} decimals={3} step={0.01} disabled={!on} onchange={(v) => cleaning.set({ join_gap: v })} hint={t('clean.joinHint')} />
+          </div>
+        {:else if op === 'arcs'}
+          <div class="indent">
+            <NumField label={t('clean.arcTol')} value={cleaning.options.arc_tol} min={0.001} max={0.1} decimals={3} step={0.005} disabled={!on} onchange={(v) => cleaning.set({ arc_tol: v })} hint={t('clean.arcHint')} />
           </div>
         {/if}
       {/each}

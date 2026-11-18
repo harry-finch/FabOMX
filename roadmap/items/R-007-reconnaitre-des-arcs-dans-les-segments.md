@@ -2,7 +2,7 @@
 id: R-007
 titre: "Reconnaître des arcs"
 resume: "Courbes de Bézier, splines et ellipses lues en arcs tangents à l'import ; opération « Reconnaître des arcs » au nettoyage pour les polylignes en segments ; coins vifs, lignes droites et petits détails intacts ; arcs écrits en Bow dans l'OMX."
-statut: idee
+statut: a-tester
 jalon: v0.2
 cree: 2026-11-18
 maj: 2026-11-18

@@ -68,7 +68,23 @@ fn free_scale_turns_a_circle_into_an_ellipse_and_warns() {
     );
     assert!(p.warnings.contains(&PlaceWarning::Distorted));
     let out = transform(&circle, Affine::scale_about(P::new(0.0, 0.0), 2.0, 1.0));
-    assert!(out[0].segs.iter().all(|s| matches!(s, Seg::Line { .. })));
+    // L'ellipse est approchée par des arcs tangents (R-007), à 0,01 mm près.
+    let segs = &out[0].segs;
+    assert!(segs.iter().filter(|s| matches!(s, Seg::Arc { .. })).count() >= 4);
+    let c = circle[0].segs[0];
+    let Seg::Arc { c: o, r, .. } = c else {
+        panic!()
+    };
+    let worst = (0..720)
+        .map(|k| {
+            let a = k as f64 * std::f64::consts::TAU / 720.0;
+            let q = P::new(2.0 * (o.x + r * a.cos()), o.y + r * a.sin());
+            segs.iter()
+                .map(|s| s.closest(q).0.dist(q))
+                .fold(f64::INFINITY, f64::min)
+        })
+        .fold(0.0, f64::max);
+    assert!(worst <= 0.01, "écart {worst} mm");
 }
 
 #[test]

@@ -123,7 +123,7 @@ fn a_slot_is_written_without_offset() {
 }
 
 #[test]
-fn arcs_stay_arcs_under_uniform_scale_only() {
+fn arcs_stay_arcs_even_under_a_stretch() {
     let body = r#"<circle cx="100" cy="100" r="10"/>"#;
     let arcs = |o: &fabomx_core::omx::Omx| {
         o.rows
@@ -133,9 +133,10 @@ fn arcs_stay_arcs_under_uniform_scale_only() {
     };
     let uniform = exported(body, Affine([2.0, 0.0, 0.0, 2.0, 0.0, 0.0]), (0.0, 0.0));
     assert!(arcs(&uniform) >= 2);
+    // Une échelle non proportionnelle donne une ellipse, elle aussi en arcs tangents (R-007).
     let stretched = exported(body, Affine([2.0, 0.0, 0.0, 1.0, 0.0, 0.0]), (0.0, 0.0));
-    assert_eq!(arcs(&stretched), 0);
-    assert!(stretched.rows.len() > 20);
+    assert!(arcs(&stretched) >= 4);
+    assert!(stretched.rows.len() < 40, "{} lignes", stretched.rows.len());
 }
 
 #[test]

@@ -1,15 +1,18 @@
 //! Le dessin lu dans un fichier : des pièces (un élément SVG, une entité
 //! DXF, un sous-chemin), chacune faite de segments exacts, en millimètres.
 //! `Builder` les construit depuis les coordonnées du fichier : les lignes,
-//! arcs et cercles restent exacts, les autres courbes sont mises en segments
-//! à `CURVE_TOL` près.
+//! arcs et cercles restent exacts, les autres courbes (Bézier, splines,
+//! ellipses, cercles déformés) deviennent des arcs tangents à `CURVE_TOL`
+//! près (`arcs::biarcs`), en segments seulement pour un détail plus petit
+//! que `arcs::MIN_RADIUS`.
 
-use crate::geom::{flatten, Affine, Seg, P};
+use crate::arcs::{biarcs, MIN_RADIUS};
+use crate::geom::{Affine, Seg, P};
 use serde::Serialize;
 use std::collections::BTreeMap;
 use std::f64::consts::TAU;
 
-/// Écart maximal entre une courbe convertie et ses segments (mm).
+/// Écart maximal entre une courbe convertie et ses arcs ou segments (mm).
 pub const CURVE_TOL: f64 = 0.01;
 
 /// Type d'un élément du fichier, pour les comptes du dialogue d'import.
@@ -75,8 +78,6 @@ impl Parsed {
 /// exprimées dans le repère du fichier, transformées par `m`.
 pub struct Builder {
     m: Affine,
-    /// Tolérance des courbes dans le repère du fichier.
-    tol: f64,
     segs: Vec<Seg>,
 }
 
@@ -84,7 +85,6 @@ impl Builder {
     pub fn new(m: Affine) -> Self {
         Builder {
             m,
-            tol: CURVE_TOL / m.factor().max(1e-300),
             segs: Vec::new(),
         }
     }
@@ -96,14 +96,8 @@ impl Builder {
         }
     }
 
-    fn polyline(&mut self, pts: &[P]) {
-        for w in pts.windows(2) {
-            self.line(w[0], w[1]);
-        }
-    }
-
     /// Arc de cercle (repère du fichier) : exact si la transformation garde
-    /// les cercles, sinon mis en segments.
+    /// les cercles, sinon une ellipse en arcs tangents.
     pub fn arc(&mut self, c: P, r: f64, a0: f64, sweep: f64) {
         if r <= 0.0 || sweep == 0.0 {
             return;
@@ -128,8 +122,7 @@ impl Builder {
             P::new(c.x + x * cs - y * sn, c.y + x * sn + y * cs)
         };
         let steps = ((dt.abs() / TAU) * 16.0).ceil() as usize;
-        let pts = flatten(&f, t0, t0 + dt, self.tol, steps.max(2));
-        self.polyline(&pts);
+        self.curve(&f, t0, t0 + dt, steps.max(2));
     }
 
     pub fn cubic(&mut self, p0: P, p1: P, p2: P, p3: P) {
@@ -137,14 +130,17 @@ impl Builder {
             let u = 1.0 - t;
             p0 * (u * u * u) + p1 * (3.0 * u * u * t) + p2 * (3.0 * u * t * t) + p3 * (t * t * t)
         };
-        let pts = flatten(&f, 0.0, 1.0, self.tol, 2);
-        self.polyline(&pts);
+        self.curve(&f, 0.0, 1.0, 1);
     }
 
-    /// Courbe déjà paramétrée (spline) : `f` sur [t0, t1].
+    /// Courbe paramétrée dans le repère du fichier : `f` sur [t0, t1], en
+    /// arcs tangents dans le repère final.
     pub fn curve(&mut self, f: &dyn Fn(f64) -> P, t0: f64, t1: f64, min_steps: usize) {
-        let pts = flatten(f, t0, t1, self.tol, min_steps);
-        self.polyline(&pts);
+        let m = self.m;
+        let g = |t: f64| m.apply(f(t));
+        let segs = biarcs(&g, t0, t1, CURVE_TOL, MIN_RADIUS, min_steps);
+        self.segs
+            .extend(segs.into_iter().filter(|s| s.length() > 1e-12));
     }
 
     /// Termine la pièce ; rien si elle n'a aucun segment.

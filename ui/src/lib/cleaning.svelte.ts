@@ -10,7 +10,7 @@ import type { CleanOptions, CleanPreview, Defect } from './types';
 
 const KEY = storageKey('clean.v1');
 
-export const DEFAULTS: CleanOptions = { duplicates: true, overlaps: true, tiny: true, tiny_size: 0.1, join: true, join_gap: 0.01, simplify: true };
+export const DEFAULTS: CleanOptions = { duplicates: true, overlaps: true, tiny: true, tiny_size: 0.1, join: true, join_gap: 0.01, simplify: true, arcs: true, arc_tol: 0.01 };
 
 function read(): { options: CleanOptions; atImport: boolean } {
   try {

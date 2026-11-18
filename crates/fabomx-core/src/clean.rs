@@ -7,7 +7,8 @@
 //!
 //! Ordre : minuscules (sur les pièces du fichier), doublons, superpositions,
 //! jonctions, puis les segments sont rechaînés en contours, les lignes
-//! alignées fusionnées au passage.
+//! alignées fusionnées au passage ; enfin les suites de segments qui suivent
+//! un arc deviennent cet arc (`arcs::fit`), hors repères.
 
 use crate::drawing::{Kind, Piece};
 use crate::geom::{Seg, P};
@@ -30,6 +31,20 @@ pub struct Options {
     /// Écart max entre deux extrémités à joindre (mm du plateau).
     pub join_gap: f64,
     pub simplify: bool,
+    /// Reconnaître des arcs dans les polylignes (R-007).
+    #[serde(default = "yes")]
+    pub arcs: bool,
+    /// Écart max entre les segments et l'arc qui les remplace (mm du plateau).
+    #[serde(default = "arc_tol")]
+    pub arc_tol: f64,
+}
+
+fn yes() -> bool {
+    true
+}
+
+fn arc_tol() -> f64 {
+    0.01
 }
 
 impl Default for Options {
@@ -42,6 +57,8 @@ impl Default for Options {
             join: true,
             join_gap: 0.01,
             simplify: true,
+            arcs: true,
+            arc_tol: arc_tol(),
         }
     }
 }
@@ -54,6 +71,7 @@ impl Options {
             tiny: true,
             join: true,
             simplify: true,
+            arcs: true,
             ..self
         }
     }
@@ -67,6 +85,8 @@ pub struct Counts {
     pub tiny: usize,
     pub joins: usize,
     pub simplified: usize,
+    /// Arcs créés à la place de suites de segments.
+    pub arcs: usize,
 }
 
 /// Un défaut situé (géométrie d'origine). `gap` : pour une extrémité qui
@@ -212,8 +232,23 @@ pub fn clean(pieces: &[Piece], o: &Options, k: f64) -> (Vec<Piece>, Counts, Vec<
         }
     }
 
-    let (out, simplified) = rechain(es, if o.simplify { Some(ALIGNED / k) } else { None });
+    let (mut out, simplified) = rechain(es, if o.simplify { Some(ALIGNED / k) } else { None });
     counts.simplified = simplified;
+    if o.arcs {
+        // Les repères ne sont pas coupés : on ne les touche pas.
+        for p in out.iter_mut().filter(|p| !p.construction) {
+            let (segs, n) = crate::arcs::fit(
+                &p.segs,
+                p.closed,
+                o.arc_tol / k,
+                crate::arcs::MIN_RADIUS / k,
+            );
+            if n > 0 {
+                p.segs = segs;
+                counts.arcs += n;
+            }
+        }
+    }
     (out, counts, defects)
 }
 
@@ -250,6 +285,9 @@ pub fn preview(pieces: &[Piece], o: &Options, k: f64) -> Preview {
     }
     if !o.simplify {
         counts.simplified = all.simplified;
+    }
+    if !o.arcs {
+        counts.arcs = all.arcs;
     }
     let topo = Topology::build(&after);
     let free: Vec<P> = topo

@@ -55,6 +55,8 @@ export interface CleanOptions {
   join: boolean;
   join_gap: number;
   simplify: boolean;
+  arcs: boolean;
+  arc_tol: number;
 }
 
 export interface CleanCounts {
@@ -63,6 +65,7 @@ export interface CleanCounts {
   tiny: number;
   joins: number;
   simplified: number;
+  arcs: number;
 }
 
 /** Un défaut situé dans la géométrie d'origine ; `gap` : écart d'une extrémité qui restera libre. */
