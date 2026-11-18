@@ -8,7 +8,7 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ## Restant à faire
 
-1. **[R-019 Version 1.0](roadmap/items/R-019-version-1-0.md)** · En cours · jalon v1.0
+1. **[R-019 Version 1.0](roadmap/items/R-019-version-1-0.md)** · À tester · jalon v1.0
    Version 1.0.0 : CHANGELOG, guide d'utilisation illustré dans le README, raccourcis Ctrl sous Windows, releases Mac (Apple Silicon) et Windows construites par GitHub Actions, sans signature payante.
 2. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée
    Marquer un trait sans traverser la plaque (gravure), dès que son code OMX est connu par un exemple de LAYOUT.
@@ -20,6 +20,9 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 ## Actions à faire
 
 - [ ] [A-015](roadmap/actions/A-015-fournir-un-omx-de-layout-avec-un-trait-grave.md) Fournir un OMX de LAYOUT avec un trait gravé (fournir, R-014)
+- [ ] [A-034](roadmap/actions/A-034-installer-et-essayer-fabomx-sous-windows.md) Installer et essayer FabOMX sous Windows (tester, R-019)
+- [ ] [A-035](roadmap/actions/A-035-installer-fabomx-pour-mac-depuis-la-release.md) Installer FabOMX pour Mac depuis la release (tester, R-019)
+- [ ] [A-036](roadmap/actions/A-036-relire-le-guide-le-changelog-et-publier-la.md) Relire le guide, le CHANGELOG et publier la release v1.0.0 (valider, R-019)
 
 ## Livré
 
