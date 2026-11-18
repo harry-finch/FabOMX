@@ -4,26 +4,21 @@ Objectif de FabOMX : à partir d'un dessin vectoriel (SVG ou DXF), produire un p
 
 On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la découpe et les spécificités du jet d'eau (v0.2).
 
-**Avancement : 4 livrés sur 7** (57 %)
+**Avancement : 5 livrés sur 7** (71 %)
 
 ## Restant à faire
 
-1. **[R-005 Application de bureau macOS](roadmap/items/R-005-application-de-bureau-macos.md)** · À tester · jalon v0.1
-   Application de bureau macOS (Tauri) : .app et .dmg, dialogue Ouvrir natif, fichiers récents, menu natif FR/EN ; mêmes fonctions que la version web.
-2. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v0.1
+1. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v0.1
    Logo définitif de la famille Fab (tuile graphite et symbole à la couleur d'identité), à la place du logo provisoire du kit.
-3. **[R-007 Reconnaître des arcs dans les segments](roadmap/items/R-007-reconnaitre-des-arcs-dans-les-segments.md)** · Idée · jalon v0.2
+2. **[R-007 Reconnaître des arcs dans les segments](roadmap/items/R-007-reconnaitre-des-arcs-dans-les-segments.md)** · Idée · jalon v0.2
    Remplacer les suites de petits segments issues des courbes converties par de vrais arcs, pour un parcours de jet d'eau plus fluide.
-
-## Actions à faire
-
-- [ ] [A-010](roadmap/actions/A-010-installer-et-essayer-l-application-fabomx-pour.md) Installer et essayer l'application FabOMX pour Mac (tester, R-005)
-- [ ] [A-011](roadmap/actions/A-011-juger-les-menus-et-les-fichiers-recents-de.md) Juger les menus et les fichiers récents de FabOMX (tester, R-005)
 
 ## Livré
 
 ### v0.1 : Interface et dessin
 
+- [R-005 Application de bureau macOS](roadmap/items/R-005-application-de-bureau-macos.md) · livrée le 2026-11-18
+  Application de bureau macOS (Tauri) : .app et .dmg, dialogue Ouvrir natif, fichiers récents, menu natif FR/EN ; mêmes fonctions que la version web.
 - [R-004 Nettoyer le dessin](roadmap/items/R-004-nettoyer-le-dessin.md) · livrée le 2026-11-18
   Section Nettoyer : doublons, superpositions, minuscules, jonctions sous un seuil, segments alignés, avec comptes et bilan en direct, liste des défauts et option à l'import ; rien n'est inventé.
 - [R-003 Poser l'interface](roadmap/items/R-003-poser-l-interface.md) · livrée le 2026-11-18
