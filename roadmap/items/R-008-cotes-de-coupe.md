@@ -2,11 +2,11 @@
 id: R-008
 titre: "Côtés de coupe"
 resume: "Outil Découpe : pour chaque contour, Extérieur, Trou, Sur la ligne (fente) ou Ne pas couper (repère), détecté par imbrication et d'après le fichier (pointillés, calques), modifiable, avec sens de parcours fixé et croisements signalés."
-statut: a-tester
+statut: livree
 jalon: v0.2
 cree: 2026-11-18
 maj: 2026-11-18
-livree:
+livree: 2026-11-18
 ---
 
 ## But

@@ -3,10 +3,10 @@ id: A-014
 type: valider
 titre: "Juger l'outil Découpe de FabOMX"
 element: R-008
-statut: a-faire
+statut: fait
 cree: 2026-11-18
 par: agent
-fait:
+fait: 2026-11-18
 ---
 
 Où : la même version que pour l'action précédente, outil Découpe (D).
@@ -16,3 +16,7 @@ Gestes : clique un contour, Maj + clic pour en ajouter un, change leur côté da
 À juger : les couleurs (bien distinctes en clair et en sombre ?), les flèches de sens (la pièce est toujours à gauche du jet), la clarté du panneau.
 
 Réponds « validé », ou ce qu'il faut changer.
+
+## Réponse
+
+Validé (choix du côté remis en grille 2 × 2).
