@@ -2,11 +2,11 @@
 id: R-017
 titre: "Choisir le côté de coupe d'un tracé ouvert"
 resume: "Pour un tracé ouvert : sur la ligne, pièce d'un côté ou de l'autre (saignée vers la chute, côté 1 dans l'OMX, sens imposé), avec hachures sur le plateau ; amorces au choix dans le prolongement du tracé pour percer hors de la plaque."
-statut: a-tester
+statut: livree
 jalon: v0.3
 cree: 2026-11-18
 maj: 2026-11-18
-livree:
+livree: 2026-11-18
 ---
 
 ## But

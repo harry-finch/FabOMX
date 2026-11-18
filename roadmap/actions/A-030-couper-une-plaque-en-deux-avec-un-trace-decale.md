@@ -3,10 +3,10 @@ id: A-030
 type: tester
 titre: "Couper une plaque en deux avec un tracé décalé"
 element: R-017
-statut: a-faire
+statut: fait
 cree: 2026-11-18
 par: agent
-fait:
+fait: 2026-11-18
 ---
 
 Où : `dist-desktop/FabOMX.app` (à lancer sur place) ou la version web (`cd ui && npm run dev`, http://localhost:5177).
@@ -16,3 +16,7 @@ Gestes : dessine une ligne qui traverse ta plaque de bord à bord (un tracé ouv
 À mesurer : la cote de la pièce gardée (la saignée doit partir du côté hachuré).
 
 Réponds avec ta mesure et ce que tu as vu.
+
+## Réponse
+
+Validé.

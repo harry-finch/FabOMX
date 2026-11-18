@@ -4,24 +4,20 @@ Objectif de FabOMX : à partir d'un dessin vectoriel (SVG ou DXF), produire un p
 
 On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la découpe et les spécificités du jet d'eau (v0.2).
 
-**Avancement : 12 livrés sur 16** (75 %)
+**Avancement : 13 livrés sur 16** (81 %)
 
 ## Restant à faire
 
-1. **[R-017 Choisir le côté de coupe d'un tracé ouvert](roadmap/items/R-017-choisir-le-cote-de-coupe-d-un-trace-ouvert.md)** · À tester · jalon v0.3
-   Pour un tracé ouvert : sur la ligne, pièce d'un côté ou de l'autre (saignée vers la chute, côté 1 dans l'OMX, sens imposé), avec hachures sur le plateau ; amorces au choix dans le prolongement du tracé pour percer hors de la plaque.
-2. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
+1. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
    Logo définitif de la famille Fab (tuile graphite et symbole à la couleur d'identité), à la place du logo provisoire du kit.
-3. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée
+2. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée
    Marquer un trait sans traverser la plaque (gravure), dès que son code OMX est connu par un exemple de LAYOUT.
-4. **[R-016 Couper une plaque dans un coin du stock](roadmap/items/R-016-couper-une-plaque-dans-un-coin-du-stock.md)** · Idée · jalon v0.3
+3. **[R-016 Couper une plaque dans un coin du stock](roadmap/items/R-016-couper-une-plaque-dans-un-coin-du-stock.md)** · Idée · jalon v0.3
    Couper une plaque dans un coin du stock sans faire le tour complet. À spécifier.
 
 ## Actions à faire
 
 - [ ] [A-015](roadmap/actions/A-015-fournir-un-omx-de-layout-avec-un-trait-grave.md) Fournir un OMX de LAYOUT avec un trait gravé (fournir, R-014)
-- [ ] [A-030](roadmap/actions/A-030-couper-une-plaque-en-deux-avec-un-trace-decale.md) Couper une plaque en deux avec un tracé décalé (tester, R-017)
-- [ ] [A-031](roadmap/actions/A-031-juger-le-choix-du-cote-d-un-trace-ouvert.md) Juger le choix du côté d'un tracé ouvert (valider, R-017)
 
 ## Livré
 
@@ -55,6 +51,8 @@ On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la déc
 
 ### v0.3 : Découpes avancées
 
+- [R-017 Choisir le côté de coupe d'un tracé ouvert](roadmap/items/R-017-choisir-le-cote-de-coupe-d-un-trace-ouvert.md) · livrée le 2026-11-18
+  Pour un tracé ouvert : sur la ligne, pièce d'un côté ou de l'autre (saignée vers la chute, côté 1 dans l'OMX, sens imposé), avec hachures sur le plateau ; amorces au choix dans le prolongement du tracé pour percer hors de la plaque.
 - [R-015 Onglets de maintien](roadmap/items/R-015-onglets-de-maintien.md) · livrée le 2026-11-18
   Onglets sur les contours extérieurs choisis : onglet de fin sans perçage, onglets le long du contour avec arrêt du jet et reperçage dans la chute ; nombre réparti ou placés au clic ; largeur 1 mm par défaut, réglable.
 
