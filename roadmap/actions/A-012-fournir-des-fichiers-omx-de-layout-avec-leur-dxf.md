@@ -3,10 +3,10 @@ id: A-012
 type: fournir
 titre: "Fournir des fichiers OMX de LAYOUT avec leur DXF"
 element: R-012
-statut: a-faire
+statut: fait
 cree: 2026-11-18
 par: agent
-fait:
+fait: 2026-11-18
 ---
 
 Pour reproduire exactement le format OMX de la ProtoMAX, j'ai besoin de fichiers réels produits par LAYOUT, chacun avec le DXF dont il vient.
@@ -21,3 +21,7 @@ Dépose-les dans `crates/fabomx-core/tests/fixtures/omx/` (ou dis-moi où ils so
 6. Si possible, un fichier avec une pause ou un délai (XData).
 
 Réponds en disant où sont les fichiers, et la version de LAYOUT utilisée.
+
+## Réponse
+
+Deux exemples fournis dans omx/ : rectangle et test (DXF + OMX).

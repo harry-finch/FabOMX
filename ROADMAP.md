@@ -4,28 +4,30 @@ Objectif de FabOMX : à partir d'un dessin vectoriel (SVG ou DXF), produire un p
 
 On avance par étapes : d'abord l'interface et le dessin (v0.1), ensuite la découpe et les spécificités du jet d'eau (v0.2).
 
-**Avancement : 6 livrés sur 13** (46 %)
+**Avancement : 6 livrés sur 14** (43 %)
 
 ## Restant à faire
 
 1. **[R-009 Qualité de coupe](roadmap/items/R-009-qualite-de-coupe.md)** · Idée · jalon v0.2
-   Choisir la qualité de coupe (1 à 5) ou la gravure pour chaque contour, avec une qualité par défaut.
-2. **[R-010 Amorces et perçages](roadmap/items/R-010-amorces-et-percages.md)** · Idée · jalon v0.2
+   Qualité de coupe de 1 à 5 : une qualité par défaut mémorisée sur le poste, et une qualité propre pour les contours choisis dans l'outil Découpe, affichée près de leur flèche.
+2. **[R-014 Gravure](roadmap/items/R-014-gravure.md)** · Idée · jalon v0.2
+   Marquer un trait sans traverser la plaque (gravure), dès que son code OMX est connu par un exemple de LAYOUT.
+3. **[R-010 Amorces et perçages](roadmap/items/R-010-amorces-et-percages.md)** · Idée · jalon v0.2
    Placer les amorces d'entrée et de sortie de chaque contour et son point de perçage, hors de la pièce, réglables.
-3. **[R-011 Ordre de coupe et aperçu du parcours](roadmap/items/R-011-ordre-de-coupe-et-apercu-du-parcours.md)** · Idée · jalon v0.2
+4. **[R-011 Ordre de coupe et aperçu du parcours](roadmap/items/R-011-ordre-de-coupe-et-apercu-du-parcours.md)** · Idée · jalon v0.2
    Calculer l'ordre de coupe (trous avant l'extérieur, déplacements courts) et montrer le parcours complet : coupes, déplacements jet coupé, perçages.
-4. **[R-012 Comprendre le format OMX](roadmap/items/R-012-comprendre-le-format-omx.md)** · Idée · jalon v0.2
+5. **[R-012 Comprendre le format OMX](roadmap/items/R-012-comprendre-le-format-omx.md)** · Idée · jalon v0.2
    Décrire et reproduire le format OMX de la ProtoMAX à partir de fichiers réels produits par LAYOUT, avec des tests qui relisent ces fichiers.
-5. **[R-007 Reconnaître des arcs dans les segments](roadmap/items/R-007-reconnaitre-des-arcs-dans-les-segments.md)** · Idée · jalon v0.2
+6. **[R-007 Reconnaître des arcs dans les segments](roadmap/items/R-007-reconnaitre-des-arcs-dans-les-segments.md)** · Idée · jalon v0.2
    Remplacer les suites de petits segments issues des courbes converties par de vrais arcs, pour un parcours de jet d'eau plus fluide.
-6. **[R-013 Exporter l'OMX](roadmap/items/R-013-exporter-l-omx.md)** · Idée · jalon v0.2
+7. **[R-013 Exporter l'OMX](roadmap/items/R-013-exporter-l-omx.md)** · Idée · jalon v0.2
    Écrire le fichier OMX du parcours, prêt à ouvrir dans MAKE ; la compensation de la saignée reste à MAKE, qui reçoit le côté de coupe.
-7. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
+8. **[R-006 Logo de FabOMX](roadmap/items/R-006-logo-de-fabomx.md)** · Idée · jalon v1.0
    Logo définitif de la famille Fab (tuile graphite et symbole à la couleur d'identité), à la place du logo provisoire du kit.
 
 ## Actions à faire
 
-- [ ] [A-012](roadmap/actions/A-012-fournir-des-fichiers-omx-de-layout-avec-leur-dxf.md) Fournir des fichiers OMX de LAYOUT avec leur DXF (fournir, R-012)
+- [ ] [A-015](roadmap/actions/A-015-fournir-un-omx-de-layout-avec-un-trait-grave.md) Fournir un OMX de LAYOUT avec un trait gravé (fournir, R-014)
 
 ## Livré
 
