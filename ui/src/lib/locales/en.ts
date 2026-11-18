@@ -196,8 +196,9 @@ const en: Shape<typeof fr> = {
     manual: 'set by hand',
     reset: 'Cleaning recomputed the sides: sides and qualities set by hand are lost.',
     quality: 'Quality',
+    ownQuality: 'Quality of the selected contours',
     defaultQuality: 'Default quality',
-    defaultQualityHint: 'For every cut contour without its own quality. Remembered on this computer.',
+    defaultQualityHint: 'For every cut contour of every drawing that has no quality of its own. Remembered on this computer.',
     qualityHints: {
       '1': 'Quality 1: fastest, rough edge.',
       '2': 'Quality 2: fast.',

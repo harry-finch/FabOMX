@@ -194,8 +194,9 @@ const fr = {
     manual: 'choisi à la main',
     reset: 'Le nettoyage a recalculé les côtés : les côtés et qualités choisis à la main sont perdus.',
     quality: 'Qualité',
+    ownQuality: 'Qualité des contours sélectionnés',
     defaultQuality: 'Qualité par défaut',
-    defaultQualityHint: 'Pour tous les contours coupés sans qualité propre. Mémorisée sur ce poste.',
+    defaultQualityHint: 'Pour tous les contours coupés de tous les dessins qui n’ont pas de qualité propre. Mémorisée sur ce poste.',
     qualityHints: {
       '1': 'Qualité 1 : la plus rapide, bord rugueux.',
       '2': 'Qualité 2 : rapide.',

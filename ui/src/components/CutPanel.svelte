@@ -69,8 +69,6 @@
 </script>
 
 <Section id="cut" title={t('cut.title')}>
-  <p class="sub" use:tip={t('cut.defaultQualityHint')}>{t('cut.defaultQuality')}</p>
-  <Segmented label={t('cut.defaultQuality')} value={String(cutting.quality)} onchange={(q) => cutting.setDefault(Number(q))} options={qualityOptions} />
   {#if !d}
     <p class="muted">{t('cut.select')}</p>
   {:else}
@@ -109,7 +107,7 @@
       {#if options.length < SIDES.length}
         <p class="hint">{t('cut.openOnly')}</p>
       {/if}
-      <p class="sub">{t('cut.quality')}</p>
+      <p class="sub">{t('cut.ownQuality')}</p>
       {#if cutPicked.length}
         <Segmented
           label={t('cut.quality')}
@@ -159,6 +157,11 @@
       <p class="ok"><CircleCheck size={14} /> {t('cut.noWarning')}</p>
     {/if}
   {/if}
+  <div class="defaults">
+    <p class="sub">{t('cut.defaultQuality')}</p>
+    <Segmented label={t('cut.defaultQuality')} value={String(cutting.quality)} onchange={(q) => cutting.setDefault(Number(q))} options={qualityOptions} />
+    <p class="hint">{t('cut.defaultQualityHint')}</p>
+  </div>
 </Section>
 
 <style>
@@ -217,6 +220,15 @@
     color: var(--text-primary);
     font-size: var(--fs-xs);
     font-weight: 600;
+  }
+
+  .defaults {
+    display: flex;
+    flex-direction: column;
+    gap: var(--s2);
+    margin-top: var(--s1);
+    padding-top: var(--s3);
+    border-top: 1px solid var(--divider);
   }
 
   .row {
